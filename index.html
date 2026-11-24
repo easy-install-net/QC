@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>築匠設計 ARTISAN STUDIO — QC 總報告</title>
+  <link rel="icon" href="data:," />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,7 +28,6 @@
     .btn-secondary:hover { background: #F8FAFC; color: #0F172A; border-color: #94A3B8; }
     .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
 
-    /* 純底線文字操作連結（無按鈕框） */
     .btn-link {
       background: transparent;
       border: none;
@@ -39,7 +39,6 @@
       cursor: pointer;
     }
 
-    /* 全頁唯一允許淺橙色的位置：所有可打字/填寫的輸入框 */
     .input-ui {
       border: 1px solid #FDBA74;
       border-radius: 6px;
@@ -48,46 +47,20 @@
       background-color: #FFF7ED;
       color: #0F172A;
     }
-    .input-ui:focus {
-      outline: none;
-      border-color: #0F172A;
-      background-color: #FFEDD5;
-    }
-    .select-ui {
-      border: 1px solid #CBD5E1;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 12px;
-      background-color: #FFFFFF;
-      color: #0F172A;
-    }
+    .input-ui:focus { outline: none; border-color: #0F172A; background-color: #FFEDD5; }
+    .select-ui { border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 8px; font-size: 12px; background-color: #FFFFFF; color: #0F172A; }
 
     .site-card { background: #FFF; border: 1px solid #CBD5E1; border-left: 4px solid #0F172A; border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
     .photo-card { background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
     .canvas-wrapper { position: relative; width: 100%; background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 6px; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
     canvas { max-width: 100%; max-height: 54vh; display: block; cursor: crosshair; }
 
-    /* 匯出 / 列印相簿 PDF 專用樣式 */
     @media print {
       body { background: #FFF !important; }
       #mainAppShell, #editorModal, #followupModal, #viewModal, #lightboxModal, #toast, .no-print { display: none !important; }
-      #albumModal {
-        position: static !important;
-        inset: auto !important;
-        background: #FFF !important;
-        overflow: visible !important;
-        display: block !important;
-      }
-      #albumModalInner {
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      #albumModalBox {
-        border: none !important;
-        box-shadow: none !important;
-        max-width: 100% !important;
-      }
+      #albumModal { position: static !important; inset: auto !important; background: #FFF !important; overflow: visible !important; display: block !important; }
+      #albumModalInner { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+      #albumModalBox { border: none !important; box-shadow: none !important; max-width: 100% !important; }
       #albumPrintHeader { display: block !important; }
       #albumGridContainer { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
       .photo-card { border: 1px solid #94A3B8 !important; box-shadow: none !important; }
@@ -97,9 +70,7 @@
 </head>
 <body>
 
-  <!-- 主畫面外殼 -->
   <div id="mainAppShell">
-    <!-- 頂部導航欄 -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
       <div class="max-w-5xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2 min-w-0">
@@ -109,22 +80,20 @@
           <span id="syncBadge" class="t-meta px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">連線中</span>
         </div>
         <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-          <button onclick="openAlbumModal('ALL')" class="btn-secondary">全部相簿</button>
-          <button onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
-          <button onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
+          <button type="button" onclick="openAlbumModal('ALL')" class="btn-secondary">全部相簿</button>
+          <button type="button" onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
+          <button type="button" onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
         </div>
       </div>
     </header>
 
-    <!-- 唯讀 / 單一單位分享橫幅 -->
     <div id="publicBanner" class="hidden bg-slate-800 text-slate-100 border-b border-slate-700">
       <div class="max-w-5xl mx-auto px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 t-meta">
         <span id="bannerText">唯讀檢視模式</span>
-        <button onclick="exitPublicMode()" class="underline text-slate-200 hover:text-white">切換編輯模式</button>
+        <button type="button" onclick="exitPublicMode()" class="underline text-slate-200 hover:text-white">切換編輯模式</button>
       </div>
     </div>
 
-    <!-- 主內容 -->
     <main class="max-w-5xl mx-auto px-3 py-3">
       <div class="bg-white border border-slate-200 rounded-lg p-2 mb-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
         <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、負責人、約期或關鍵字..." class="input-ui flex-1" />
@@ -148,13 +117,13 @@
     </main>
   </div>
 
-  <!-- 彈窗 1：完整新增 / 編輯報告 & 現場媒體工具列 -->
+  <!-- 彈窗 1：編輯報告 -->
   <div id="editorModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 overflow-y-auto">
     <div class="min-h-screen px-3 py-4 flex items-start justify-center">
       <div class="bg-white border border-slate-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-xl">
         <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <span class="t-site text-slate-900" id="editorModalTitle">新增報告</span>
-          <button onclick="closeEditor()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
+          <button type="button" onclick="closeEditor()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
         </div>
 
         <div class="p-4 space-y-3">
@@ -196,7 +165,6 @@
             </div>
           </div>
 
-          <!-- 多文件 / 連結管理區 -->
           <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="t-meta font-semibold text-slate-700">關聯文件 / PDF（顯示於卡片右側）</span>
@@ -221,7 +189,6 @@
             <input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖" class="input-ui w-full" />
           </div>
 
-          <!-- 現場媒體工具列：多相片、現場拍照、拍照後手繪、空白手指草圖板 -->
           <div class="border-t border-slate-200 pt-3">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
               <span class="t-body font-semibold text-slate-800">現場相片與手繪（支援 Ctrl+V 貼上截圖）</span>
@@ -270,13 +237,13 @@
     </div>
   </div>
 
-  <!-- 彈窗 2：預約時間 / 純留言（徹底分離） -->
+  <!-- 彈窗 2：約期 / 留言 -->
   <div id="followupModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 overflow-y-auto">
     <div class="min-h-screen px-3 py-6 flex items-start justify-center">
       <div class="bg-white border border-slate-300 rounded-lg w-full max-w-lg overflow-hidden shadow-xl">
         <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <span class="t-site text-slate-900" id="followupModalTitle">新增留言</span>
-          <button onclick="closeFollowupModal()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
+          <button type="button" onclick="closeFollowupModal()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
         </div>
         <div class="p-4 space-y-3">
           <div id="followupTargetTitle" class="t-body font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200"></div>
@@ -326,9 +293,9 @@
         <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
           <span class="t-site text-slate-900 truncate" id="viewModalHeader">報告詳情</span>
           <div class="flex items-center gap-2 shrink-0">
-            <button onclick="copySingleReportSummary()" class="btn-link text-slate-700 hover:text-slate-900">複製重點</button>
-            <button onclick="copySingleReportLink()" class="btn-link text-slate-700 hover:text-slate-900">複製Link</button>
-            <button onclick="closeViewModal()" class="text-slate-500 hover:text-slate-900 t-meta px-1">關閉 ✕</button>
+            <button type="button" onclick="copySingleReportSummary()" class="btn-link text-slate-700 hover:text-slate-900">複製重點</button>
+            <button type="button" onclick="copySingleReportLink()" class="btn-link text-slate-700 hover:text-slate-900">複製Link</button>
+            <button type="button" onclick="closeViewModal()" class="text-slate-500 hover:text-slate-900 t-meta px-1">關閉 ✕</button>
           </div>
         </div>
         <div id="viewModalBody" class="p-4 space-y-3"></div>
@@ -336,11 +303,10 @@
     </div>
   </div>
 
-  <!-- 彈窗 4：內建現場相簿 & 匯出 PDF（原頁彈出，不跳頁） -->
+  <!-- 彈窗 4：內建現場相簿 & 匯出 PDF -->
   <div id="albumModal" class="hidden fixed inset-0 z-40 bg-slate-900/60 overflow-y-auto">
     <div id="albumModalInner" class="min-h-screen px-2 sm:px-4 py-3 sm:py-5 flex items-start justify-center">
       <div id="albumModalBox" class="bg-white border border-slate-300 rounded-lg w-full max-w-5xl overflow-hidden shadow-2xl">
-        <!-- 頂部操作列 -->
         <div class="px-4 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-slate-50 no-print">
           <div class="flex items-center gap-2 min-w-0">
             <span class="t-site text-slate-900 truncate" id="albumModalTitle">現場相簿 & PDF</span>
@@ -354,7 +320,6 @@
           </div>
         </div>
 
-        <!-- 列印 PDF 專用抬頭 -->
         <div id="albumPrintHeader" class="hidden border-b-2 border-slate-900 pb-3 mb-4">
           <div class="flex items-baseline justify-between">
             <div>
@@ -365,7 +330,6 @@
           </div>
         </div>
 
-        <!-- 篩選與快速批量上傳 -->
         <div class="p-3 bg-slate-50/70 border-b border-slate-200 space-y-2.5 no-print">
           <div class="flex flex-col sm:flex-row gap-2">
             <input type="text" id="albumSearchInput" oninput="renderAlbumModal()" placeholder="搜尋相片說明、日期或標題..." class="input-ui flex-1 py-1.5" />
@@ -394,7 +358,6 @@
           </div>
         </div>
 
-        <!-- 相片網格 -->
         <div class="p-3.5">
           <div id="albumGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
@@ -407,7 +370,7 @@
     <div class="bg-white rounded-lg max-w-4xl w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
       <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
         <span class="t-body font-bold text-slate-900 truncate" id="lbTitle">相片預覽</span>
-        <button onclick="closeLightbox()" class="t-meta text-slate-500 hover:text-slate-900 px-2 py-1">關閉 ✕</button>
+        <button type="button" onclick="closeLightbox()" class="t-meta text-slate-500 hover:text-slate-900 px-2 py-1">關閉 ✕</button>
       </div>
       <div class="bg-slate-900 flex items-center justify-center">
         <img id="lbImg" src="" class="max-h-[75vh] max-w-full object-contain" />
@@ -758,7 +721,7 @@
         if (keyword) {
           const logsText = (r.followupLogs || []).map(l => `${l.author} ${l.appointDate} ${l.message}`).join(' ');
           const docsText = getDocsList(r).map(d => d.name).join(' ');
-          if (!`${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${docsText} ${r.followup || ''}${logsText}`.toLowerCase().includes(keyword)) return false;
+          if (!`${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${docsText} ${r.followup || ''} ${logsText}`.toLowerCase().includes(keyword)) return false;
         }
         return true;
       });
@@ -776,14 +739,14 @@
       });
       groups.forEach(g => g.items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0)));
 
-      container.innerHTML = groups.map(group => {
+      container.innerHTML = groups.map((group, gIdx) => {
         const assigneeText = group.assignee || group.items[0].assignee || '';
-        const safeSite = escapeHtml(group.site).replace(/'/g, "\\'");
-        const safeAssignee = escapeHtml(assigneeText).replace(/'/g, "\\'");
         const isExpanded = expandedSites.has(group.site);
         const visibleItems = isExpanded ? group.items : group.items.slice(0, 3);
         const hiddenCount = group.items.length - visibleItems.length;
         const totalSitePhotos = group.items.reduce((sum, item) => sum + ((item.photos && item.photos.length) || 0), 0);
+        const encodedSite = encodeURIComponent(group.site);
+        const encodedAssignee = encodeURIComponent(assigneeText);
 
         const itemsHtml = visibleItems.map((r, idx) => {
           const stBadge = getStatusStyle(r.status);
@@ -842,7 +805,8 @@
           return `
             <div class="${idx > 0 ? 'pt-3 mt-3 border-t border-slate-200' : ''} flex flex-col sm:flex-row gap-2 sm:gap-3.5">
               <div class="sm:w-32 shrink-0 pt-0.5 flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0.5">
-                <div class="t-body t-mono font-bold text-slate-900">${escapeHtml(r.date)}</div>${r.timeRange ? `<div class="t-meta t-mono text-slate-500">${escapeHtml(r.timeRange)}</div>` : ''}
+                <div class="t-body t-mono font-bold text-slate-900">${escapeHtml(r.date)}</div>
+                ${r.timeRange ? `<div class="t-meta t-mono text-slate-500">${escapeHtml(r.timeRange)}</div>` : ''}
               </div>
 
               <div class="flex-1 min-w-0 sm:border-l sm:border-slate-200 sm:pl-3.5">
@@ -850,7 +814,8 @@
                   <div>${statusEl}</div>
                   <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                     ${appointBtnHtml}
-                    <button type="button" onclick="openViewModal('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">檢視(${photoCount})</button>${!isPublic ? `
+                    <button type="button" onclick="openViewModal('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">檢視(${photoCount})</button>
+                    ${!isPublic ? `
                       <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">快改</button>
                       <button type="button" onclick="openEditor('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">詳編</button>
                       <button type="button" onclick="deleteReport('${r.id}')" class="btn-link text-slate-400 hover:text-red-600">刪</button>
@@ -860,8 +825,10 @@
 
                 <div class="flex flex-col md:flex-row gap-2.5 justify-between">
                   <div class="flex-1 min-w-0">
-                    <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line mt-0.5">${summaryHtml}</div>` : ''}
-                    ${thumbsHtml}${renderFollowupBlock(r)}
+                    <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
+                    ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line mt-0.5">${summaryHtml}</div>` : ''}
+                    ${thumbsHtml}
+                    ${renderFollowupBlock(r)}
                   </div>
                   ${docsSideHtml}
                 </div>
@@ -871,7 +838,7 @@
 
         const collapseBtn = group.items.length > 3 ? `
           <div class="mt-2.5 pt-2 border-t border-slate-100 text-center">
-            <button type="button" onclick="toggleExpandSite('${safeSite}')" class="btn-link text-slate-600 hover:text-slate-900">
+            <button type="button" onclick="toggleExpandSite(decodeURIComponent('${encodedSite}'))" class="btn-link text-slate-600 hover:text-slate-900">
               ${isExpanded ? '收合舊紀錄 ▴' : `展開其餘 ${hiddenCount} 條紀錄 ▾`}
             </button>
           </div>` : '';
@@ -880,18 +847,20 @@
           <div class="site-card">
             <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2 min-w-0">
-                <span class="t-site text-slate-900 truncate">${escapeHtml(group.site)}</span>${assigneeText ? `<span class="t-meta font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-800">${escapeHtml(assigneeText)}</span>` : ''}
-                ${!isPublic ? `<button type="button" onclick="quickEditSiteHeader('${safeSite}', '${safeAssignee}')" title="修改單位或負責人" class="t-meta text-slate-400 hover:text-slate-900 px-1">✎</button>` : ''}
+                <span class="t-site text-slate-900 truncate">${escapeHtml(group.site)}</span>
+                ${assigneeText ? `<span class="t-meta font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-800">${escapeHtml(assigneeText)}</span>` : ''}
+                ${!isPublic ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encodedSite}'), decodeURIComponent('${encodedAssignee}'))" title="修改單位或負責人" class="t-meta text-slate-400 hover:text-slate-900 px-1">✎</button>` : ''}
               </div>
               <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-                ${!isPublic ? `<button type="button" onclick="openEditorForSite('${safeSite}', '${safeAssignee}')" class="btn-primary py-1 px-2">+ 新增日期</button>` : ''}
-                <button type="button" onclick="openAlbumModal('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">相簿(${totalSitePhotos}) & PDF</button>
-                <button type="button" onclick="copySiteClipboardSummary('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">複製重點</button>
-                <button type="button" onclick="copySiteShareLink('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">分享Link</button>
+                ${!isPublic ? `<button type="button" onclick="openEditorForSite(decodeURIComponent('${encodedSite}'), decodeURIComponent('${encodedAssignee}'))" class="btn-primary py-1 px-2">+ 新增日期</button>` : ''}
+                <button type="button" onclick="openAlbumModal(decodeURIComponent('${encodedSite}'))" class="btn-link text-slate-800 hover:text-blue-700">相簿(${totalSitePhotos}) & PDF</button>
+                <button type="button" onclick="copySiteClipboardSummary(decodeURIComponent('${encodedSite}'))" class="btn-link text-slate-800 hover:text-blue-700">複製重點</button>
+                <button type="button" onclick="copySiteShareLink(decodeURIComponent('${encodedSite}'))" class="btn-link text-slate-800 hover:text-blue-700">分享Link</button>
               </div>
             </div>
             <div class="px-3.5 py-3">
-              ${itemsHtml}${collapseBtn}
+              ${itemsHtml}
+              ${collapseBtn}
             </div>
           </div>`;
       }).join('');
@@ -954,7 +923,7 @@
         if (dateVal !== 'ALL' && r.date !== dateVal) return;
         const photos = Array.isArray(r.photos) ? r.photos : [];
         photos.forEach((p, idx) => {
-          const hay = `${r.site} ${r.date}${r.title} ${p.note || ''}`.toLowerCase();
+          const hay = `${r.site} ${r.date} ${r.title} ${p.note || ''}`.toLowerCase();
           if (keyword && !hay.includes(keyword)) return;
           entries.push({
             reportId: r.id,
@@ -1000,7 +969,8 @@
                   <span class="font-bold text-slate-900 truncate">${escapeHtml(item.site)}</span>
                   <span class="t-mono shrink-0">${escapeHtml(item.date)}</span>
                 </div>
-                <div class="t-meta font-semibold text-slate-700 truncate mt-0.5">${escapeHtml(item.title)}</div>${!isPublic ? `
+                <div class="t-meta font-semibold text-slate-700 truncate mt-0.5">${escapeHtml(item.title)}</div>
+                ${!isPublic ? `
                   <input type="text" value="${escapeHtml(item.photo.note || '')}"
                     onchange="updateAlbumPhotoNote('${item.reportId}', ${item.photoIndex}, this.value)"
                     placeholder="輸入相片說明..."
@@ -1182,7 +1152,7 @@
       document.getElementById('fuMsgLabel').textContent = isAppoint ? '約期說明 *' : '留言內容 *';
       document.getElementById('appointFieldsWrap').classList.toggle('hidden', !isAppoint);
 
-      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) —${r.title}`;
+      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
       document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
       document.getElementById('fuDate').value = '';
       document.getElementById('fuTimeStart').value = '';
@@ -1195,7 +1165,8 @@
         ? `<div class="t-meta text-slate-400 text-center py-2">暫無紀錄</div>`
         : logs.map(log => `
           <div class="bg-white border border-slate-200 rounded p-2 t-meta">
-            <div class="flex items-center justify-between"><span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span><span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span></div>${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
+            <div class="flex items-center justify-between"><span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span><span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span></div>
+            ${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
             <div class="mt-1 text-slate-700">${escapeHtml(log.message)}</div>
           </div>`).join('');
       document.getElementById('followupModal').classList.remove('hidden');
@@ -1362,7 +1333,7 @@
         <div onclick="selectPhotoForAnnotation(${idx})" class="relative border rounded overflow-hidden cursor-pointer ${idx === activePhotoIndex ? 'border-slate-900 ring-2 ring-slate-900' : 'border-slate-300'}">
           <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-20 object-cover bg-slate-100" />
           <div class="p-1 bg-white flex items-center justify-between t-meta">
-            <span class="truncate text-slate-700">#${idx+1}${p.note ? escapeHtml(p.note) : '點擊繪圖'}</span>
+            <span class="truncate text-slate-700">#${idx+1} ${p.note ? escapeHtml(p.note) : '點擊繪圖'}</span>
             <button type="button" onclick="removeDraftPhoto(event, ${idx})" class="text-slate-400 hover:text-slate-900 px-1">✕</button>
           </div>
         </div>`).join('');
@@ -1517,7 +1488,7 @@
       const r = reports.find(rep => rep.id === id); if (!r) return;
       viewingReportId = id; const stBadge = getStatusStyle(r.status);
       const docs = getDocsList(r);
-      document.getElementById('viewModalHeader').textContent = `${r.site} —${r.title}`;
+      document.getElementById('viewModalHeader').textContent = `${r.site} — ${r.title}`;
       const summaryHtml = renderSummaryWithInlineLink(r.summary, docs, r.id);
       const docsHtml = docs.length > 0 ? `<div class="pt-2 mt-2 border-t border-slate-200 flex flex-wrap items-center gap-2"><span class="t-meta text-slate-500">文件：</span>${docs.map(d => (d.url && (d.url.startsWith('http') || d.url.startsWith('data:'))) ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link text-blue-700">📄 ${escapeHtml(d.name)} ↗</a>` : `<span class="t-meta font-medium underline">${escapeHtml(d.name)}</span>`).join('')}</div>` : '';
       const photosHtml = (r.photos && r.photos.length > 0)
@@ -1526,4 +1497,21 @@
       document.getElementById('viewModalBody').innerHTML = `
         <div class="site-card">
           <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-baseline gap-2"><span class="t
+            <div class="flex items-baseline gap-2"><span class="t-site text-slate-900">${escapeHtml(r.site)}</span>${r.assignee ? `<span class="t-meta font-semibold text-slate-700">${escapeHtml(r.assignee)}</span>` : ''}</div>
+            <div class="flex items-center gap-2"><span class="t-body t-mono text-slate-600">${escapeHtml(r.date)} ${r.timeRange || ''}</span><span class="t-meta px-2 py-0.5 rounded border font-medium ${stBadge}">${escapeHtml(r.status)}</span></div>
+          </div>
+          <div class="p-3.5 space-y-2">
+            <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
+            ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line">${summaryHtml}</div>` : ''}
+            ${renderFollowupBlock(r)}${docsHtml}
+          </div>
+        </div>${photosHtml}`;
+      document.getElementById('viewModal').classList.remove('hidden');
+    }
+    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); viewingReportId = null; }
+    function escapeHtml(str) { return !str ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    startRealtimeSync();
+  </script>
+</body>
+</html>
