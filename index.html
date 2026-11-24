@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>築匠設計 ARTISAN STUDIO — 現場相片標註與 QC 總報告系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
+      background-color: #F9FAFB;
+      color: #111827;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+      padding: 0;
+    }
+    .text-base-ui { font-size: 14px; }
+    .text-sub-ui { font-size: 13px; }
+    .text-title-ui { font-size: 15px; }
+    .pad-card { padding: 14px 16px; }
+    .pad-btn { padding: 6px 12px; }
+    .pad-input { padding: 7px 10px; }
+
+    .btn-primary {
+      background-color: #111827;
+      color: #FFFFFF;
+      border: 1px solid #111827;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-primary:hover { background-color: #374151; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary {
+      background-color: #FFFFFF;
+      color: #111827;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-secondary:hover { background-color: #F3F4F6; }
+    .btn-active {
+      background-color: #111827 !important;
+      color: #FFFFFF !important;
+      border-color: #111827 !important;
+    }
+
+    .canvas-wrapper {
+      position: relative;
+      width: 100%;
+      background-color: #E5E7EB;
+      border: 1px solid #D1D5DB;
+      border-radius: 6px;
+      overflow: hidden;
+      touch-action: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      max-width: 100%;
+      max-height: 60vh;
+      display: block;
+      cursor: crosshair;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航欄 -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="font-bold tracking-tight truncate" style="color: #EA580C; font-size: 15px;">築匠設計 ARTISAN STUDIO</span>
+        <span class="text-gray-300">|</span>
+        <span class="text-gray-600 font-medium truncate text-sub-ui">現場 QC 報告系統</span>
+        <span id="syncBadge" class="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 shrink-0">雲端連線中...</span>
+      </div>
+      <div class="flex items-center gap-2 shrink-0" id="headerActions">
+        <button onclick="copyQuickCreateLink()" id="quickCreateLinkBtn" class="btn-secondary pad-btn flex items-center gap-1.5" title="複製手機桌面快捷建立網址 (?action=new)">
+          <span>快捷建單 Link</span>
+        </button>
+        <button onclick="copyPublicLink()" class="btn-secondary pad-btn flex items-center gap-1.5" title="複製供任何人檢視的唯讀連結 (?view=public)">
+          <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          <span>公開連結</span>
+        </button>
+        <button onclick="openEditor()" id="newReportBtn" class="btn-primary pad-btn flex items-center gap-1.5">
+          <span>+ 新增報告</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 唯讀模式提示橫幅 -->
+  <div id="publicBanner" class="hidden bg-gray-100 border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between text-sub-ui text-gray-600">
+      <span>唯讀檢視模式（雲端實時同步｜任何人可透過此連結查閱現場相片與 QC 備註）</span>
+      <button onclick="exitPublicMode()" class="underline text-gray-800 hover:text-black">切換至編輯模式</button>
+    </div>
+  </div>
+
+  <!-- 主內容區：總報告列表 -->
+  <main class="max-w-4xl mx-auto px-4 py-4">
+    <!-- 篩選與搜尋列 -->
+    <div class="bg-white border border-gray-200 rounded-md pad-card mb-4 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+      <div class="flex items-center gap-2 flex-1">
+        <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、@跟進人、問題關鍵字..." class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+      </div>
+      <div class="flex items-center gap-2">
+        <select id="siteFilter" onchange="renderReportList()" class="border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900">
+          <option value="ALL">全部屋苑 / 項目</option>
+        </select>
+        <select id="statusFilter" onchange="renderReportList()" class="border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900">
+          <option value="ALL">全部狀態</option>
+          <option value="需跟進">需跟進</option>
+          <option value="待確認">待確認</option>
+          <option value="已完成">已完成</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 報告列表容器 (按屋苑/項目分組) -->
+    <div id="reportListContainer" class="space-y-4">
+      <div class="bg-white border border-gray-200 rounded-md p-6 text-center text-gray-500 text-sub-ui">正在從雲端載入 QC 報告資料...</div>
+    </div>
+  </main>
+
+  <!-- 彈窗 1：新增 / 編輯報告 & 相片標註工作台 -->
+  <div id="editorModal" class="hidden fixed inset-0 z-40 bg-black/50 overflow-y-auto">
+    <div class="min-h-screen px-3 py-4 flex items-start justify-center">
+      <div class="bg-white border border-gray-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-lg">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <span class="font-semibold text-title-ui text-gray-900" id="editorModalTitle">新增現場 QC 報告</span>
+          <button onclick="closeEditor()" class="text-gray-500 hover:text-gray-900 text-sub-ui px-2 py-1">關閉 ✕</button>
+        </div>
+
+        <div class="p-4 space-y-3.5">
+          <!-- 第一行：屋苑、@負責人、狀態 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">屋苑 / 單位 *</label>
+              <input type="text" id="fieldSite" placeholder="例如：屯門 瓏門 3座25H室" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">@負責人 / 括號備註</label>
+              <input type="text" id="fieldAssignee" placeholder="例如：@Johnny (工廠生產前修改)" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">跟進狀態</label>
+              <select id="fieldStatus" class="w-full border border-gray-300 rounded-md pad-input text-base-ui bg-white focus:outline-none focus:border-gray-900">
+                <option value="需跟進">需跟進</option>
+                <option value="待確認">待確認</option>
+                <option value="已完成">已完成</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 第二行：日期、時段 -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">日期</label>
+              <input type="date" id="fieldDate" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">時段（可留空或填 00:00 - 00:00）</label>
+              <input type="text" id="fieldTimeRange" placeholder="例如：00:00 - 00:00" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">報告標題 / 項目重點 *</label>
+              <input type="text" id="fieldTitle" placeholder="例如：傢俬入單圖紙覆尺及床頭板安裝問題" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            </div>
+          </div>
+
+          <!-- 第三行：檔案/外部連結設定 -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50 p-3 rounded-md border border-gray-200">
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">報告/圖紙名稱（內文有相同名稱會自動變 Link）</label>
+              <input type="text" id="fieldDocName" placeholder="例如：《瓏門3座25H室-261124 ada advice.pdf》" class="w-full border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sub-ui font-medium text-gray-700 mb-1">連結網址 URL 或上載 PDF 檔案</label>
+              <div class="flex items-center gap-1.5">
+                <input type="text" id="fieldDocUrl" placeholder="貼上網址 https://... 或右側選 PDF" class="flex-1 border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900" />
+                <label class="btn-secondary pad-btn shrink-0 cursor-pointer">
+                  <span>選 PDF</span>
+                  <input type="file" accept="application/pdf" class="hidden" onchange="handlePdfUpload(event)" />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 編號重點內容 -->
+          <div>
+            <label class="block text-sub-ui font-medium text-gray-700 mb-1">檢查要點 / 編號事項（每行一項）</label>
+            <textarea id="fieldSummary" rows="4" placeholder="1. 已核對現場尺寸並發出《瓏門3座25H室-261124 ada advice.pdf》予 Johnny。&#10;2. 床頭板設計厚度會導致擺唔到六尺床，需通知客人改設計。" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900"></textarea>
+          </div>
+
+          <!-- 後續跟進欄 -->
+          <div>
+            <label class="block text-sub-ui font-medium text-gray-700 mb-1">後續跟進（如留空則自動顯示「後續：_____________ / 暫無跟進」）</label>
+            <input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖 / 已安排師傅星期五上門執正（留空顯示暫無跟進）" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+          </div>
+
+          <!-- 相片拍攝 / 上載與標註區 -->
+          <div class="border-t border-gray-200 pt-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+              <span class="font-medium text-base-ui text-gray-900">現場相片與標註（支持透明線圈、箭咀、圖片打字）</span>
+              <div class="flex items-center gap-2">
+                <label class="btn-secondary pad-btn flex items-center gap-1.5 cursor-pointer">
+                  <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  <span>現場影相</span>
+                  <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" />
+                </label>
+                <label class="btn-primary pad-btn flex items-center gap-1.5 cursor-pointer">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span>從相簿上載</span>
+                  <input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" />
+                </label>
+              </div>
+            </div>
+
+            <!-- 繪圖標註工具箱 -->
+            <div id="annotationWorkspace" class="hidden bg-gray-50 border border-gray-200 rounded-md p-3 mb-3">
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-gray-200">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button type="button" onclick="setTool('circle')" id="tool-circle" class="btn-secondary pad-btn btn-active">◯ 透明線圈</button>
+                  <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="btn-secondary pad-btn">↗ 透明箭咀</button>
+                  <button type="button" onclick="setTool('text')" id="tool-text" class="btn-secondary pad-btn">T 圖片打字</button>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sub-ui text-gray-500">標註色：</span>
+                  <button type="button" onclick="setColor('rgba(220, 38, 38, 0.72)')" class="w-5 h-5 rounded-full border border-gray-400" style="background:#DC2626;" title="半透明紅"></button>
+                  <button type="button" onclick="setColor('rgba(234, 88, 12, 0.75)')" class="w-5 h-5 rounded-full border border-gray-400" style="background:#EA580C;" title="半透明橙"></button>
+                  <button type="button" onclick="setColor('rgba(234, 179, 8, 0.78)')" class="w-5 h-5 rounded-full border border-gray-400" style="background:#EAB308;" title="半透明黃"></button>
+                  <button type="button" onclick="setColor('rgba(17, 24, 39, 0.75)')" class="w-5 h-5 rounded-full border border-gray-400" style="background:#111827;" title="半透明黑"></button>
+                  <button type="button" onclick="setColor('rgba(255, 255, 255, 0.85)')" class="w-5 h-5 rounded-full border border-gray-400" style="background:#FFFFFF;" title="半透明白"></button>
+                  <span class="text-gray-300 mx-1">|</span>
+                  <button type="button" onclick="undoShape()" class="btn-secondary pad-btn">復原上一步</button>
+                  <button type="button" onclick="clearShapes()" class="btn-secondary pad-btn text-gray-600">清除標註</button>
+                </div>
+              </div>
+
+              <div id="textInputBar" class="hidden flex items-center gap-2 mb-2.5 bg-white p-2 rounded border border-gray-300">
+                <span class="text-sub-ui text-gray-600 shrink-0">標籤文字：</span>
+                <input type="text" id="canvasTextInput" placeholder="輸入文字後，直接點擊下方相片位置貼上..." class="flex-1 border border-gray-300 rounded pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+                <span class="text-sub-ui text-gray-400 hidden sm:inline">點擊相片放置</span>
+              </div>
+
+              <div class="canvas-wrapper">
+                <canvas id="annotCanvas"></canvas>
+              </div>
+
+              <div class="mt-2.5">
+                <label class="block text-sub-ui font-medium text-gray-700 mb-1">此相片工程問題說明（打字欄）</label>
+                <textarea id="currentPhotoNote" rows="2" oninput="syncCurrentPhotoNote()" placeholder="填寫此相片對應的現場問題或修改指示..." class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900"></textarea>
+              </div>
+            </div>
+
+            <div id="photoThumbList" class="grid grid-cols-2 sm:grid-cols-4 gap-2.5"></div>
+          </div>
+        </div>
+
+        <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeEditor()" class="btn-secondary pad-btn">取消</button>
+          <button type="button" id="saveReportBtn" onclick="saveReport()" class="btn-primary pad-btn">儲存並同步至雲端</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 2：檢視單份完整報告 (供任何人查閱) -->
+  <div id="viewModal" class="hidden fixed inset-0 z-40 bg-black/50 overflow-y-auto">
+    <div class="min-h-screen px-3 py-4 flex items-start justify-center">
+      <div class="bg-white border border-gray-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-lg">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="font-bold text-sub-ui" style="color:#EA580C;">築匠設計</span>
+            <span class="text-gray-300">|</span>
+            <span class="font-semibold text-title-ui text-gray-900 truncate" id="viewModalHeader">QC 現場報告詳情</span>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="copySingleReportLink()" class="btn-secondary pad-btn">複製此報告連結</button>
+            <button onclick="closeViewModal()" class="text-gray-500 hover:text-gray-900 text-sub-ui px-2 py-1">關閉 ✕</button>
+          </div>
+        </div>
+        <div id="viewModalBody" class="p-4 space-y-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 輕量提示 Toast -->
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-4 py-2 rounded-md text-sub-ui shadow-md"></div>
+
+  <!-- Firebase Compat SDK (穩定支援即時監聽與雲端讀寫) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+  <script>
+    // ==========================================
+    // 1. Firebase 雲端資料庫初始化
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSRfZdAVh8ADPNtayW5lyDtmE0xDsJXNg",
+      authDomain: "gen-lang-client-0208380044.firebaseapp.com",
+      databaseURL: "https://gen-lang-client-0208380044-default-rtdb.firebaseio.com",
+      projectId: "gen-lang-client-0208380044",
+      storageBucket: "gen-lang-client-0208380044.firebasestorage.app",
+      messagingSenderId: "17077391191",
+      appId: "1:17077391191:web:cb936dd1bfe98b2f3d7812"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const COLLECTION_NAME = 'artisan_qc_reports';
+
+    const DEFAULT_EASY_INSTALL_BASE = 'https://easy-install-net.github.io/QC/index.html';
+
+    let reports = [];
+    let editingReportId = null;
+    let viewingReportId = null;
+    let initialRouteHandled = false;
+
+    let draftPhotos = [];
+    let activePhotoIndex = -1;
+
+    let currentTool = 'circle';
+    let currentColor = 'rgba(220, 38, 38, 0.72)';
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let baseImageObj = null;
+
+    const canvas = document.getElementById('annotCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const SEED_REPORTS = [
+      {
+        id: 'rep-261124-01',
+        site: '屯門 瓏門 3座25H室',
+        assignee: '@Johnny (工廠生產前修改)',
+        date: '2026-11-24',
+        timeRange: '00:00 - 00:00',
+        status: '需跟進',
+        title: '傢俬入單圖紙覆尺及床頭板安裝問題',
+        docName: '《瓏門3座25H室-261124 ada advice.pdf》',
+        docUrl: '#advice-pdf-longmen',
+        summary: '1. 已核對現場尺寸並發出《瓏門3座25H室-261124 ada advice.pdf》予 Johnny。\n2. 床頭板設計厚度會導致擺唔到六尺床，需通知客人改設計。\n3. 趁工廠剛展開生產盡快於廠內解決安裝隱患，避免日後現場保修。',
+        followup: '',
+        photos: [],
+        createdAt: 1795478400000
+      },
+      {
+        id: 'rep-261124-02',
+        site: '屯門 良景',
+        assignee: '@Jackson / 設計師',
+        date: '2026-11-24',
+        timeRange: '09:30 - 12:00',
+        status: '待確認',
+        title: '現場睇位及圖紙覆核',
+        docName: '',
+        docUrl: '',
+        summary: '1. 23日夜及24日早上前往良景現場睇位及覆核圖紙。\n2. 下午返公司與設計部對接細節。',
+        followup: '',
+        photos: [],
+        createdAt: 1795474800000
+      },
+      {
+        id: 'rep-261120-03',
+        site: '將軍澳 東港城',
+        assignee: '@Rovena / @Sam Yu',
+        date: '2026-11-20',
+        timeRange: '14:00 - 16:30',
+        status: '已完成',
+        title: '埋尾安裝項目點算與安排',
+        docName: '',
+        docUrl: '',
+        summary: '1. 核實現場非單純小五金，包括安裝馬桶、坐凳、鞋櫃及洞洞板（門鐘未買）。\n2. 屋苑星期六禁止鑽牆等噪音工程，已由設計師 Rovena 協調兩批師傅分開跟進。',
+        followup: '已由設計師 Rovena 安排兩批師傅分開跟進，暫無跟進',
+        photos: [],
+        createdAt: 1795132800000
+      },
+      {
+        id: 'rep-261118-04',
+        site: '太古城 南海閣 3樓E室',
+        assignee: '@Ringo (泥水跟進)',
+        date: '2026-11-18',
+        timeRange: '10:00 - 13:00',
+        status: '需跟進',
+        title: '現場覆尺及泥水斜水/石壆高度檢查',
+        docName: '工程度尺圖 (Code: 701216)',
+        docUrl: 'https://easy-install-net.github.io/site-record/measure/view.html?code=701216',
+        summary: '1. 廚房地台斜水唔夠，需安排泥水執正（詳見 工程度尺圖 (Code: 701216)）。\n2. 浴室石壆做高咗，設計師 Ringo 確認需要改低。\n3. 弧形紙已放回公司茶几。',
+        followup: '',
+        photos: [],
+        createdAt: 1794960000000
+      },
+      {
+        id: 'rep-261117-05',
+        site: '屯門 海翠花園 T2 19A',
+        assignee: '@設計師 (夾圖確認)',
+        date: '2026-11-17',
+        timeRange: '11:30 - 13:00',
+        status: '待確認',
+        title: '櫥櫃來水及電線位現場核對',
+        docName: '《海翠花園最終效果圖.pdf》',
+        docUrl: '#render-pdf-pierhead',
+        summary: '1. 現場來水未平，有雜物遮住部分電線位。\n2. 已對照《海翠花園最終效果圖.pdf》並於18日回公司同設計師夾圖確認。',
+        followup: '',
+        photos: [],
+        createdAt: 1794873600000
+      },
+      {
+        id: 'rep-261116-06',
+        site: '屯門 景峰豪庭 T1 32C',
+        assignee: '@Jackson / Jacky',
+        date: '2026-11-16',
+        timeRange: '10:00 - 11:30',
+        status: '已完成',
+        title: '現場覆尺核對（修正前期 100mm 頭尺誤差）',
+        docName: '《屯門景峰豪庭一庭32樓C室.pdf》',
+        docUrl: '#plan-pdf-primeview',
+        summary: '1. 前期頭尺發現約有 100mm 差距，已於16日早上聯同 Jacky 到現場重新覆尺。\n2. 已核對《屯門景峰豪庭一庭32樓C室.pdf》平面圖及傢俬圖。',
+        followup: '',
+        photos: [],
+        createdAt: 1794787200000
+      },
+      {
+        id: 'rep-261116-07',
+        site: '九龍站 擎天半島 T5 36G',
+        assignee: '@Jackson / Jacky',
+        date: '2026-11-16',
+        timeRange: '14:30 - 16:30',
+        status: '已完成',
+        title: '現場傢俬圖覆尺',
+        docName: '《擎天半岛5-36G 傢俬圖.pdf》',
+        docUrl: '#furniture-pdf-sorrento',
+        summary: '1. 16日下午完成現場覆尺，並核對《擎天半岛5-36G 傢俬圖.pdf》。',
+        followup: '',
+        photos: [],
+        createdAt: 1794783600000
+      }
+    ];
+
+    function setSyncStatus(text, isOk = true) {
+      const el = document.getElementById('syncBadge');
+      if (!el) return;
+      el.textContent = text;
+      el.className = isOk
+        ? 'text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-300 shrink-0'
+        : 'text-[11px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-800 border border-orange-300 shrink-0';
+    }
+
+    // 啟動 Firestore 實時監聽
+    function startRealtimeSync() {
+      db.collection(COLLECTION_NAME)
+        .orderBy('createdAt', 'desc')
+        .onSnapshot(async (snapshot) => {
+          setSyncStatus('雲端已同步', true);
+          if (snapshot.empty) {
+            // 若雲端尚未有任何資料，自動寫入初始 7 筆紀錄
+            const batch = db.batch();
+            SEED_REPORTS.forEach(item => {
+              const ref = db.collection(COLLECTION_NAME).doc(item.id);
+              batch.set(ref, item);
+            });
+            await batch.commit();
+            return;
+          }
+
+          reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          updateSiteFilterOptions();
+          renderReportList();
+
+          if (!initialRouteHandled) {
+            initialRouteHandled = true;
+            checkUrlParams();
+          }
+        }, (err) => {
+          console.error('Firestore sync error:', err);
+          setSyncStatus('連線受阻，請檢查 Firestore 權限', false);
+          document.getElementById('reportListContainer').innerHTML = `
+            <div class="bg-white border border-gray-300 rounded-md p-6 text-center space-y-2">
+              <div class="font-semibold text-gray-900">未能連接雲端資料庫</div>
+              <div class="text-sub-ui text-gray-600">請確認 Firebase Firestore 規則已設為 Test mode（允許讀寫），錯誤訊息：${escapeHtml(err.message)}</div>
+            </div>
+          `;
+        });
+    }
+
+    // ==========================================
+    // 2. 網址參數解析 & 連結複製
+    // ==========================================
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const isPublic = params.get('view') === 'public';
+      const reportId = params.get('reportId');
+
+      if (isPublic || reportId) {
+        document.getElementById('publicBanner').classList.remove('hidden');
+        document.getElementById('newReportBtn').classList.add('hidden');
+        const qBtn = document.getElementById('quickCreateLinkBtn');
+        if (qBtn) qBtn.classList.add('hidden');
+      }
+
+      if (reportId) {
+        const target = reports.find(r => r.id === reportId);
+        if (target) openViewModal(reportId);
+      } else if (!isPublic && params.get('action') === 'new') {
+        openEditor();
+      }
+    }
+
+    function exitPublicMode() {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('view');
+      url.searchParams.delete('reportId');
+      window.history.replaceState({}, '', url);
+      document.getElementById('publicBanner').classList.add('hidden');
+      document.getElementById('newReportBtn').classList.remove('hidden');
+      const qBtn = document.getElementById('quickCreateLinkBtn');
+      if (qBtn) qBtn.classList.remove('hidden');
+      renderReportList();
+    }
+
+    function getBaseUrl() {
+      if (window.location.protocol === 'file:') {
+        return new URL(DEFAULT_EASY_INSTALL_BASE);
+      }
+      const url = new URL(window.location.href);
+      url.search = '';
+      return url;
+    }
+
+    function copyQuickCreateLink() {
+      const url = getBaseUrl();
+      url.searchParams.set('action', 'new');
+      copyText(url.toString(), '已複製「快捷建立報告 Link」(?action=new)');
+    }
+
+    function copyPublicLink() {
+      const url = getBaseUrl();
+      url.searchParams.set('view', 'public');
+      copyText(url.toString(), '已複製「公開總報告連結」(?view=public)');
+    }
+
+    function copySingleReportLink() {
+      if (!viewingReportId) return;
+      const url = getBaseUrl();
+      url.searchParams.set('view', 'public');
+      url.searchParams.set('reportId', viewingReportId);
+      copyText(url.toString(), '已複製「此單份 QC 報告連結」');
+    }
+
+    function copyText(text, msg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(msg));
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(msg);
+      }
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
+    }
+
+    // ==========================================
+    // 3. 總報告列表渲染 (卡片分組 + 內文檔名變超連結)
+    // ==========================================
+    function updateSiteFilterOptions() {
+      const select = document.getElementById('siteFilter');
+      const currentVal = select.value;
+      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
+      select.innerHTML = '<option value="ALL">全部屋苑 / 項目</option>' +
+        sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      if (sites.includes(currentVal)) select.value = currentVal;
+    }
+
+    function renderSummaryWithInlineLink(summaryText, docName, docUrl, reportId) {
+      if (!summaryText) return '';
+      let escaped = escapeHtml(summaryText);
+      if (docName && escaped.includes(escapeHtml(docName))) {
+        const escDocName = escapeHtml(docName);
+        let linkHtml = '';
+        if (docUrl && (docUrl.startsWith('http://') || docUrl.startsWith('https://') || docUrl.startsWith('data:'))) {
+          linkHtml = `<a href="${escapeHtml(docUrl)}" target="_blank" rel="noopener noreferrer" class="underline font-medium text-gray-900 hover:text-orange-600 cursor-pointer" title="點擊開啟檔案/連結">${escDocName}</a>`;
+        } else {
+          linkHtml = `<button type="button" onclick="openViewModal('${reportId}')" class="underline font-medium text-gray-900 hover:text-orange-600 cursor-pointer text-left" title="點擊檢視報告附件">${escDocName}</button>`;
+        }
+        escaped = escaped.replaceAll(escDocName, linkHtml);
+      }
+      return escaped;
+    }
+
+    function renderReportList() {
+      const container = document.getElementById('reportListContainer');
+      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      const siteVal = document.getElementById('siteFilter').value;
+      const statusVal = document.getElementById('statusFilter').value;
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+
+      const filtered = reports.filter(r => {
+        if (siteVal !== 'ALL' && r.site !== siteVal) return false;
+        if (statusVal !== 'ALL' && r.status !== statusVal) return false;
+        if (keyword) {
+          const hay = `${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${r.docName || ''} ${r.followup || ''}`.toLowerCase();
+          if (!hay.includes(keyword)) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white border border-gray-200 rounded-md p-6 text-center text-gray-500 text-sub-ui">暫無符合條件的 QC 報告紀錄</div>`;
+        return;
+      }
+
+      const groups = [];
+      const groupMap = {};
+      filtered.forEach(r => {
+        const key = r.site || '未分類項目';
+        if (!groupMap[key]) {
+          groupMap[key] = {
+            site: key,
+            assignee: r.assignee || '',
+            items: []
+          };
+          groups.push(groupMap[key]);
+        }
+        groupMap[key].items.push(r);
+      });
+
+      container.innerHTML = groups.map(group => {
+        const assigneeText = group.assignee || group.items[0].assignee || '';
+
+        const itemsHtml = group.items.map((r, itemIdx) => {
+          const photoCount = r.photos ? r.photos.length : 0;
+          const statusBadge = r.status === '已完成'
+            ? 'bg-gray-100 text-gray-600 border-gray-200'
+            : (r.status === '需跟進' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-400');
+
+          const summaryHtml = renderSummaryWithInlineLink(r.summary, r.docName, r.docUrl, r.id);
+
+          const extraDocLinkHtml = (r.docName && (!r.summary || !r.summary.includes(r.docName)))
+            ? `<div class="mt-1.5 text-sub-ui">附件 / 連結：${
+                (r.docUrl && (r.docUrl.startsWith('http') || r.docUrl.startsWith('data:')))
+                  ? `<a href="${escapeHtml(r.docUrl)}" target="_blank" class="underline font-medium text-gray-900 hover:text-orange-600">${escapeHtml(r.docName)}</a>`
+                  : `<button type="button" onclick="openViewModal('${r.id}')" class="underline font-medium text-gray-900 hover:text-orange-600">${escapeHtml(r.docName)}</button>`
+              }</div>`
+            : '';
+
+          const thumbsHtml = photoCount > 0 ? `
+            <div class="flex items-center gap-2 mt-2.5 overflow-x-auto pb-1">
+              ${r.photos.map(p => `
+                <div onclick="openViewModal('${r.id}')" class="relative shrink-0 w-16 h-16 rounded border border-gray-300 overflow-hidden cursor-pointer bg-gray-100">
+                  <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-full object-cover" />
+                  ${p.note ? '<span class="absolute bottom-0 inset-x-0 bg-black/65 text-white text-[10px] px-1 truncate">有備註</span>' : ''}
+                </div>
+              `).join('')}
+            </div>
+          ` : '';
+
+          return `
+            <div class="${itemIdx > 0 ? 'pt-3.5 mt-3.5 border-t border-gray-200' : ''}">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <span class="text-sub-ui font-medium text-gray-600">${escapeHtml(r.date)}</span>
+                  ${r.timeRange ? `<span class="text-base-ui font-medium text-gray-800">${escapeHtml(r.timeRange)}</span>` : ''}
+                  <span class="px-2 py-0.5 text-[12px] font-medium rounded border ${statusBadge}">${escapeHtml(r.status)}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button onclick="openViewModal('${r.id}')" class="btn-secondary pad-btn">檢視 (${photoCount}圖)</button>
+                  ${!isPublic ? `
+                    <button onclick="openEditor('${r.id}')" class="btn-secondary pad-btn">編輯</button>
+                    <button onclick="deleteReport('${r.id}')" class="btn-secondary pad-btn text-gray-500 hover:text-gray-900">刪除</button>
+                  ` : ''}
+                </div>
+              </div>
+
+              <div class="text-base-ui font-semibold text-gray-900 mb-1.5">${escapeHtml(r.title)}</div>
+
+              ${summaryHtml ? `<div class="text-base-ui text-gray-700 whitespace-pre-line leading-relaxed pl-1">${summaryHtml}</div>` : ''}
+              ${extraDocLinkHtml}
+              ${thumbsHtml}
+
+              <div class="mt-2.5 pt-2 border-t border-dashed border-gray-200 pl-1 text-sub-ui text-gray-700 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  ${r.followup && r.followup.trim()
+                    ? `<span class="font-medium text-gray-900">後續：</span><span>${escapeHtml(r.followup)}</span>`
+                    : `<span class="font-medium text-gray-800">後續：</span><span class="text-gray-400 tracking-wider">_____________</span> <span class="text-gray-500">/ 暫無跟進</span>`
+                  }
+                </div>
+                ${!isPublic ? `<button type="button" onclick="quickEditFollowup('${r.id}')" class="text-[12px] underline text-gray-500 hover:text-gray-900">填寫後續</button>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <div class="bg-white border border-gray-200 rounded-md overflow-hidden shadow-xs">
+            <div class="px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2" style="background-color: #FEF9EC;">
+              <div class="flex flex-wrap items-baseline gap-2">
+                <span class="font-bold text-title-ui text-gray-900">${escapeHtml(group.site)}</span>
+                ${assigneeText ? `<span class="text-sub-ui font-medium" style="color: #9A3412;">${escapeHtml(assigneeText)}</span>` : ''}
+              </div>
+              <span class="text-sub-ui text-gray-500">共 ${group.items.length} 條紀錄</span>
+            </div>
+            <div class="pad-card">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ==========================================
+    // 4. 報告編輯器與檔案/相片處理
+    // ==========================================
+    function openEditor(id = null) {
+      editingReportId = id;
+      draftPhotos = [];
+      activePhotoIndex = -1;
+
+      if (id) {
+        const rep = reports.find(r => r.id === id);
+        if (!rep) return;
+        document.getElementById('editorModalTitle').textContent = '編輯現場 QC 報告';
+        document.getElementById('fieldSite').value = rep.site || '';
+        document.getElementById('fieldAssignee').value = rep.assignee || '';
+        document.getElementById('fieldDate').value = rep.date || '';
+        document.getElementById('fieldTimeRange').value = rep.timeRange || '';
+        document.getElementById('fieldStatus').value = rep.status || '需跟進';
+        document.getElementById('fieldTitle').value = rep.title || '';
+        document.getElementById('fieldDocName').value = rep.docName || '';
+        document.getElementById('fieldDocUrl').value = rep.docUrl || '';
+        document.getElementById('fieldSummary').value = rep.summary || '';
+        document.getElementById('fieldFollowup').value = rep.followup || '';
+        draftPhotos = JSON.parse(JSON.stringify(rep.photos || []));
+      } else {
+        document.getElementById('editorModalTitle').textContent = '新增現場 QC 報告';
+        document.getElementById('fieldSite').value = '';
+        document.getElementById('fieldAssignee').value = '';
+        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fieldTimeRange').value = '';
+        document.getElementById('fieldStatus').value = '需跟進';
+        document.getElementById('fieldTitle').value = '';
+        document.getElementById('fieldDocName').value = '';
+        document.getElementById('fieldDocUrl').value = '';
+        document.getElementById('fieldSummary').value = '';
+        document.getElementById('fieldFollowup').value = '';
+      }
+
+      renderPhotoThumbList();
+      if (draftPhotos.length > 0) {
+        selectPhotoForAnnotation(0);
+      } else {
+        document.getElementById('annotationWorkspace').classList.add('hidden');
+      }
+
+      document.getElementById('editorModal').classList.remove('hidden');
+    }
+
+    function closeEditor() {
+      document.getElementById('editorModal').classList.add('hidden');
+    }
+
+    function handlePdfUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      if (file.size > 650 * 1024) {
+        showToast('提示：單份 PDF 建議小於 650KB，或貼上 Google Drive 連結');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const formattedName = `《${file.name}》`;
+        document.getElementById('fieldDocName').value = formattedName;
+        document.getElementById('fieldDocUrl').value = e.target.result;
+        const sumEl = document.getElementById('fieldSummary');
+        if (!sumEl.value.includes(formattedName)) {
+          sumEl.value = (sumEl.value ? sumEl.value + '\n' : '') + `已附帶報告檔案 ${formattedName} 供查閱。`;
+        }
+        showToast(`已載入檔案：${file.name}`);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    function handlePhotoUpload(event) {
+      const files = Array.from(event.target.files || []);
+      if (files.length === 0) return;
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            // 壓縮至長邊 960px (JPEG 0.72) 確保 Firestore 單文件 1MB 內可穩定儲存多張現場相片
+            const maxDim = 960;
+            let w = img.width, h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+              else { w = Math.round(w * maxDim / h); h = maxDim; }
+            }
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = w;
+            offCanvas.height = h;
+            offCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            const compressed = offCanvas.toDataURL('image/jpeg', 0.72);
+
+            draftPhotos.push({
+              id: 'ph-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+              base64Raw: compressed,
+              base64Annotated: compressed,
+              shapes: [],
+              note: ''
+            });
+            renderPhotoThumbList();
+            selectPhotoForAnnotation(draftPhotos.length - 1);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+      event.target.value = '';
+    }
+
+    function renderPhotoThumbList() {
+      const list = document.getElementById('photoThumbList');
+      if (draftPhotos.length === 0) {
+        list.innerHTML = '';
+        return;
+      }
+      list.innerHTML = draftPhotos.map((p, idx) => `
+        <div onclick="selectPhotoForAnnotation(${idx})" class="relative border rounded-md overflow-hidden cursor-pointer ${idx === activePhotoIndex ? 'border-gray-900 ring-2 ring-gray-900' : 'border-gray-300'}">
+          <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-24 object-cover bg-gray-100" />
+          <div class="p-1.5 bg-white flex items-center justify-between text-[12px]">
+            <span class="truncate text-gray-700">#${idx + 1} ${p.note ? escapeHtml(p.note) : '點擊標註'}</span>
+            <button type="button" onclick="removeDraftPhoto(event, ${idx})" class="text-gray-400 hover:text-gray-900 px-1">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function removeDraftPhoto(e, idx) {
+      e.stopPropagation();
+      draftPhotos.splice(idx, 1);
+      if (draftPhotos.length === 0) {
+        activePhotoIndex = -1;
+        document.getElementById('annotationWorkspace').classList.add('hidden');
+      } else {
+        selectPhotoForAnnotation(Math.max(0, idx - 1));
+      }
+      renderPhotoThumbList();
+    }
+
+    // ==========================================
+    // 5. 相片繪圖標註系統 (透明線圈 / 透明箭咀 / 圖片打字)
+    // ==========================================
+    function selectPhotoForAnnotation(idx) {
+      activePhotoIndex = idx;
+      const photo = draftPhotos[idx];
+      if (!photo) return;
+
+      document.getElementById('annotationWorkspace').classList.remove('hidden');
+      document.getElementById('currentPhotoNote').value = photo.note || '';
+      renderPhotoThumbList();
+
+      baseImageObj = new Image();
+      baseImageObj.onload = function() {
+        canvas.width = baseImageObj.width;
+        canvas.height = baseImageObj.height;
+        redrawCanvas();
+      };
+      baseImageObj.src = photo.base64Raw;
+    }
+
+    function syncCurrentPhotoNote() {
+      if (activePhotoIndex < 0 || !draftPhotos[activePhotoIndex]) return;
+      draftPhotos[activePhotoIndex].note = document.getElementById('currentPhotoNote').value;
+      renderPhotoThumbList();
+    }
+
+    function setTool(tool) {
+      currentTool = tool;
+      ['circle', 'arrow', 'text'].forEach(t => {
+        const btn = document.getElementById('tool-' + t);
+        if (t === tool) btn.classList.add('btn-active');
+        else btn.classList.remove('btn-active');
+      });
+      const textBar = document.getElementById('textInputBar');
+      if (tool === 'text') {
+        textBar.classList.remove('hidden');
+        document.getElementById('canvasTextInput').focus();
+      } else {
+        textBar.classList.add('hidden');
+      }
+    }
+
+    function setColor(rgba) {
+      currentColor = rgba;
+      showToast('已切換標註顏色');
+    }
+
+    function undoShape() {
+      if (activePhotoIndex < 0) return;
+      draftPhotos[activePhotoIndex].shapes.pop();
+      redrawCanvas(true);
+    }
+
+    function clearShapes() {
+      if (activePhotoIndex < 0) return;
+      draftPhotos[activePhotoIndex].shapes = [];
+      redrawCanvas(true);
+    }
+
+    function getCanvasCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+      };
+    }
+
+    canvas.addEventListener('mousedown', handlePointerDown);
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('mouseup', handlePointerUp);
+    canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
+    canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+    canvas.addEventListener('touchend', handlePointerUp);
+
+    function handlePointerDown(e) {
+      if (activePhotoIndex < 0) return;
+      e.preventDefault();
+      const pos = getCanvasCoords(e);
+
+      if (currentTool === 'text') {
+        const txt = document.getElementById('canvasTextInput').value.trim();
+        if (!txt) {
+          showToast('請先喺上方輸入文字，再點擊相片放置');
+          document.getElementById('canvasTextInput').focus();
+          return;
+        }
+        draftPhotos[activePhotoIndex].shapes.push({
+          type: 'text',
+          x: pos.x,
+          y: pos.y,
+          text: txt,
+          color: currentColor
+        });
+        redrawCanvas(true);
+        return;
+      }
+
+      isDrawing = true;
+      startX = pos.x;
+      startY = pos.y;
+    }
+
+    function handlePointerMove(e) {
+      if (!isDrawing || activePhotoIndex < 0) return;
+      e.preventDefault();
+      const pos = getCanvasCoords(e);
+      redrawCanvas(false);
+      drawShape(ctx, {
+        type: currentTool,
+        x1: startX,
+        y1: startY,
+        x2: pos.x,
+        y2: pos.y,
+        color: currentColor
+      });
+    }
+
+    function handlePointerUp(e) {
+      if (!isDrawing || activePhotoIndex < 0) return;
+      isDrawing = false;
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const endX = (clientX - rect.left) * (canvas.width / rect.width);
+      const endY = (clientY - rect.top) * (canvas.height / rect.height);
+
+      if (Math.hypot(endX - startX, endY - startY) > 8) {
+        draftPhotos[activePhotoIndex].shapes.push({
+          type: currentTool,
+          x1: startX,
+          y1: startY,
+          x2: endX,
+          y2: endY,
+          color: currentColor
+        });
+      }
+      redrawCanvas(true);
+    }
+
+    function redrawCanvas(saveSnapshot = false) {
+      if (!baseImageObj || activePhotoIndex < 0) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(baseImageObj, 0, 0, canvas.width, canvas.height);
+
+      const shapes = draftPhotos[activePhotoIndex].shapes || [];
+      shapes.forEach(s => drawShape(ctx, s));
+
+      if (saveSnapshot) {
+        draftPhotos[activePhotoIndex].base64Annotated = canvas.toDataURL('image/jpeg', 0.78);
+        renderPhotoThumbList();
+      }
+    }
+
+    function drawShape(context, s) {
+      context.save();
+      const lineW = Math.max(4, Math.round(canvas.width * 0.006));
+      context.strokeStyle = s.color;
+      context.fillStyle = s.color;
+      context.lineWidth = lineW;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+
+      if (s.type === 'circle') {
+        const cx = (s.x1 + s.x2) / 2;
+        const cy = (s.y1 + s.y2) / 2;
+        const rx = Math.abs(s.x2 - s.x1) / 2;
+        const ry = Math.abs(s.y2 - s.y1) / 2;
+        context.beginPath();
+        context.ellipse(cx, cy, Math.max(rx, 5), Math.max(ry, 5), 0, 0, 2 * Math.PI);
+        context.stroke();
+      } else if (s.type === 'arrow') {
+        const headLen = lineW * 4.2;
+        const angle = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
+        context.beginPath();
+        context.moveTo(s.x1, s.y1);
+        context.lineTo(s.x2, s.y2);
+        context.stroke();
+
+        context.beginPath();
+        context.moveTo(s.x2, s.y2);
+        context.lineTo(s.x2 - headLen * Math.cos(angle - Math.PI / 6), s.y2 - headLen * Math.sin(angle - Math.PI / 6));
+        context.lineTo(s.x2 - headLen * Math.cos(angle + Math.PI / 6), s.y2 - headLen * Math.sin(angle + Math.PI / 6));
+        context.closePath();
+        context.fill();
+      } else if (s.type === 'text') {
+        const fontSize = Math.max(20, Math.round(canvas.width * 0.028));
+        context.font = `bold ${fontSize}px sans-serif`;
+        const metrics = context.measureText(s.text);
+        const padX = 10, padY = 6;
+        context.fillStyle = 'rgba(17, 24, 39, 0.72)';
+        context.fillRect(s.x - padX, s.y - fontSize, metrics.width + padX * 2, fontSize + padY * 2);
+        context.fillStyle = '#FFFFFF';
+        context.fillText(s.text, s.x, s.y);
+      }
+      context.restore();
+    }
+
+    // ==========================================
+    // 6. 雲端儲存、刪除與唯讀檢視彈窗
+    // ==========================================
+    async function saveReport() {
+      const site = document.getElementById('fieldSite').value.trim();
+      const title = document.getElementById('fieldTitle').value.trim();
+      if (!site || !title) {
+        showToast('請填寫「屋苑 / 單位」及「報告標題」');
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveReportBtn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '雲端同步中...';
+
+      const docId = editingReportId || ('rep-' + Date.now());
+      const existing = reports.find(r => r.id === docId);
+
+      // 只儲存必要欄位（省去重複的 base64Raw 若未標註，節省雲端空間）
+      const optimizedPhotos = draftPhotos.map(p => ({
+        id: p.id,
+        base64Raw: (p.shapes && p.shapes.length > 0) ? p.base64Raw : '',
+        base64Annotated: p.base64Annotated || p.base64Raw,
+        shapes: p.shapes || [],
+        note: p.note || ''
+      }));
+
+      const payload = {
+        site,
+        assignee: document.getElementById('fieldAssignee').value.trim(),
+        date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
+        timeRange: document.getElementById('fieldTimeRange').value.trim(),
+        status: document.getElementById('fieldStatus').value,
+        title,
+        docName: document.getElementById('fieldDocName').value.trim(),
+        docUrl: document.getElementById('fieldDocUrl').value.trim(),
+        summary: document.getElementById('fieldSummary').value.trim(),
+        followup: document.getElementById('fieldFollowup').value.trim(),
+        photos: optimizedPhotos,
+        createdAt: existing ? existing.createdAt : Date.now(),
+        updatedAt: Date.now()
+      };
+
+      try {
+        await db.collection(COLLECTION_NAME).doc(docId).set(payload);
+        closeEditor();
+        showToast('已成功儲存並同步至雲端');
+      } catch (err) {
+        console.error(err);
+        showToast('儲存失敗（可能單次相片過多超過 1MB，請分開兩條紀錄上傳）');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '儲存並同步至雲端';
+      }
+    }
+
+    async function quickEditFollowup(id) {
+      const rep = reports.find(r => r.id === id);
+      if (!rep) return;
+      const val = prompt('請輸入後續跟進內容（留空則恢復「後續：_____________ / 暫無跟進」）：', rep.followup || '');
+      if (val === null) return;
+      try {
+        await db.collection(COLLECTION_NAME).doc(id).update({
+          followup: val.trim(),
+          updatedAt: Date.now()
+        });
+        showToast('已更新雲端後續狀態');
+      } catch (err) {
+        showToast('更新失敗：' + err.message);
+      }
+    }
+
+    async function deleteReport(id) {
+      if (!confirm('確定從雲端刪除此份 QC 報告紀錄？')) return;
+      try {
+        await db.collection(COLLECTION_NAME).doc(id).delete();
+        showToast('已從雲端刪除報告');
+      } catch (err) {
+        showToast('刪除失敗：' + err.message);
+      }
+    }
+
+    function openViewModal(id) {
+      const r = reports.find(rep => rep.id === id);
+      if (!r) return;
+      viewingReportId = id;
+
+      document.getElementById('viewModalHeader').textContent = `${r.site} — ${r.title}`;
+      const summaryHtml = renderSummaryWithInlineLink(r.summary, r.docName, r.docUrl, r.id);
+
+      const docBarHtml = r.docName ? `
+        <div class="pt-2 mt-2 border-t border-gray-200 flex items-center justify-between gap-2">
+          <span class="text-sub-ui text-gray-600">關聯報告 / 圖紙檔案：</span>
+          ${(r.docUrl && (r.docUrl.startsWith('http') || r.docUrl.startsWith('data:')))
+            ? `<a href="${escapeHtml(r.docUrl)}" target="_blank" class="btn-primary pad-btn inline-block">開啟 ${escapeHtml(r.docName)} ↗</a>`
+            : `<span class="text-sub-ui font-medium underline text-gray-800">${escapeHtml(r.docName)}（已附於下方紀錄）</span>`
+          }
+        </div>
+      ` : '';
+
+      const photosHtml = (r.photos && r.photos.length > 0)
+        ? `<div class="space-y-4">
+            ${r.photos.map((p, idx) => `
+              <div class="border border-gray-200 rounded-md overflow-hidden bg-gray-50">
+                <img src="${p.base64Annotated || p.base64Raw}" class="w-full max-h-[65vh] object-contain bg-gray-100" />
+                <div class="p-3 bg-white border-t border-gray-200">
+                  <div class="text-sub-ui font-semibold text-gray-800">現場相片 #${idx + 1}</div>
+                  <div class="text-base-ui text-gray-700 mt-0.5">${p.note ? escapeHtml(p.note) : '<span class="text-gray-400">無附加文字說明</span>'}</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>`
+        : `<div class="p-4 border border-gray-200 rounded-md text-center text-sub-ui text-gray-400">此份報告暫未附帶現場相片（可按「編輯」補加影相與標註）</div>`;
+
+      document.getElementById('viewModalBody').innerHTML = `
+        <div class="border border-gray-200 rounded-md overflow-hidden">
+          <div class="px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2" style="background-color: #FEF9EC;">
+            <div class="flex flex-wrap items-baseline gap-2">
+              <span class="font-bold text-title-ui text-gray-900">${escapeHtml(r.site)}</span>
+              ${r.assignee ? `<span class="text-sub-ui font-medium" style="color: #9A3412;">${escapeHtml(r.assignee)}</span>` : ''}
+            </div>
+            <span class="text-sub-ui text-gray-600">${escapeHtml(r.date)} ${r.timeRange ? '｜ ' + escapeHtml(r.timeRange) : ''} ｜ ${escapeHtml(r.status)}</span>
+          </div>
+          <div class="p-4 bg-white space-y-2">
+            <div class="text-base-ui font-semibold text-gray-900">${escapeHtml(r.title)}</div>
+            ${summaryHtml ? `<div class="text-base-ui text-gray-700 whitespace-pre-line leading-relaxed">${summaryHtml}</div>` : ''}
+            <div class="pt-2 mt-2 border-t border-dashed border-gray-200 text-sub-ui text-gray-700">
+              ${r.followup && r.followup.trim()
+                ? `<span class="font-medium text-gray-900">後續：</span><span>${escapeHtml(r.followup)}</span>`
+                : `<span class="font-medium text-gray-800">後續：</span><span class="text-gray-400 tracking-wider">_____________</span> <span class="text-gray-500">/ 暫無跟進</span>`
+              }
+            </div>
+            ${docBarHtml}
+          </div>
+        </div>
+        ${photosHtml}
+      `;
+
+      document.getElementById('viewModal').classList.remove('hidden');
+    }
+
+    function closeViewModal() {
+      document.getElementById('viewModal').classList.add('hidden');
+      viewingReportId = null;
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // 修復編輯舊相片時若 base64Raw 為空則退回使用 base64Annotated
+    const _origSelectPhoto = selectPhotoForAnnotation;
+    selectPhotoForAnnotation = function(idx) {
+      if (draftPhotos[idx] && !draftPhotos[idx].base64Raw) {
+        draftPhotos[idx].base64Raw = draftPhotos[idx].base64Annotated;
+      }
+      _origSelectPhoto(idx);
+    };
+
+    startRealtimeSync();
+  </script>
+</body>
+</html>
