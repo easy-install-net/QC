@@ -63,59 +63,90 @@
     }
 
     .site-card { background: #FFF; border: 1px solid #CBD5E1; border-left: 4px solid #0F172A; border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
+    .photo-card { background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
     .canvas-wrapper { position: relative; width: 100%; background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 6px; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
     canvas { max-width: 100%; max-height: 54vh; display: block; cursor: crosshair; }
+
+    /* 匯出 / 列印相簿 PDF 專用樣式 */
+    @media print {
+      body { background: #FFF !important; }
+      #mainAppShell, #editorModal, #followupModal, #viewModal, #lightboxModal, #toast, .no-print { display: none !important; }
+      #albumModal {
+        position: static !important;
+        inset: auto !important;
+        background: #FFF !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      #albumModalInner {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #albumModalBox {
+        border: none !important;
+        box-shadow: none !important;
+        max-width: 100% !important;
+      }
+      #albumPrintHeader { display: block !important; }
+      #albumGridContainer { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
+      .photo-card { border: 1px solid #94A3B8 !important; box-shadow: none !important; }
+      .photo-card img { max-height: 250px !important; object-fit: contain !important; background: #F8FAFC !important; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- 頂部導航欄 -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-5xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 min-w-0">
-        <span class="font-bold tracking-tight truncate text-slate-900" style="font-size:16px;">築匠設計 ARTISAN STUDIO</span>
-        <span class="text-slate-300">|</span>
-        <span class="text-slate-600 font-medium truncate t-meta">QC 總報告</span>
-        <span id="syncBadge" class="t-meta px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">連線中</span>
+  <!-- 主畫面外殼 -->
+  <div id="mainAppShell">
+    <!-- 頂部導航欄 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+      <div class="max-w-5xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="font-bold tracking-tight truncate text-slate-900" style="font-size:16px;">築匠設計 ARTISAN STUDIO</span>
+          <span class="text-slate-300">|</span>
+          <span class="text-slate-600 font-medium truncate t-meta">QC 總報告</span>
+          <span id="syncBadge" class="t-meta px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">連線中</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+          <button onclick="openAlbumModal('ALL')" class="btn-secondary">全部相簿</button>
+          <button onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
+          <button onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
+        </div>
       </div>
-      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <button onclick="goToAlbum()" class="btn-secondary">全部相簿</button>
-        <button onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
-        <button onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- 唯讀 / 單一單位分享橫幅 -->
-  <div id="publicBanner" class="hidden bg-slate-800 text-slate-100 border-b border-slate-700">
-    <div class="max-w-5xl mx-auto px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 t-meta">
-      <span id="bannerText">唯讀檢視模式</span>
-      <button onclick="exitPublicMode()" class="underline text-slate-200 hover:text-white">切換編輯模式</button>
+    <!-- 唯讀 / 單一單位分享橫幅 -->
+    <div id="publicBanner" class="hidden bg-slate-800 text-slate-100 border-b border-slate-700">
+      <div class="max-w-5xl mx-auto px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 t-meta">
+        <span id="bannerText">唯讀檢視模式</span>
+        <button onclick="exitPublicMode()" class="underline text-slate-200 hover:text-white">切換編輯模式</button>
+      </div>
     </div>
+
+    <!-- 主內容 -->
+    <main class="max-w-5xl mx-auto px-3 py-3">
+      <div class="bg-white border border-slate-200 rounded-lg p-2 mb-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
+        <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、負責人、約期或關鍵字..." class="input-ui flex-1" />
+        <div class="flex items-center gap-2">
+          <select id="siteFilter" onchange="renderReportList()" class="select-ui flex-1 sm:flex-none">
+            <option value="ALL">全部單位</option>
+          </select>
+          <select id="statusFilter" onchange="renderReportList()" class="select-ui">
+            <option value="ALL">全部狀態</option>
+            <option value="需跟進">需跟進</option>
+            <option value="已約期">已約期</option>
+            <option value="待確認">待確認</option>
+            <option value="已完成">已完成</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="reportListContainer" class="space-y-3">
+        <div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">載入中...</div>
+      </div>
+    </main>
   </div>
-
-  <!-- 主內容 -->
-  <main class="max-w-5xl mx-auto px-3 py-3">
-    <div class="bg-white border border-slate-200 rounded-lg p-2 mb-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
-      <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、負責人、約期或關鍵字..." class="input-ui flex-1" />
-      <div class="flex items-center gap-2">
-        <select id="siteFilter" onchange="renderReportList()" class="select-ui flex-1 sm:flex-none">
-          <option value="ALL">全部單位</option>
-        </select>
-        <select id="statusFilter" onchange="renderReportList()" class="select-ui">
-          <option value="ALL">全部狀態</option>
-          <option value="需跟進">需跟進</option>
-          <option value="已約期">已約期</option>
-          <option value="待確認">待確認</option>
-          <option value="已完成">已完成</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="reportListContainer" class="space-y-3">
-      <div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">載入中...</div>
-    </div>
-  </main>
 
   <!-- 彈窗 1：完整新增 / 編輯報告 & 現場媒體工具列 -->
   <div id="editorModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 overflow-y-auto">
@@ -266,7 +297,6 @@
               </div>
             </div>
 
-            <!-- 僅在「+ 約期」模式顯示，分開開始/結束兩格 -->
             <div id="appointFieldsWrap" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
               <div><label class="block t-meta font-semibold text-slate-700 mb-1">預約日期 *</label><input type="date" id="fuDate" class="input-ui w-full t-meta" /></div>
               <div>
@@ -306,7 +336,90 @@
     </div>
   </div>
 
-  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2 rounded-md t-meta shadow-lg"></div>
+  <!-- 彈窗 4：內建現場相簿 & 匯出 PDF（原頁彈出，不跳頁） -->
+  <div id="albumModal" class="hidden fixed inset-0 z-40 bg-slate-900/60 overflow-y-auto">
+    <div id="albumModalInner" class="min-h-screen px-2 sm:px-4 py-3 sm:py-5 flex items-start justify-center">
+      <div id="albumModalBox" class="bg-white border border-slate-300 rounded-lg w-full max-w-5xl overflow-hidden shadow-2xl">
+        <!-- 頂部操作列 -->
+        <div class="px-4 py-2.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 bg-slate-50 no-print">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="t-site text-slate-900 truncate" id="albumModalTitle">現場相簿 & PDF</span>
+            <span class="t-meta text-slate-500 shrink-0" id="albumCountBadge"></span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button type="button" onclick="copyAlbumSummary()" class="btn-link text-slate-700 hover:text-slate-900">複製重點</button>
+            <button type="button" onclick="copyAlbumShareLink()" class="btn-link text-slate-700 hover:text-slate-900">分享相簿Link</button>
+            <button type="button" onclick="exportAlbumPdf()" class="btn-primary">匯出 / 另存 PDF</button>
+            <button type="button" onclick="closeAlbumModal()" class="btn-secondary">關閉 ✕</button>
+          </div>
+        </div>
+
+        <!-- 列印 PDF 專用抬頭 -->
+        <div id="albumPrintHeader" class="hidden border-b-2 border-slate-900 pb-3 mb-4">
+          <div class="flex items-baseline justify-between">
+            <div>
+              <div class="font-bold text-lg text-slate-900">築匠設計 ARTISAN STUDIO — 現場相片紀錄報告</div>
+              <div class="t-body font-bold text-slate-800 mt-1" id="albumPrintSiteTitle"></div>
+            </div>
+            <div class="t-meta text-slate-500 t-mono" id="albumPrintDateStr"></div>
+          </div>
+        </div>
+
+        <!-- 篩選與快速批量上傳 -->
+        <div class="p-3 bg-slate-50/70 border-b border-slate-200 space-y-2.5 no-print">
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" id="albumSearchInput" oninput="renderAlbumModal()" placeholder="搜尋相片說明、日期或標題..." class="input-ui flex-1 py-1.5" />
+            <div class="flex items-center gap-2">
+              <select id="albumSiteFilter" onchange="onAlbumSiteChange()" class="select-ui flex-1 sm:flex-none">
+                <option value="ALL">全部單位</option>
+              </select>
+              <select id="albumDateFilter" onchange="renderAlbumModal()" class="select-ui">
+                <option value="ALL">全部日期</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="albumQuickUploadBar" class="flex flex-wrap items-center justify-between gap-2 pt-1.5 border-t border-slate-200/70">
+            <span class="t-meta text-slate-600" id="albumScopeHint">可直接拍照或批量上傳相片至目前單位</span>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <label class="btn-secondary cursor-pointer">
+                <span>現場拍照</span>
+                <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleQuickAlbumUpload(event)" />
+              </label>
+              <label class="btn-primary cursor-pointer">
+                <span>+ 批量上傳相片</span>
+                <input type="file" accept="image/*" multiple class="hidden" onchange="handleQuickAlbumUpload(event)" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 相片網格 -->
+        <div class="p-3.5">
+          <div id="albumGridContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 5：相簿單張大圖檢視 -->
+  <div id="lightboxModal" class="hidden fixed inset-0 z-50 bg-slate-900/85 flex items-center justify-center p-3 no-print" onclick="closeLightbox()">
+    <div class="bg-white rounded-lg max-w-4xl w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+      <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
+        <span class="t-body font-bold text-slate-900 truncate" id="lbTitle">相片預覽</span>
+        <button onclick="closeLightbox()" class="t-meta text-slate-500 hover:text-slate-900 px-2 py-1">關閉 ✕</button>
+      </div>
+      <div class="bg-slate-900 flex items-center justify-center">
+        <img id="lbImg" src="" class="max-h-[75vh] max-w-full object-contain" />
+      </div>
+      <div class="p-3 bg-white flex flex-wrap items-center justify-between gap-2">
+        <div class="t-body text-slate-800" id="lbNote"></div>
+        <div class="t-meta t-mono text-slate-500" id="lbMeta"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2 rounded-md t-meta shadow-lg no-print"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -364,6 +477,10 @@
         reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         updateSiteFilterOptions();
         renderReportList();
+        if (!document.getElementById('albumModal').classList.contains('hidden')) {
+          syncAlbumFilterOptions();
+          renderAlbumModal();
+        }
         if (!initialRouteHandled) {
           initialRouteHandled = true;
           checkUrlParams();
@@ -385,19 +502,12 @@
       }
     });
 
-    function goToAlbum(siteName = '') {
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
-      const url = new URL('album.html', window.location.href);
-      if (isPublic) url.searchParams.set('view', 'public');
-      if (siteName) url.searchParams.set('site', siteName);
-      window.location.href = url.toString();
-    }
-
     function checkUrlParams() {
       const params = new URLSearchParams(window.location.search);
       const isPublic = params.get('view') === 'public';
       const reportId = params.get('reportId');
       const siteParam = params.get('site');
+      const tabParam = params.get('tab');
 
       if (siteParam) {
         const sel = document.getElementById('siteFilter');
@@ -411,7 +521,8 @@
       }
 
       renderReportList();
-      if (reportId && reports.find(r => r.id === reportId)) openViewModal(reportId);
+      if (tabParam === 'album') openAlbumModal(siteParam || 'ALL');
+      else if (reportId && reports.find(r => r.id === reportId)) openViewModal(reportId);
       else if (!isPublic && params.get('action') === 'new') openEditor();
     }
 
@@ -647,7 +758,7 @@
         if (keyword) {
           const logsText = (r.followupLogs || []).map(l => `${l.author} ${l.appointDate} ${l.message}`).join(' ');
           const docsText = getDocsList(r).map(d => d.name).join(' ');
-          if (!`${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${docsText} ${r.followup || ''} ${logsText}`.toLowerCase().includes(keyword)) return false;
+          if (!`${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${docsText} ${r.followup || ''}${logsText}`.toLowerCase().includes(keyword)) return false;
         }
         return true;
       });
@@ -672,13 +783,13 @@
         const isExpanded = expandedSites.has(group.site);
         const visibleItems = isExpanded ? group.items : group.items.slice(0, 3);
         const hiddenCount = group.items.length - visibleItems.length;
+        const totalSitePhotos = group.items.reduce((sum, item) => sum + ((item.photos && item.photos.length) || 0), 0);
 
         const itemsHtml = visibleItems.map((r, idx) => {
           const stBadge = getStatusStyle(r.status);
           const photoCount = r.photos ? r.photos.length : 0;
           const docs = getDocsList(r);
 
-          // 原位快改狀態
           if (!isPublic && inlineEditId === r.id) {
             const parsedT = parseTimeRange(r.timeRange);
             return `
@@ -704,7 +815,6 @@
 
           const summaryHtml = renderSummaryWithInlineLink(r.summary, docs, r.id);
 
-          // 右側獨立文件／連結欄
           const docsSideHtml = docs.length > 0 ? `
             <div class="md:w-52 shrink-0 md:border-l md:border-slate-200 md:pl-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 space-y-1">
               <div class="t-meta font-semibold text-slate-500">文件 / 連結</div>
@@ -725,28 +835,22 @@
             ? `<button type="button" onclick="cycleStatus('${r.id}')" title="點擊切換狀態" class="t-meta px-2 py-0.5 rounded border font-medium cursor-pointer hover:opacity-80 ${stBadge}">${escapeHtml(r.status)} ↻</button>`
             : `<span class="t-meta px-2 py-0.5 rounded border font-medium ${stBadge}">${escapeHtml(r.status)}</span>`;
 
-          // 「+ 約期」每張單位卡片只出現一次（僅最新最頂 idx === 0 顯示），純底線無框
           const appointBtnHtml = (idx === 0)
             ? `<button type="button" onclick="openFollowupModal('${r.id}', 'appoint')" class="btn-link text-blue-700 hover:text-blue-900">+ 約期</button>`
             : '';
 
           return `
             <div class="${idx > 0 ? 'pt-3 mt-3 border-t border-slate-200' : ''} flex flex-col sm:flex-row gap-2 sm:gap-3.5">
-              <!-- 左欄：日期 + 時段（已徹底移除紅點重疊） -->
               <div class="sm:w-32 shrink-0 pt-0.5 flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0.5">
-                <div class="t-body t-mono font-bold text-slate-900">${escapeHtml(r.date)}</div>
-                ${r.timeRange ? `<div class="t-meta t-mono text-slate-500">${escapeHtml(r.timeRange)}</div>` : ''}
+                <div class="t-body t-mono font-bold text-slate-900">${escapeHtml(r.date)}</div>${r.timeRange ? `<div class="t-meta t-mono text-slate-500">${escapeHtml(r.timeRange)}</div>` : ''}
               </div>
 
-              <!-- 右欄：梯級內容區 -->
               <div class="flex-1 min-w-0 sm:border-l sm:border-slate-200 sm:pl-3.5">
                 <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
                   <div>${statusEl}</div>
-                  <!-- 純底線文字連結操作列（無按鈕框） -->
                   <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                     ${appointBtnHtml}
-                    <button type="button" onclick="openViewModal('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">檢視(${photoCount})</button>
-                    ${!isPublic ? `
+                    <button type="button" onclick="openViewModal('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">檢視(${photoCount})</button>${!isPublic ? `
                       <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">快改</button>
                       <button type="button" onclick="openEditor('${r.id}')" class="btn-link text-slate-700 hover:text-slate-900">詳編</button>
                       <button type="button" onclick="deleteReport('${r.id}')" class="btn-link text-slate-400 hover:text-red-600">刪</button>
@@ -756,10 +860,8 @@
 
                 <div class="flex flex-col md:flex-row gap-2.5 justify-between">
                   <div class="flex-1 min-w-0">
-                    <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
-                    ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line mt-0.5">${summaryHtml}</div>` : ''}
-                    ${thumbsHtml}
-                    ${renderFollowupBlock(r)}
+                    <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line mt-0.5">${summaryHtml}</div>` : ''}
+                    ${thumbsHtml}${renderFollowupBlock(r)}
                   </div>
                   ${docsSideHtml}
                 </div>
@@ -778,26 +880,297 @@
           <div class="site-card">
             <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2 min-w-0">
-                <span class="t-site text-slate-900 truncate">${escapeHtml(group.site)}</span>
-                ${assigneeText ? `<span class="t-meta font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-800">${escapeHtml(assigneeText)}</span>` : ''}
+                <span class="t-site text-slate-900 truncate">${escapeHtml(group.site)}</span>${assigneeText ? `<span class="t-meta font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-800">${escapeHtml(assigneeText)}</span>` : ''}
                 ${!isPublic ? `<button type="button" onclick="quickEditSiteHeader('${safeSite}', '${safeAssignee}')" title="修改單位或負責人" class="t-meta text-slate-400 hover:text-slate-900 px-1">✎</button>` : ''}
               </div>
               <div class="flex flex-wrap items-center gap-2.5 shrink-0">
                 ${!isPublic ? `<button type="button" onclick="openEditorForSite('${safeSite}', '${safeAssignee}')" class="btn-primary py-1 px-2">+ 新增日期</button>` : ''}
-                <button type="button" onclick="goToAlbum('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">相簿 & PDF ↗</button>
+                <button type="button" onclick="openAlbumModal('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">相簿(${totalSitePhotos}) & PDF</button>
                 <button type="button" onclick="copySiteClipboardSummary('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">複製重點</button>
                 <button type="button" onclick="copySiteShareLink('${safeSite}')" class="btn-link text-slate-800 hover:text-blue-700">分享Link</button>
               </div>
             </div>
             <div class="px-3.5 py-3">
-              ${itemsHtml}
-              ${collapseBtn}
+              ${itemsHtml}${collapseBtn}
             </div>
           </div>`;
       }).join('');
     }
 
-    // 約期 & 純留言彈窗（徹底分離）
+    // ================= 內建相簿彈窗 & 匯出 PDF =================
+    function openAlbumModal(siteName = 'ALL') {
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+      document.getElementById('albumQuickUploadBar').classList.toggle('hidden', isPublic);
+      syncAlbumFilterOptions();
+      const siteSel = document.getElementById('albumSiteFilter');
+      if (siteName && [...siteSel.options].some(o => o.value === siteName)) {
+        siteSel.value = siteName;
+      } else {
+        siteSel.value = 'ALL';
+      }
+      updateAlbumDateOptions();
+      document.getElementById('albumSearchInput').value = '';
+      document.getElementById('albumModal').classList.remove('hidden');
+      renderAlbumModal();
+    }
+
+    function closeAlbumModal() {
+      document.getElementById('albumModal').classList.add('hidden');
+    }
+
+    function syncAlbumFilterOptions() {
+      const siteSel = document.getElementById('albumSiteFilter');
+      const curSite = siteSel.value;
+      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
+      siteSel.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      if (sites.includes(curSite)) siteSel.value = curSite;
+      updateAlbumDateOptions();
+    }
+
+    function onAlbumSiteChange() {
+      updateAlbumDateOptions();
+      renderAlbumModal();
+    }
+
+    function updateAlbumDateOptions() {
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const dateSel = document.getElementById('albumDateFilter');
+      const curDate = dateSel.value;
+      const targetReports = siteVal === 'ALL' ? reports : reports.filter(r => r.site === siteVal);
+      const dates = [...new Set(targetReports.map(r => r.date).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+      dateSel.innerHTML = '<option value="ALL">全部日期</option>' + dates.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
+      if (dates.includes(curDate)) dateSel.value = curDate;
+    }
+
+    function getAlbumPhotoEntries() {
+      const keyword = document.getElementById('albumSearchInput').value.trim().toLowerCase();
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const dateVal = document.getElementById('albumDateFilter').value;
+      const entries = [];
+
+      const sortedReports = [...reports].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+      sortedReports.forEach(r => {
+        if (siteVal !== 'ALL' && r.site !== siteVal) return;
+        if (dateVal !== 'ALL' && r.date !== dateVal) return;
+        const photos = Array.isArray(r.photos) ? r.photos : [];
+        photos.forEach((p, idx) => {
+          const hay = `${r.site} ${r.date}${r.title} ${p.note || ''}`.toLowerCase();
+          if (keyword && !hay.includes(keyword)) return;
+          entries.push({
+            reportId: r.id,
+            site: r.site,
+            date: r.date,
+            title: r.title,
+            photoIndex: idx,
+            photo: p
+          });
+        });
+      });
+      return entries;
+    }
+
+    function renderAlbumModal() {
+      const container = document.getElementById('albumGridContainer');
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+      const entries = getAlbumPhotoEntries();
+
+      document.getElementById('albumModalTitle').textContent = siteVal === 'ALL' ? '全部單位相簿 & PDF' : `${siteVal} — 相簿 & PDF`;
+      document.getElementById('albumCountBadge').textContent = `(${entries.length}張)`;
+      document.getElementById('albumScopeHint').textContent = siteVal === 'ALL'
+        ? '提示：先在右上角揀選單一單位，再批量上傳相片'
+        : `上傳目標單位：${siteVal}`;
+
+      if (entries.length === 0) {
+        container.innerHTML = `<div class="col-span-full bg-slate-50 border border-slate-200 rounded-lg p-8 text-center text-slate-500 t-body">此單位暫無相片，可按上方「+ 批量上傳相片」加入現場相片</div>`;
+        return;
+      }
+
+      container.innerHTML = entries.map((item, i) => {
+        const imgSrc = item.photo.base64Annotated || item.photo.base64Raw;
+        return `
+          <div class="photo-card flex flex-col">
+            <div onclick="openLightbox(${i})" class="relative bg-slate-100 border-b border-slate-200 cursor-pointer overflow-hidden" style="height:210px;">
+              <img src="${imgSrc}" class="w-full h-full object-cover hover:scale-[1.02] transition-transform" />
+              <span class="absolute top-2 left-2 bg-slate-900/80 text-white t-meta t-mono px-1.5 py-0.5 rounded">#${i + 1}</span>
+            </div>
+            <div class="p-2.5 flex-1 flex flex-col justify-between space-y-2">
+              <div>
+                <div class="flex items-center justify-between gap-1 t-meta text-slate-500">
+                  <span class="font-bold text-slate-900 truncate">${escapeHtml(item.site)}</span>
+                  <span class="t-mono shrink-0">${escapeHtml(item.date)}</span>
+                </div>
+                <div class="t-meta font-semibold text-slate-700 truncate mt-0.5">${escapeHtml(item.title)}</div>${!isPublic ? `
+                  <input type="text" value="${escapeHtml(item.photo.note || '')}"
+                    onchange="updateAlbumPhotoNote('${item.reportId}', ${item.photoIndex}, this.value)"
+                    placeholder="輸入相片說明..."
+                    class="input-ui w-full t-meta py-1 mt-1.5 no-print" />
+                  <div class="hidden print:block t-body text-slate-800 mt-1">${escapeHtml(item.photo.note || '')}</div>
+                ` : `
+                  <div class="t-body text-slate-800 mt-1">${escapeHtml(item.photo.note || '無說明')}</div>
+                `}
+              </div>
+              ${!isPublic ? `
+                <div class="pt-1 border-t border-slate-100 flex items-center justify-end no-print">
+                  <button type="button" onclick="deleteAlbumSinglePhoto('${item.reportId}', ${item.photoIndex})" class="btn-link text-slate-400 hover:text-red-600">刪除相片</button>
+                </div>
+              ` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function updateAlbumPhotoNote(reportId, photoIndex, newNote) {
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep || !rep.photos || !rep.photos[photoIndex]) return;
+      const updatedPhotos = JSON.parse(JSON.stringify(rep.photos));
+      updatedPhotos[photoIndex].note = newNote.trim();
+      try {
+        await db.collection(COLLECTION_NAME).doc(reportId).update({ photos: updatedPhotos, updatedAt: Date.now() });
+        showToast('說明已更新');
+      } catch (e) { showToast('更新失敗'); }
+    }
+
+    async function deleteAlbumSinglePhoto(reportId, photoIndex) {
+      if (!confirm('確定刪除此相片？')) return;
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep || !rep.photos) return;
+      const updatedPhotos = rep.photos.filter((_, idx) => idx !== photoIndex);
+      try {
+        await db.collection(COLLECTION_NAME).doc(reportId).update({ photos: updatedPhotos, updatedAt: Date.now() });
+        showToast('已刪除相片');
+      } catch (e) { showToast('刪除失敗'); }
+    }
+
+    async function handleQuickAlbumUpload(event) {
+      const files = Array.from(event.target.files || []);
+      event.target.value = '';
+      if (!files.length) return;
+
+      let siteVal = document.getElementById('albumSiteFilter').value;
+      if (siteVal === 'ALL') {
+        const inputSite = prompt('請輸入此批相片所屬的屋苑 / 單位名稱：');
+        if (!inputSite || !inputSite.trim()) return;
+        siteVal = inputSite.trim();
+      }
+
+      showToast(`正在壓縮上傳 ${files.length} 張相片...`);
+      const compressedPhotos = [];
+      for (const file of files) {
+        const b64 = await compressAlbumImage(file);
+        compressedPhotos.push({
+          id: 'ph-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          base64Raw: '',
+          base64Annotated: b64,
+          shapes: [],
+          note: ''
+        });
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const existingToday = reports.find(r => r.site === siteVal && r.date === today);
+
+      try {
+        if (existingToday && (existingToday.photos || []).length + compressedPhotos.length <= 8) {
+          await db.collection(COLLECTION_NAME).doc(existingToday.id).update({
+            photos: [...(existingToday.photos || []), ...compressedPhotos],
+            updatedAt: Date.now()
+          });
+        } else {
+          const docId = 'rep-' + Date.now();
+          await db.collection(COLLECTION_NAME).doc(docId).set({
+            site: siteVal,
+            assignee: '',
+            date: today,
+            timeRange: '',
+            status: '需跟進',
+            title: `現場相片紀錄 (${compressedPhotos.length}張)`,
+            docs: [],
+            docName: '',
+            docUrl: '',
+            summary: '',
+            followup: '',
+            followupLogs: [],
+            photos: compressedPhotos,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+          });
+        }
+        document.getElementById('albumSiteFilter').value = siteVal;
+        showToast(`已成功上傳 ${compressedPhotos.length} 張相片`);
+      } catch (e) {
+        showToast('上傳失敗（單次建議不超過 6 張）');
+      }
+    }
+
+    function compressAlbumImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const maxDim = 900;
+            let w = img.width, h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+              else { w = Math.round(w * maxDim / h); h = maxDim; }
+            }
+            const off = document.createElement('canvas');
+            off.width = w; off.height = h;
+            off.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(off.toDataURL('image/jpeg', 0.68));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function exportAlbumPdf() {
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const dateVal = document.getElementById('albumDateFilter').value;
+      document.getElementById('albumPrintSiteTitle').textContent = siteVal === 'ALL'
+        ? '全部單位現場相片總覽'
+        : `單位：${siteVal}${dateVal !== 'ALL' ? ' ｜ 日期：' + dateVal : ''}`;
+      document.getElementById('albumPrintDateStr').textContent = `列印日期：${new Date().toISOString().split('T')[0]}`;
+      window.print();
+    }
+
+    function copyAlbumSummary() {
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const entries = getAlbumPhotoEntries();
+      const shareUrl = new URL(window.location.href);
+      shareUrl.search = siteVal !== 'ALL' ? `?view=public&tab=album&site=${encodeURIComponent(siteVal)}` : '?view=public&tab=album';
+
+      const lines = [`【築匠設計 現場相簿重點】${siteVal === 'ALL' ? '全部單位' : siteVal}（共 ${entries.length} 張相片）`];
+      entries.forEach((item, idx) => {
+        lines.push(`#${idx + 1} [${item.date}] ${item.title}${item.photo.note ? ' — ' + item.photo.note : ''}`);
+      });
+      lines.push(`相簿及 PDF 檢視：${shareUrl.toString()}`);
+      copyText(lines.join('\n'), '已複製相簿重點記錄');
+    }
+
+    function copyAlbumShareLink() {
+      const siteVal = document.getElementById('albumSiteFilter').value;
+      const url = new URL(window.location.href);
+      url.search = siteVal !== 'ALL' ? `?view=public&tab=album&site=${encodeURIComponent(siteVal)}` : '?view=public&tab=album';
+      copyText(url.toString(), siteVal !== 'ALL' ? `已複製「${siteVal}」相簿分享 Link` : '已複製總相簿 Link');
+    }
+
+    function openLightbox(idx) {
+      const entries = getAlbumPhotoEntries();
+      const item = entries[idx];
+      if (!item) return;
+      document.getElementById('lbTitle').textContent = `${item.site} — ${item.title}`;
+      document.getElementById('lbImg').src = item.photo.base64Annotated || item.photo.base64Raw;
+      document.getElementById('lbNote').textContent = item.photo.note || '無相片說明';
+      document.getElementById('lbMeta').textContent = `${item.date} (#${idx + 1})`;
+      document.getElementById('lightboxModal').classList.remove('hidden');
+    }
+
+    function closeLightbox() { document.getElementById('lightboxModal').classList.add('hidden'); }
+
+    // ================= 約期 & 純留言彈窗 =================
     function openFollowupModal(id, mode = 'comment') {
       const r = reports.find(rep => rep.id === id);
       if (!r) return;
@@ -809,7 +1182,7 @@
       document.getElementById('fuMsgLabel').textContent = isAppoint ? '約期說明 *' : '留言內容 *';
       document.getElementById('appointFieldsWrap').classList.toggle('hidden', !isAppoint);
 
-      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
+      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) —${r.title}`;
       document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
       document.getElementById('fuDate').value = '';
       document.getElementById('fuTimeStart').value = '';
@@ -822,8 +1195,7 @@
         ? `<div class="t-meta text-slate-400 text-center py-2">暫無紀錄</div>`
         : logs.map(log => `
           <div class="bg-white border border-slate-200 rounded p-2 t-meta">
-            <div class="flex items-center justify-between"><span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span><span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span></div>
-            ${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
+            <div class="flex items-center justify-between"><span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span><span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span></div>${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
             <div class="mt-1 text-slate-700">${escapeHtml(log.message)}</div>
           </div>`).join('');
       document.getElementById('followupModal').classList.remove('hidden');
@@ -871,7 +1243,7 @@
       finally { btn.disabled = false; btn.textContent = '發送'; }
     }
 
-    // 多文件列表管理
+    // ================= 多文件列表管理 =================
     function renderDocRows() {
       const container = document.getElementById('docRowsContainer');
       if (draftDocs.length === 0) {
@@ -890,7 +1262,7 @@
 
     function handlePdfUpload(event) {
       Array.from(event.target.files || []).forEach(file => {
-        if (file.size > 650 * 1024) { showToast(`${file.name} 超過 650KB，請改用雲端連結`); return; }
+        if (file.size > 650 * 1024) { showToast(`${file.name} 超過 650KB，請改用 Google Drive 連結`); return; }
         const reader = new FileReader();
         reader.onload = function(e) {
           addDocRow(file.name, e.target.result);
@@ -901,7 +1273,7 @@
       event.target.value = '';
     }
 
-    // 完整編輯器
+    // ================= 完整編輯器 & 手繪標註 =================
     function openEditorForSite(siteName, assigneeName) {
       openEditor(null);
       document.getElementById('editorModalTitle').textContent = `新增日期 — ${siteName}`;
@@ -990,7 +1362,7 @@
         <div onclick="selectPhotoForAnnotation(${idx})" class="relative border rounded overflow-hidden cursor-pointer ${idx === activePhotoIndex ? 'border-slate-900 ring-2 ring-slate-900' : 'border-slate-300'}">
           <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-20 object-cover bg-slate-100" />
           <div class="p-1 bg-white flex items-center justify-between t-meta">
-            <span class="truncate text-slate-700">#${idx+1} ${p.note ? escapeHtml(p.note) : '點擊繪圖'}</span>
+            <span class="truncate text-slate-700">#${idx+1}${p.note ? escapeHtml(p.note) : '點擊繪圖'}</span>
             <button type="button" onclick="removeDraftPhoto(event, ${idx})" class="text-slate-400 hover:text-slate-900 px-1">✕</button>
           </div>
         </div>`).join('');
@@ -1145,7 +1517,7 @@
       const r = reports.find(rep => rep.id === id); if (!r) return;
       viewingReportId = id; const stBadge = getStatusStyle(r.status);
       const docs = getDocsList(r);
-      document.getElementById('viewModalHeader').textContent = `${r.site} — ${r.title}`;
+      document.getElementById('viewModalHeader').textContent = `${r.site} —${r.title}`;
       const summaryHtml = renderSummaryWithInlineLink(r.summary, docs, r.id);
       const docsHtml = docs.length > 0 ? `<div class="pt-2 mt-2 border-t border-slate-200 flex flex-wrap items-center gap-2"><span class="t-meta text-slate-500">文件：</span>${docs.map(d => (d.url && (d.url.startsWith('http') || d.url.startsWith('data:'))) ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link text-blue-700">📄 ${escapeHtml(d.name)} ↗</a>` : `<span class="t-meta font-medium underline">${escapeHtml(d.name)}</span>`).join('')}</div>` : '';
       const photosHtml = (r.photos && r.photos.length > 0)
@@ -1154,1185 +1526,4 @@
       document.getElementById('viewModalBody').innerHTML = `
         <div class="site-card">
           <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-baseline gap-2"><span class="t-site text-slate-900">${escapeHtml(r.site)}</span>${r.assignee ? `<span class="t-meta font-semibold text-slate-700">${escapeHtml(r.assignee)}</span>` : ''}</div>
-            <div class="flex items-center gap-2"><span class="t-body t-mono text-slate-600">${escapeHtml(r.date)} ${r.timeRange || ''}</span><span class="t-meta px-2 py-0.5 rounded border font-medium ${stBadge}">${escapeHtml(r.status)}</span></div>
-          </div>
-          <div class="p-3.5 space-y-2">
-            <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
-            ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line">${summaryHtml}</div>` : ''}
-            ${renderFollowupBlock(r)}${docsHtml}
-          </div>
-        </div>${photosHtml}`;
-      document.getElementById('viewModal').classList.remove('hidden');
-    }
-    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); viewingReportId = null; }
-    function escapeHtml(str) { return !str ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    startRealtimeSync();
-  </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="zh-HK">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>築匠設計 ARTISAN STUDIO — QC 總報告</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
-      background-color: #F1F5F9;
-      color: #0F172A;
-      font-size: 14px;
-      line-height: 1.5;
-      margin: 0;
-    }
-    .t-site { font-size: 16px; line-height: 1.35; font-weight: 700; }
-    .t-body { font-size: 14px; line-height: 1.5; }
-    .t-meta { font-size: 12px; line-height: 1.4; }
-    .t-mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-
-    .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #0F172A; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; cursor: pointer; }
-    .btn-primary:hover { background: #334155; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; cursor: pointer; }
-    .btn-secondary:hover { background: #F8FAFC; color: #0F172A; border-color: #94A3B8; }
-    .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
-
-    /* 全頁唯一允許淺橙色的位置：所有可打字/填寫的輸入框 */
-    .input-ui {
-      border: 1px solid #FDBA74;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 14px;
-      background-color: #FFF7ED;
-      color: #0F172A;
-    }
-    .input-ui:focus {
-      outline: none;
-      border-color: #0F172A;
-      background-color: #FFEDD5;
-    }
-    .select-ui {
-      border: 1px solid #CBD5E1;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 12px;
-      background-color: #FFFFFF;
-      color: #0F172A;
-    }
-
-    .site-card { background: #FFF; border: 1px solid #CBD5E1; border-left: 4px solid #0F172A; border-radius: 8px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); overflow: hidden; }
-    .canvas-wrapper { position: relative; width: 100%; background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 6px; overflow: hidden; touch-action: none; display: flex; align-items: center; justify-content: center; }
-    canvas { max-width: 100%; max-height: 54vh; display: block; cursor: crosshair; }
-  </style>
-</head>
-<body>
-
-  <!-- 頂部導航欄 -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-    <div class="max-w-5xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 min-w-0">
-        <span class="font-bold tracking-tight truncate text-slate-900" style="font-size:16px;">築匠設計 ARTISAN STUDIO</span>
-        <span class="text-slate-300">|</span>
-        <span class="text-slate-600 font-medium truncate t-meta">QC 總報告</span>
-        <span id="syncBadge" class="t-meta px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">連線中</span>
-      </div>
-      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <button onclick="goToAlbum()" class="btn-secondary">全部相簿</button>
-        <button onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
-        <button onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- 唯讀 / 單一單位分享橫幅 -->
-  <div id="publicBanner" class="hidden bg-slate-800 text-slate-100 border-b border-slate-700">
-    <div class="max-w-5xl mx-auto px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 t-meta">
-      <span id="bannerText">唯讀檢視模式</span>
-      <button onclick="exitPublicMode()" class="underline text-slate-200 hover:text-white">切換編輯模式</button>
-    </div>
-  </div>
-
-  <!-- 主內容 -->
-  <main class="max-w-5xl mx-auto px-3 py-3">
-    <div class="bg-white border border-slate-200 rounded-lg p-2 mb-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
-      <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、負責人、約期或關鍵字..." class="input-ui flex-1" />
-      <div class="flex items-center gap-2">
-        <select id="siteFilter" onchange="renderReportList()" class="select-ui flex-1 sm:flex-none">
-          <option value="ALL">全部單位</option>
-        </select>
-        <select id="statusFilter" onchange="renderReportList()" class="select-ui">
-          <option value="ALL">全部狀態</option>
-          <option value="需跟進">需跟進</option>
-          <option value="已約期">已約期</option>
-          <option value="待確認">待確認</option>
-          <option value="已完成">已完成</option>
-        </select>
-      </div>
-    </div>
-
-    <div id="reportListContainer" class="space-y-3">
-      <div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">載入中...</div>
-    </div>
-  </main>
-
-  <!-- 彈窗 1：完整新增 / 編輯報告 & 現場媒體工具列 -->
-  <div id="editorModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 overflow-y-auto">
-    <div class="min-h-screen px-3 py-4 flex items-start justify-center">
-      <div class="bg-white border border-slate-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-xl">
-        <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <span class="t-site text-slate-900" id="editorModalTitle">新增報告</span>
-          <button onclick="closeEditor()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
-        </div>
-
-        <div class="p-4 space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">屋苑 / 單位 *</label>
-              <input type="text" id="fieldSite" placeholder="例如：屯門 瓏門 3座25H室" class="input-ui w-full" />
-            </div>
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">@負責人</label>
-              <input type="text" id="fieldAssignee" placeholder="例如：@Johnny" class="input-ui w-full" />
-            </div>
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">狀態</label>
-              <select id="fieldStatus" class="select-ui w-full py-2">
-                <option value="需跟進">需跟進</option>
-                <option value="已約期">已約期</option>
-                <option value="待確認">待確認</option>
-                <option value="已完成">已完成</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">日期</label>
-              <input type="date" id="fieldDate" class="input-ui w-full" />
-            </div>
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">時段（開始 / 結束）</label>
-              <div class="grid grid-cols-2 gap-1.5">
-                <input type="time" id="fieldTimeStart" class="input-ui w-full px-2" />
-                <input type="time" id="fieldTimeEnd" class="input-ui w-full px-2" />
-              </div>
-            </div>
-            <div>
-              <label class="block t-meta font-semibold text-slate-700 mb-1">項目重點標題 *</label>
-              <input type="text" id="fieldTitle" placeholder="例如：現場睇位及覆尺" class="input-ui w-full" />
-            </div>
-          </div>
-
-          <!-- 多文件 / 連結管理區 -->
-          <div class="bg-slate-50 p-2.5 rounded-md border border-slate-200 space-y-2">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="t-meta font-semibold text-slate-700">關聯文件 / PDF（顯示於卡片右側）</span>
-              <div class="flex items-center gap-1.5">
-                <label class="btn-secondary cursor-pointer">
-                  <span>+ 上傳 PDF</span>
-                  <input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" />
-                </label>
-                <button type="button" onclick="addDocRow()" class="btn-secondary">+ 加網址連結</button>
-              </div>
-            </div>
-            <div id="docRowsContainer" class="space-y-1.5"></div>
-          </div>
-
-          <div>
-            <label class="block t-meta font-semibold text-slate-700 mb-1">檢查要點 / 事項內容</label>
-            <textarea id="fieldSummary" rows="3" placeholder="輸入檢查內容..." class="input-ui w-full"></textarea>
-          </div>
-
-          <div>
-            <label class="block t-meta font-semibold text-slate-700 mb-1">後續摘要（可留空）</label>
-            <input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖" class="input-ui w-full" />
-          </div>
-
-          <!-- 現場媒體工具列：多相片、現場拍照、拍照後手繪、空白手指草圖板 -->
-          <div class="border-t border-slate-200 pt-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
-              <span class="t-body font-semibold text-slate-800">現場相片與手繪（支援 Ctrl+V 貼上截圖）</span>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <label class="btn-secondary cursor-pointer"><span>現場拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
-                <label class="btn-secondary cursor-pointer"><span>多相片上傳</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
-                <button type="button" onclick="createBlankSketch()" class="btn-primary">+ 手指草圖板</button>
-              </div>
-            </div>
-
-            <div id="annotationWorkspace" class="hidden bg-slate-50 border border-slate-200 rounded-md p-2.5 mb-2.5">
-              <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-slate-200">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="btn-secondary btn-active">✎ 手繪</button>
-                  <button type="button" onclick="setTool('circle')" id="tool-circle" class="btn-secondary">◯ 線圈</button>
-                  <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="btn-secondary">↗ 箭咀</button>
-                  <button type="button" onclick="setTool('text')" id="tool-text" class="btn-secondary">T 打字</button>
-                </div>
-                <div class="flex items-center gap-1.5">
-                  <button type="button" onclick="setColor('rgba(220, 38, 38, 0.85)')" class="w-5 h-5 rounded-full border border-slate-400" style="background:#DC2626;"></button>
-                  <button type="button" onclick="setColor('rgba(37, 99, 235, 0.85)')" class="w-5 h-5 rounded-full border border-slate-400" style="background:#2563EB;"></button>
-                  <button type="button" onclick="setColor('rgba(234, 179, 8, 0.85)')" class="w-5 h-5 rounded-full border border-slate-400" style="background:#EAB308;"></button>
-                  <button type="button" onclick="setColor('rgba(15, 23, 42, 0.85)')" class="w-5 h-5 rounded-full border border-slate-400" style="background:#0F172A;"></button>
-                  <button type="button" onclick="setColor('rgba(255, 255, 255, 0.92)')" class="w-5 h-5 rounded-full border border-slate-400" style="background:#FFFFFF;"></button>
-                  <button type="button" onclick="undoShape()" class="btn-secondary ml-1">復原</button>
-                  <button type="button" onclick="clearShapes()" class="btn-secondary">清除</button>
-                </div>
-              </div>
-              <div id="textInputBar" class="hidden flex items-center gap-2 mb-2">
-                <input type="text" id="canvasTextInput" placeholder="輸入文字後，點擊下方畫布貼上..." class="input-ui flex-1 t-meta py-1" />
-              </div>
-              <div class="canvas-wrapper"><canvas id="annotCanvas"></canvas></div>
-              <div class="mt-2">
-                <textarea id="currentPhotoNote" rows="2" oninput="syncCurrentPhotoNote()" placeholder="此相片／草圖說明..." class="input-ui w-full"></textarea>
-              </div>
-            </div>
-            <div id="photoThumbList" class="grid grid-cols-2 sm:grid-cols-4 gap-2"></div>
-          </div>
-        </div>
-
-        <div class="px-4 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
-          <button type="button" onclick="closeEditor()" class="btn-secondary">取消</button>
-          <button type="button" id="saveReportBtn" onclick="saveReport()" class="btn-primary">儲存同步</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 彈窗 2：預約時間 / 純留言（徹底分離） -->
-  <div id="followupModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 overflow-y-auto">
-    <div class="min-h-screen px-3 py-6 flex items-start justify-center">
-      <div class="bg-white border border-slate-300 rounded-lg w-full max-w-lg overflow-hidden shadow-xl">
-        <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <span class="t-site text-slate-900" id="followupModalTitle">新增留言</span>
-          <button onclick="closeFollowupModal()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
-        </div>
-        <div class="p-4 space-y-3">
-          <div id="followupTargetTitle" class="t-body font-semibold text-slate-800 bg-slate-50 p-2 rounded border border-slate-200"></div>
-          <div id="followupHistoryList" class="space-y-1.5 max-h-48 overflow-y-auto border border-slate-200 rounded-md p-2 bg-slate-50"></div>
-
-          <div class="border-t border-slate-200 pt-3 space-y-2.5">
-            <div class="grid grid-cols-2 gap-2">
-              <div><label class="block t-meta font-semibold text-slate-700 mb-1">名字 *</label><input type="text" id="fuAuthor" placeholder="例如：Johnny" class="input-ui w-full t-meta" /></div>
-              <div>
-                <label class="block t-meta font-semibold text-slate-700 mb-1">更新狀態</label>
-                <select id="fuNewStatus" class="select-ui w-full py-1.5">
-                  <option value="KEEP">保持原狀態</option>
-                  <option value="已約期">已約期</option>
-                  <option value="需跟進">需跟進</option>
-                  <option value="待確認">待確認</option>
-                  <option value="已完成">已完成</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- 僅在「+ 約期」模式顯示，分開開始/結束兩格 -->
-            <div id="appointFieldsWrap" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div><label class="block t-meta font-semibold text-slate-700 mb-1">預約日期 *</label><input type="date" id="fuDate" class="input-ui w-full t-meta" /></div>
-              <div>
-                <label class="block t-meta font-semibold text-slate-700 mb-1">預約時段（開始 / 結束）</label>
-                <div class="grid grid-cols-2 gap-1">
-                  <input type="time" id="fuTimeStart" class="input-ui w-full t-meta px-1.5" />
-                  <input type="time" id="fuTimeEnd" class="input-ui w-full t-meta px-1.5" />
-                </div>
-              </div>
-            </div>
-
-            <div><label class="block t-meta font-semibold text-slate-700 mb-1" id="fuMsgLabel">留言內容 *</label><textarea id="fuMessage" rows="2" placeholder="輸入內容..." class="input-ui w-full"></textarea></div>
-          </div>
-        </div>
-        <div class="px-4 py-2.5 border-t border-slate-200 bg-slate-50 flex items-center justify-end gap-2">
-          <button type="button" onclick="closeFollowupModal()" class="btn-secondary">取消</button>
-          <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="btn-primary">發送</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 彈窗 3：檢視單份報告 -->
-  <div id="viewModal" class="hidden fixed inset-0 z-40 bg-slate-900/50 overflow-y-auto">
-    <div class="min-h-screen px-3 py-4 flex items-start justify-center">
-      <div class="bg-white border border-slate-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-xl">
-        <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <span class="t-site text-slate-900 truncate" id="viewModalHeader">報告詳情</span>
-          <div class="flex items-center gap-1.5 shrink-0">
-            <button onclick="copySingleReportSummary()" class="btn-secondary">複製重點</button>
-            <button onclick="copySingleReportLink()" class="btn-secondary">複製Link</button>
-            <button onclick="closeViewModal()" class="text-slate-500 hover:text-slate-900 t-meta px-2 py-1">關閉 ✕</button>
-          </div>
-        </div>
-        <div id="viewModalBody" class="p-4 space-y-3"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2 rounded-md t-meta shadow-lg"></div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyCSRfZdAVh8ADPNtayW5lyDtmE0xDsJXNg",
-      authDomain: "gen-lang-client-0208380044.firebaseapp.com",
-      databaseURL: "https://gen-lang-client-0208380044-default-rtdb.firebaseio.com",
-      projectId: "gen-lang-client-0208380044",
-      storageBucket: "gen-lang-client-0208380044.firebasestorage.app",
-      messagingSenderId: "17077391191",
-      appId: "1:17077391191:web:cb936dd1bfe98b2f3d7812"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const COLLECTION_NAME = 'artisan_qc_reports';
-    const STATUS_ORDER = ['需跟進', '已約期', '待確認', '已完成'];
-
-    let reports = [];
-    let expandedSites = new Set();
-    let inlineEditId = null;
-    let editingReportId = null;
-    let viewingReportId = null;
-    let followupTargetId = null;
-    let followupModalMode = 'comment';
-    let initialRouteHandled = false;
-
-    let draftDocs = [];
-    let draftPhotos = [];
-    let activePhotoIndex = -1;
-    let currentTool = 'freehand';
-    let currentColor = 'rgba(220, 38, 38, 0.85)';
-    let isDrawing = false;
-    let startX = 0, startY = 0;
-    let currentStroke = [];
-    let baseImageObj = null;
-
-    const canvas = document.getElementById('annotCanvas');
-    const ctx = canvas.getContext('2d');
-
-    function setSyncStatus(text, isOk = true) {
-      const el = document.getElementById('syncBadge');
-      if (!el) return;
-      el.textContent = text;
-      el.className = isOk
-        ? 't-meta px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0'
-        : 't-meta px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 shrink-0';
-    }
-
-    function startRealtimeSync() {
-      db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        setSyncStatus('已同步', true);
-        reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateSiteFilterOptions();
-        renderReportList();
-        if (!initialRouteHandled) {
-          initialRouteHandled = true;
-          checkUrlParams();
-        }
-      }, (err) => {
-        console.error(err);
-        setSyncStatus('離線', false);
-      });
-    }
-
-    // 支援開啟編輯器時直接 Ctrl+V 貼上剪貼簿截圖
-    window.addEventListener('paste', (e) => {
-      if (document.getElementById('editorModal').classList.contains('hidden')) return;
-      const items = (e.clipboardData || window.clipboardData).items;
-      for (const item of items) {
-        if (item.type.indexOf('image') !== -1) {
-          const file = item.getAsFile();
-          if (file) processImageFile(file);
-        }
-      }
-    });
-
-    function goToAlbum(siteName = '') {
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
-      const url = new URL('album.html', window.location.href);
-      if (isPublic) url.searchParams.set('view', 'public');
-      if (siteName) url.searchParams.set('site', siteName);
-      window.location.href = url.toString();
-    }
-
-    function checkUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const isPublic = params.get('view') === 'public';
-      const reportId = params.get('reportId');
-      const siteParam = params.get('site');
-
-      if (siteParam) {
-        const sel = document.getElementById('siteFilter');
-        if ([...sel.options].some(o => o.value === siteParam)) sel.value = siteParam;
-      }
-
-      if (isPublic || reportId) {
-        document.getElementById('publicBanner').classList.remove('hidden');
-        document.getElementById('newReportBtn').classList.add('hidden');
-        document.getElementById('bannerText').textContent = siteParam ? `唯讀檢視：${siteParam}` : '唯讀檢視模式';
-      }
-
-      renderReportList();
-      if (reportId && reports.find(r => r.id === reportId)) openViewModal(reportId);
-      else if (!isPublic && params.get('action') === 'new') openEditor();
-    }
-
-    function exitPublicMode() {
-      const url = new URL(window.location.href);
-      url.searchParams.delete('view');
-      url.searchParams.delete('reportId');
-      window.history.replaceState({}, '', url);
-      document.getElementById('publicBanner').classList.add('hidden');
-      document.getElementById('newReportBtn').classList.remove('hidden');
-      renderReportList();
-    }
-
-    function copyPublicLink() {
-      const url = new URL(window.location.href);
-      url.search = '?view=public';
-      copyText(url.toString(), '已複製總公開 Link');
-    }
-
-    function copySiteShareLink(siteName) {
-      const url = new URL(window.location.href);
-      url.search = `?view=public&site=${encodeURIComponent(siteName)}`;
-      copyText(url.toString(), `已複製「${siteName}」專屬分享 Link`);
-    }
-
-    function copySingleReportLink() {
-      if (!viewingReportId) return;
-      const url = new URL(window.location.href);
-      url.search = `?view=public&reportId=${viewingReportId}`;
-      copyText(url.toString(), '已複製單份報告 Link');
-    }
-
-    // 剪貼簿重點記錄（整卡單位）
-    function copySiteClipboardSummary(siteName) {
-      const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
-      if (!items.length) return;
-      const assignee = items[0].assignee ? ` (${items[0].assignee})` : '';
-      const shareUrl = new URL(window.location.href);
-      shareUrl.search = `?view=public&site=${encodeURIComponent(siteName)}`;
-
-      const lines = [`【築匠設計 QC 重點】${siteName}${assignee}`];
-      items.forEach(r => {
-        lines.push(`▸ ${r.date}${r.timeRange ? ' ' + r.timeRange : ''} [${r.status}] ${r.title}`);
-        if (r.summary) lines.push(`  內容：${r.summary.replace(/\n/g, ' / ')}`);
-        if (r.followup) lines.push(`  後續：${r.followup}`);
-        const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
-        logs.forEach(l => {
-          const ap = l.appointDate ? `約期 ${l.appointDate} ${l.appointTime || ''} ` : '';
-          lines.push(`  • ${l.author}：${ap}${l.message}`);
-        });
-      });
-      lines.push(`相簿及詳情：${shareUrl.toString()}`);
-      copyText(lines.join('\n'), `已複製「${siteName}」重點記錄`);
-    }
-
-    // 剪貼簿重點記錄（單份報告）
-    function copySingleReportSummary() {
-      const r = reports.find(rep => rep.id === viewingReportId);
-      if (!r) return;
-      const shareUrl = new URL(window.location.href);
-      shareUrl.search = `?view=public&reportId=${r.id}`;
-      const lines = [
-        `【築匠設計 QC 重點】${r.site}${r.assignee ? ' (' + r.assignee + ')' : ''}`,
-        `日期：${r.date}${r.timeRange ? ' ' + r.timeRange : ''} [${r.status}]`,
-        `項目：${r.title}`
-      ];
-      if (r.summary) lines.push(`內容：\n${r.summary}`);
-      if (r.followup) lines.push(`後續：${r.followup}`);
-      lines.push(`詳情連結：${shareUrl.toString()}`);
-      copyText(lines.join('\n'), '已複製此報告重點記錄');
-    }
-
-    function copyText(text, msg) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast(msg));
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        showToast(msg);
-      }
-    }
-
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
-    }
-
-    function updateSiteFilterOptions() {
-      const select = document.getElementById('siteFilter');
-      const cur = select.value;
-      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
-      select.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-      if (sites.includes(cur)) select.value = cur;
-    }
-
-    function getStatusStyle(status) {
-      if (status === '需跟進') return 'bg-red-50 text-red-700 border-red-200';
-      if (status === '已約期') return 'bg-blue-50 text-blue-700 border-blue-200';
-      if (status === '待確認') return 'bg-amber-50 text-amber-700 border-amber-200';
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    }
-
-    function getDocsList(r) {
-      if (Array.isArray(r.docs) && r.docs.length > 0) return r.docs;
-      if (r.docName) return [{ name: r.docName, url: r.docUrl || '' }];
-      return [];
-    }
-
-    function parseTimeRange(str) {
-      if (!str) return { start: '', end: '' };
-      const m = str.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
-      if (m) return { start: m[1].padStart(5, '0'), end: m[2].padStart(5, '0') };
-      return { start: '', end: '' };
-    }
-
-    function formatTimeRange(start, end) {
-      if (start && end) return `${start} - ${end}`;
-      if (start) return start;
-      if (end) return end;
-      return '';
-    }
-
-    async function cycleStatus(id) {
-      const rep = reports.find(r => r.id === id);
-      if (!rep) return;
-      const idx = STATUS_ORDER.indexOf(rep.status);
-      const nextStatus = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length];
-      try {
-        await db.collection(COLLECTION_NAME).doc(id).update({ status: nextStatus, updatedAt: Date.now() });
-        showToast(`狀態：${nextStatus}`);
-      } catch (e) { showToast('更新失敗'); }
-    }
-
-    async function quickEditSiteHeader(oldSite, oldAssignee) {
-      const newSite = prompt('修改單位名稱（同步更新此卡全部日期）：', oldSite);
-      if (newSite === null || !newSite.trim()) return;
-      const newAssignee = prompt('修改 @負責人：', oldAssignee || '');
-      if (newAssignee === null) return;
-
-      const targets = reports.filter(r => r.site === oldSite);
-      const batch = db.batch();
-      targets.forEach(r => {
-        batch.update(db.collection(COLLECTION_NAME).doc(r.id), {
-          site: newSite.trim(),
-          assignee: newAssignee.trim(),
-          updatedAt: Date.now()
-        });
-      });
-      try {
-        await batch.commit();
-        showToast(`已更新 ${targets.length} 條紀錄`);
-      } catch (e) { showToast('更新失敗'); }
-    }
-
-    function startInlineEdit(id) { inlineEditId = id; renderReportList(); }
-    function cancelInlineEdit() { inlineEditId = null; renderReportList(); }
-    async function saveInlineEdit(id) {
-      const date = document.getElementById(`ie-date-${id}`).value;
-      const tStart = document.getElementById(`ie-tstart-${id}`).value;
-      const tEnd = document.getElementById(`ie-tend-${id}`).value;
-      const timeRange = formatTimeRange(tStart, tEnd);
-      const title = document.getElementById(`ie-title-${id}`).value.trim();
-      const summary = document.getElementById(`ie-sum-${id}`).value.trim();
-      const followup = document.getElementById(`ie-fu-${id}`).value.trim();
-      if (!title) { showToast('標題不能為空'); return; }
-      try {
-        await db.collection(COLLECTION_NAME).doc(id).update({ date, timeRange, title, summary, followup, updatedAt: Date.now() });
-        inlineEditId = null;
-        showToast('已儲存');
-      } catch (e) { showToast('儲存失敗'); }
-    }
-
-    function renderSummaryWithInlineLink(summaryText, docs, reportId) {
-      if (!summaryText) return '';
-      let escaped = escapeHtml(summaryText);
-      docs.forEach(d => {
-        if (d.name && escaped.includes(escapeHtml(d.name))) {
-          const escName = escapeHtml(d.name);
-          const linkHtml = (d.url && (d.url.startsWith('http://') || d.url.startsWith('https://') || d.url.startsWith('data:')))
-            ? `<a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="underline font-medium text-blue-700 hover:text-slate-900">${escName}</a>`
-            : `<button type="button" onclick="openViewModal('${reportId}')" class="underline font-medium text-blue-700 hover:text-slate-900 text-left">${escName}</button>`;
-          escaped = escaped.replaceAll(escName, linkHtml);
-        }
-      });
-      return escaped;
-    }
-
-    function renderFollowupBlock(r) {
-      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
-      const hasStatic = r.followup && r.followup.trim();
-      const logsHtml = logs.length > 0 ? `<div class="mt-1.5 space-y-1">${logs.map(log => `
-        <div class="t-meta bg-white border border-slate-200 rounded px-2 py-1 flex flex-wrap items-baseline justify-between gap-1">
-          <div>
-            <span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span>
-            ${log.appointDate ? `<span class="ml-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium">約期 ${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</span>` : ''}
-            <span class="ml-1 text-slate-700">${escapeHtml(log.message)}</span>
-          </div>
-          <span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span>
-        </div>`).join('')}</div>` : '';
-
-      const headerLine = (!hasStatic && logs.length === 0)
-        ? `<span class="text-slate-400">暫無跟進</span>`
-        : `${hasStatic ? `<span class="text-slate-700">${escapeHtml(r.followup)}</span>` : `<span class="text-slate-500">共 ${logs.length} 條紀錄</span>`}`;
-
-      return `
-        <div class="mt-2 bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5 t-meta">
-          <div class="flex flex-wrap items-center gap-2">
-            <button type="button" onclick="openFollowupModal('${r.id}', 'comment')" class="font-semibold text-slate-800 hover:text-blue-700 underline shrink-0">+ 留言</button>
-            <span class="text-slate-300">|</span>
-            <div><span class="font-semibold text-slate-700">後續：</span>${headerLine}</div>
-          </div>
-          ${logsHtml}
-        </div>`;
-    }
-
-    function toggleExpandSite(siteKey) {
-      if (expandedSites.has(siteKey)) expandedSites.delete(siteKey);
-      else expandedSites.add(siteKey);
-      renderReportList();
-    }
-
-    function renderReportList() {
-      const container = document.getElementById('reportListContainer');
-      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-      const siteVal = document.getElementById('siteFilter').value;
-      const statusVal = document.getElementById('statusFilter').value;
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
-
-      const filtered = reports.filter(r => {
-        if (siteVal !== 'ALL' && r.site !== siteVal) return false;
-        if (statusVal !== 'ALL' && r.status !== statusVal) return false;
-        if (keyword) {
-          const logsText = (r.followupLogs || []).map(l => `${l.author} ${l.appointDate} ${l.message}`).join(' ');
-          const docsText = getDocsList(r).map(d => d.name).join(' ');
-          if (!`${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${docsText} ${r.followup || ''} ${logsText}`.toLowerCase().includes(keyword)) return false;
-        }
-        return true;
-      });
-
-      if (filtered.length === 0) {
-        container.innerHTML = `<div class="bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">暫無紀錄</div>`;
-        return;
-      }
-
-      const groups = [], groupMap = {};
-      filtered.forEach(r => {
-        const key = r.site || '未分類單位';
-        if (!groupMap[key]) { groupMap[key] = { site: key, assignee: r.assignee || '', items: [] }; groups.push(groupMap[key]); }
-        groupMap[key].items.push(r);
-      });
-      groups.forEach(g => g.items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0)));
-
-      container.innerHTML = groups.map(group => {
-        const assigneeText = group.assignee || group.items[0].assignee || '';
-        const safeSite = escapeHtml(group.site).replace(/'/g, "\\'");
-        const safeAssignee = escapeHtml(assigneeText).replace(/'/g, "\\'");
-        const isExpanded = expandedSites.has(group.site);
-        const visibleItems = isExpanded ? group.items : group.items.slice(0, 3);
-        const hiddenCount = group.items.length - visibleItems.length;
-
-        const itemsHtml = visibleItems.map((r, idx) => {
-          const stBadge = getStatusStyle(r.status);
-          const photoCount = r.photos ? r.photos.length : 0;
-          const docs = getDocsList(r);
-
-          // 原位快改狀態（左日期、右內容梯級結構）
-          if (!isPublic && inlineEditId === r.id) {
-            const parsedT = parseTimeRange(r.timeRange);
-            return `
-              <div class="${idx > 0 ? 'pt-3 mt-3 border-t border-slate-200' : ''} flex flex-col sm:flex-row gap-3">
-                <div class="sm:w-36 shrink-0 space-y-1.5">
-                  <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date || '')}" class="input-ui t-meta w-full" />
-                  <div class="grid grid-cols-2 gap-1">
-                    <input type="time" id="ie-tstart-${r.id}" value="${parsedT.start}" class="input-ui t-meta w-full px-1" />
-                    <input type="time" id="ie-tend-${r.id}" value="${parsedT.end}" class="input-ui t-meta w-full px-1" />
-                  </div>
-                </div>
-                <div class="flex-1 bg-slate-50 border border-slate-300 rounded-md p-2.5 space-y-2">
-                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title || '')}" placeholder="項目重點" class="input-ui w-full font-semibold" />
-                  <textarea id="ie-sum-${r.id}" rows="3" placeholder="檢查內容" class="input-ui w-full">${escapeHtml(r.summary || '')}</textarea>
-                  <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup || '')}" placeholder="後續摘要" class="input-ui w-full t-meta" />
-                  <div class="flex items-center justify-end gap-1.5">
-                    <button type="button" onclick="cancelInlineEdit()" class="btn-secondary">取消</button>
-                    <button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-primary">✓ 儲存</button>
-                  </div>
-                </div>
-              </div>`;
-          }
-
-          const summaryHtml = renderSummaryWithInlineLink(r.summary, docs, r.id);
-
-          // 右側獨立文件／連結欄
-          const docsSideHtml = docs.length > 0 ? `
-            <div class="md:w-52 shrink-0 md:border-l md:border-slate-200 md:pl-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 space-y-1">
-              <div class="t-meta font-semibold text-slate-500">文件 / 連結</div>
-              ${docs.map(d => {
-                const isUrl = d.url && (d.url.startsWith('http://') || d.url.startsWith('https://') || d.url.startsWith('data:'));
-                return isUrl
-                  ? `<a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="block t-meta font-medium text-blue-700 hover:underline truncate" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
-                  : `<button type="button" onclick="openViewModal('${r.id}')" class="block t-meta font-medium text-blue-700 hover:underline truncate text-left w-full" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)}</button>`;
-              }).join('')}
-            </div>` : '';
-
-          const thumbsHtml = photoCount > 0 ? `<div class="flex items-center gap-1.5 mt-2 overflow-x-auto pb-0.5">${r.photos.map(p => `
-            <div onclick="openViewModal('${r.id}')" class="shrink-0 w-14 h-14 rounded border border-slate-300 overflow-hidden cursor-pointer bg-slate-100">
-              <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-full object-cover" />
-            </div>`).join('')}</div>` : '';
-
-          const statusEl = !isPublic
-            ? `<button type="button" onclick="cycleStatus('${r.id}')" title="點擊切換狀態" class="t-meta px-2 py-0.5 rounded border font-medium cursor-pointer hover:opacity-80 ${stBadge}">${escapeHtml(r.status)} ↻</button>`
-            : `<span class="t-meta px-2 py-0.5 rounded border font-medium ${stBadge}">${escapeHtml(r.status)}</span>`;
-
-          // 「+ 約期」每張單位卡片只出現一次（僅最新最頂 idx === 0 顯示）
-          const appointBtnHtml = (idx === 0)
-            ? `<button type="button" onclick="openFollowupModal('${r.id}', 'appoint')" class="btn-secondary py-1 px-2 text-blue-700 border-blue-200 hover:bg-blue-50">+ 約期</button>`
-            : '';
-
-          return `
-            <div class="${idx > 0 ? 'pt-3 mt-3 border-t border-slate-200' : ''} flex flex-col sm:flex-row gap-2 sm:gap-3.5">
-              <!-- 左欄：日期 + 時段 -->
-              <div class="sm:w-32 shrink-0 pt-0.5 flex sm:flex-col items-baseline sm:items-start gap-2 sm:gap-0.5">
-                <div class="t-body t-mono font-bold text-slate-900">${escapeHtml(r.date)}</div>
-                ${r.timeRange ? `<div class="t-meta t-mono text-slate-500">${escapeHtml(r.timeRange)}</div>` : ''}
-              </div>
-
-              <!-- 右欄：梯級內容區 -->
-              <div class="flex-1 min-w-0 sm:border-l sm:border-slate-200 sm:pl-3.5">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-                  <div>${statusEl}</div>
-                  <div class="flex flex-wrap items-center gap-1 shrink-0">
-                    ${appointBtnHtml}
-                    <button onclick="openViewModal('${r.id}')" class="btn-secondary py-1 px-2">檢視(${photoCount})</button>
-                    ${!isPublic ? `
-                      <button onclick="startInlineEdit('${r.id}')" class="btn-secondary py-1 px-2">快改</button>
-                      <button onclick="openEditor('${r.id}')" class="btn-secondary py-1 px-2">詳編</button>
-                      <button onclick="deleteReport('${r.id}')" class="btn-secondary py-1 px-2 text-slate-400 hover:text-red-600">刪</button>
-                    ` : ''}
-                  </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row gap-2.5 justify-between">
-                  <div class="flex-1 min-w-0">
-                    <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
-                    ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line mt-0.5">${summaryHtml}</div>` : ''}
-                    ${thumbsHtml}
-                    ${renderFollowupBlock(r)}
-                  </div>
-                  ${docsSideHtml}
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-
-        const collapseBtn = group.items.length > 3 ? `
-          <div class="mt-2.5 pt-2 border-t border-slate-100 text-center">
-            <button type="button" onclick="toggleExpandSite('${safeSite}')" class="t-meta font-semibold text-slate-600 hover:text-slate-900 underline">
-              ${isExpanded ? '收合舊紀錄 ▴' : `展開其餘 ${hiddenCount} 條紀錄 ▾`}
-            </button>
-          </div>` : '';
-
-        return `
-          <div class="site-card">
-            <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2 min-w-0">
-                <span class="t-site text-slate-900 truncate">${escapeHtml(group.site)}</span>
-                ${assigneeText ? `<span class="t-meta font-semibold px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-800">${escapeHtml(assigneeText)}</span>` : ''}
-                ${!isPublic ? `<button type="button" onclick="quickEditSiteHeader('${safeSite}', '${safeAssignee}')" title="修改單位或負責人" class="t-meta text-slate-400 hover:text-slate-900 px-1">✎</button>` : ''}
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-                ${!isPublic ? `<button type="button" onclick="openEditorForSite('${safeSite}', '${safeAssignee}')" class="btn-primary py-1 px-2">+ 新增日期</button>` : ''}
-                <button type="button" onclick="goToAlbum('${safeSite}')" class="btn-secondary py-1 px-2">相簿 & PDF ↗</button>
-                <button type="button" onclick="copySiteClipboardSummary('${safeSite}')" class="btn-secondary py-1 px-2">複製重點</button>
-                <button type="button" onclick="copySiteShareLink('${safeSite}')" class="btn-secondary py-1 px-2">分享Link</button>
-              </div>
-            </div>
-            <div class="px-3.5 py-3">
-              ${itemsHtml}
-              ${collapseBtn}
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    // 約期 & 純留言彈窗（徹底分離）
-    function openFollowupModal(id, mode = 'comment') {
-      const r = reports.find(rep => rep.id === id);
-      if (!r) return;
-      followupTargetId = id;
-      followupModalMode = mode;
-
-      const isAppoint = (mode === 'appoint');
-      document.getElementById('followupModalTitle').textContent = isAppoint ? '預約跟進時間' : '新增留言';
-      document.getElementById('fuMsgLabel').textContent = isAppoint ? '約期說明 *' : '留言內容 *';
-      document.getElementById('appointFieldsWrap').classList.toggle('hidden', !isAppoint);
-
-      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
-      document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
-      document.getElementById('fuDate').value = '';
-      document.getElementById('fuTimeStart').value = '';
-      document.getElementById('fuTimeEnd').value = '';
-      document.getElementById('fuNewStatus').value = isAppoint ? '已約期' : 'KEEP';
-      document.getElementById('fuMessage').value = '';
-
-      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
-      document.getElementById('followupHistoryList').innerHTML = logs.length === 0
-        ? `<div class="t-meta text-slate-400 text-center py-2">暫無紀錄</div>`
-        : logs.map(log => `
-          <div class="bg-white border border-slate-200 rounded p-2 t-meta">
-            <div class="flex items-center justify-between"><span class="font-semibold text-slate-900">${escapeHtml(log.author || '同事')}</span><span class="text-slate-400 t-mono">${escapeHtml(log.createdAtStr || '')}</span></div>
-            ${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
-            <div class="mt-1 text-slate-700">${escapeHtml(log.message)}</div>
-          </div>`).join('');
-      document.getElementById('followupModal').classList.remove('hidden');
-
-      setTimeout(() => {
-        if (isAppoint) document.getElementById('fuDate').focus();
-        else document.getElementById('fuMessage').focus();
-      }, 50);
-    }
-
-    function closeFollowupModal() { document.getElementById('followupModal').classList.add('hidden'); followupTargetId = null; }
-
-    async function submitFollowupLog() {
-      if (!followupTargetId) return;
-      const author = document.getElementById('fuAuthor').value.trim();
-      const message = document.getElementById('fuMessage').value.trim();
-      const newStatus = document.getElementById('fuNewStatus').value;
-
-      let appointDate = '', appointTime = '';
-      if (followupModalMode === 'appoint') {
-        appointDate = document.getElementById('fuDate').value;
-        appointTime = formatTimeRange(document.getElementById('fuTimeStart').value, document.getElementById('fuTimeEnd').value);
-        if (!appointDate) { showToast('請選擇預約日期'); return; }
-      }
-      if (!author || !message) { showToast('請填寫名字及內容'); return; }
-
-      localStorage.setItem('artisan_user_name', author);
-      const btn = document.getElementById('submitFollowupBtn');
-      btn.disabled = true; btn.textContent = '發送中';
-
-      const now = new Date();
-      const timeStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      const rep = reports.find(r => r.id === followupTargetId);
-      const updateData = {
-        followupLogs: [...(rep.followupLogs || []), { id: 'log-' + Date.now(), author, appointDate, appointTime, message, createdAtStr: timeStr }],
-        updatedAt: Date.now()
-      };
-      if (newStatus !== 'KEEP') updateData.status = newStatus;
-
-      try {
-        await db.collection(COLLECTION_NAME).doc(followupTargetId).update(updateData);
-        closeFollowupModal();
-        showToast('已同步');
-      } catch (e) { showToast('發送失敗'); }
-      finally { btn.disabled = false; btn.textContent = '發送'; }
-    }
-
-    // 多文件列表管理
-    function renderDocRows() {
-      const container = document.getElementById('docRowsContainer');
-      if (draftDocs.length === 0) {
-        container.innerHTML = `<div class="t-meta text-slate-400">未附加文件（按上方按鈕上傳 PDF 或新增網址）</div>`;
-        return;
-      }
-      container.innerHTML = draftDocs.map((d, idx) => `
-        <div class="grid grid-cols-12 gap-1.5 items-center">
-          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${idx}].name=this.value" placeholder="文件名稱" class="input-ui col-span-5 t-meta py-1" />
-          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${idx}].url=this.value" placeholder="https://... 或已載入PDF" class="input-ui col-span-6 t-meta py-1" />
-          <button type="button" onclick="removeDocRow(${idx})" class="col-span-1 text-slate-400 hover:text-red-600 t-meta text-center">✕</button>
-        </div>`).join('');
-    }
-    function addDocRow(name = '', url = '') { draftDocs.push({ name, url }); renderDocRows(); }
-    function removeDocRow(idx) { draftDocs.splice(idx, 1); renderDocRows(); }
-
-    function handlePdfUpload(event) {
-      Array.from(event.target.files || []).forEach(file => {
-        if (file.size > 650 * 1024) { showToast(`${file.name} 超過 650KB，請改用雲端連結`); return; }
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          addDocRow(file.name, e.target.result);
-          showToast(`已載入：${file.name}`);
-        };
-        reader.readAsDataURL(file);
-      });
-      event.target.value = '';
-    }
-
-    // 完整編輯器
-    function openEditorForSite(siteName, assigneeName) {
-      openEditor(null);
-      document.getElementById('editorModalTitle').textContent = `新增日期 — ${siteName}`;
-      document.getElementById('fieldSite').value = siteName;
-      document.getElementById('fieldAssignee').value = assigneeName || '';
-      document.getElementById('fieldTitle').focus();
-    }
-
-    function openEditor(id = null) {
-      editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1;
-      if (id) {
-        const rep = reports.find(r => r.id === id);
-        if (!rep) return;
-        document.getElementById('editorModalTitle').textContent = '編輯報告';
-        document.getElementById('fieldSite').value = rep.site || '';
-        document.getElementById('fieldAssignee').value = rep.assignee || '';
-        document.getElementById('fieldDate').value = rep.date || '';
-        const parsedT = parseTimeRange(rep.timeRange);
-        document.getElementById('fieldTimeStart').value = parsedT.start;
-        document.getElementById('fieldTimeEnd').value = parsedT.end;
-        document.getElementById('fieldStatus').value = rep.status || '需跟進';
-        document.getElementById('fieldTitle').value = rep.title || '';
-        document.getElementById('fieldSummary').value = rep.summary || '';
-        document.getElementById('fieldFollowup').value = rep.followup || '';
-        draftDocs = JSON.parse(JSON.stringify(getDocsList(rep)));
-        draftPhotos = JSON.parse(JSON.stringify(rep.photos || []));
-      } else {
-        document.getElementById('editorModalTitle').textContent = '新增報告';
-        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
-        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
-        document.getElementById('fieldStatus').value = '需跟進';
-      }
-      renderDocRows();
-      renderPhotoThumbList();
-      if (draftPhotos.length > 0) selectPhotoForAnnotation(0);
-      else document.getElementById('annotationWorkspace').classList.add('hidden');
-      document.getElementById('editorModal').classList.remove('hidden');
-    }
-
-    function closeEditor() { document.getElementById('editorModal').classList.add('hidden'); }
-
-    function handlePhotoUpload(event) {
-      Array.from(event.target.files || []).forEach(file => processImageFile(file));
-      event.target.value = '';
-    }
-
-    function processImageFile(file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-          const maxDim = 960; let w = img.width, h = img.height;
-          if (w > maxDim || h > maxDim) { if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; } else { w = Math.round(w * maxDim / h); h = maxDim; } }
-          const off = document.createElement('canvas'); off.width = w; off.height = h;
-          off.getContext('2d').drawImage(img, 0, 0, w, h);
-          const compressed = off.toDataURL('image/jpeg', 0.72);
-          draftPhotos.push({ id: 'ph-' + Date.now() + '-' + Math.random().toString(36).slice(2,6), base64Raw: compressed, base64Annotated: compressed, shapes: [], note: '' });
-          renderPhotoThumbList();
-          selectPhotoForAnnotation(draftPhotos.length - 1);
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // 空白手指草圖板
-    function createBlankSketch() {
-      const off = document.createElement('canvas');
-      off.width = 800; off.height = 600;
-      const octx = off.getContext('2d');
-      octx.fillStyle = '#FFFFFF';
-      octx.fillRect(0, 0, 800, 600);
-      octx.strokeStyle = '#E2E8F0';
-      octx.lineWidth = 1;
-      for (let x = 40; x < 800; x += 40) { octx.beginPath(); octx.moveTo(x, 0); octx.lineTo(x, 600); octx.stroke(); }
-      for (let y = 40; y < 600; y += 40) { octx.beginPath(); octx.moveTo(0, y); octx.lineTo(800, y); octx.stroke(); }
-      const blankData = off.toDataURL('image/jpeg', 0.85);
-      draftPhotos.push({ id: 'sk-' + Date.now(), base64Raw: blankData, base64Annotated: blankData, shapes: [], note: '手繪草圖' });
-      renderPhotoThumbList();
-      selectPhotoForAnnotation(draftPhotos.length - 1);
-      setTool('freehand');
-    }
-
-    function renderPhotoThumbList() {
-      const list = document.getElementById('photoThumbList');
-      list.innerHTML = draftPhotos.map((p, idx) => `
-        <div onclick="selectPhotoForAnnotation(${idx})" class="relative border rounded overflow-hidden cursor-pointer ${idx === activePhotoIndex ? 'border-slate-900 ring-2 ring-slate-900' : 'border-slate-300'}">
-          <img src="${p.base64Annotated || p.base64Raw}" class="w-full h-20 object-cover bg-slate-100" />
-          <div class="p-1 bg-white flex items-center justify-between t-meta">
-            <span class="truncate text-slate-700">#${idx+1} ${p.note ? escapeHtml(p.note) : '點擊繪圖'}</span>
-            <button type="button" onclick="removeDraftPhoto(event, ${idx})" class="text-slate-400 hover:text-slate-900 px-1">✕</button>
-          </div>
-        </div>`).join('');
-    }
-
-    function removeDraftPhoto(e, idx) {
-      e.stopPropagation(); draftPhotos.splice(idx, 1);
-      if (draftPhotos.length === 0) { activePhotoIndex = -1; document.getElementById('annotationWorkspace').classList.add('hidden'); }
-      else selectPhotoForAnnotation(Math.max(0, idx - 1));
-      renderPhotoThumbList();
-    }
-
-    function selectPhotoForAnnotation(idx) {
-      if (draftPhotos[idx] && !draftPhotos[idx].base64Raw) draftPhotos[idx].base64Raw = draftPhotos[idx].base64Annotated;
-      activePhotoIndex = idx; const photo = draftPhotos[idx]; if (!photo) return;
-      document.getElementById('annotationWorkspace').classList.remove('hidden');
-      document.getElementById('currentPhotoNote').value = photo.note || '';
-      renderPhotoThumbList();
-      baseImageObj = new Image();
-      baseImageObj.onload = function() { canvas.width = baseImageObj.width; canvas.height = baseImageObj.height; redrawCanvas(); };
-      baseImageObj.src = photo.base64Raw;
-    }
-
-    function syncCurrentPhotoNote() { if (activePhotoIndex >= 0 && draftPhotos[activePhotoIndex]) { draftPhotos[activePhotoIndex].note = document.getElementById('currentPhotoNote').value; renderPhotoThumbList(); } }
-    function setTool(tool) {
-      currentTool = tool;
-      ['freehand','circle','arrow','text'].forEach(t => document.getElementById('tool-' + t).classList.toggle('btn-active', t === tool));
-      document.getElementById('textInputBar').classList.toggle('hidden', tool !== 'text');
-      if (tool === 'text') document.getElementById('canvasTextInput').focus();
-    }
-    function setColor(rgba) { currentColor = rgba; }
-    function undoShape() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes.pop(); redrawCanvas(true); } }
-    function clearShapes() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes = []; redrawCanvas(true); } }
-
-    function getCanvasCoords(e) {
-      const rect = canvas.getBoundingClientRect();
-      const cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: (cx - rect.left) * (canvas.width / rect.width), y: (cy - rect.top) * (canvas.height / rect.height) };
-    }
-    canvas.addEventListener('mousedown', handlePointerDown);
-    canvas.addEventListener('mousemove', handlePointerMove);
-    canvas.addEventListener('mouseup', handlePointerUp);
-    canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
-    canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
-    canvas.addEventListener('touchend', handlePointerUp);
-
-    function handlePointerDown(e) {
-      if (activePhotoIndex < 0) return; e.preventDefault();
-      const pos = getCanvasCoords(e);
-      if (currentTool === 'text') {
-        const txt = document.getElementById('canvasTextInput').value.trim();
-        if (!txt) { showToast('請先輸入文字'); return; }
-        draftPhotos[activePhotoIndex].shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color: currentColor });
-        redrawCanvas(true); return;
-      }
-      isDrawing = true; startX = pos.x; startY = pos.y;
-      if (currentTool === 'freehand') currentStroke = [{ x: pos.x, y: pos.y }];
-    }
-    function handlePointerMove(e) {
-      if (!isDrawing || activePhotoIndex < 0) return; e.preventDefault();
-      const pos = getCanvasCoords(e); redrawCanvas(false);
-      if (currentTool === 'freehand') {
-        currentStroke.push({ x: pos.x, y: pos.y });
-        drawShape(ctx, { type: 'freehand', points: currentStroke, color: currentColor });
-      } else {
-        drawShape(ctx, { type: currentTool, x1: startX, y1: startY, x2: pos.x, y2: pos.y, color: currentColor });
-      }
-    }
-    function handlePointerUp(e) {
-      if (!isDrawing || activePhotoIndex < 0) return; isDrawing = false;
-      if (currentTool === 'freehand') {
-        if (currentStroke.length > 1) draftPhotos[activePhotoIndex].shapes.push({ type: 'freehand', points: currentStroke, color: currentColor });
-        currentStroke = [];
-        redrawCanvas(true);
-        return;
-      }
-      const rect = canvas.getBoundingClientRect();
-      const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX, cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-      const endX = (cx - rect.left) * (canvas.width / rect.width), endY = (cy - rect.top) * (canvas.height / rect.height);
-      if (Math.hypot(endX - startX, endY - startY) > 8) draftPhotos[activePhotoIndex].shapes.push({ type: currentTool, x1: startX, y1: startY, x2: endX, y2: endY, color: currentColor });
-      redrawCanvas(true);
-    }
-    function redrawCanvas(saveSnapshot = false) {
-      if (!baseImageObj || activePhotoIndex < 0) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(baseImageObj, 0, 0, canvas.width, canvas.height);
-      (draftPhotos[activePhotoIndex].shapes || []).forEach(s => drawShape(ctx, s));
-      if (saveSnapshot) { draftPhotos[activePhotoIndex].base64Annotated = canvas.toDataURL('image/jpeg', 0.78); renderPhotoThumbList(); }
-    }
-    function drawShape(context, s) {
-      context.save(); const lineW = Math.max(4, Math.round(canvas.width * 0.006));
-      context.strokeStyle = s.color; context.fillStyle = s.color; context.lineWidth = lineW; context.lineCap = 'round'; context.lineJoin = 'round';
-      if (s.type === 'freehand' && s.points && s.points.length > 1) {
-        context.beginPath();
-        context.moveTo(s.points[0].x, s.points[0].y);
-        for (let i = 1; i < s.points.length; i++) context.lineTo(s.points[i].x, s.points[i].y);
-        context.stroke();
-      } else if (s.type === 'circle') {
-        context.beginPath(); context.ellipse((s.x1+s.x2)/2, (s.y1+s.y2)/2, Math.max(Math.abs(s.x2-s.x1)/2,5), Math.max(Math.abs(s.y2-s.y1)/2,5), 0, 0, 2*Math.PI); context.stroke();
-      } else if (s.type === 'arrow') {
-        const headLen = lineW * 4.2, angle = Math.atan2(s.y2 - s.y1, s.x2 - s.x1);
-        context.beginPath(); context.moveTo(s.x1, s.y1); context.lineTo(s.x2, s.y2); context.stroke();
-        context.beginPath(); context.moveTo(s.x2, s.y2);
-        context.lineTo(s.x2 - headLen * Math.cos(angle - Math.PI/6), s.y2 - headLen * Math.sin(angle - Math.PI/6));
-        context.lineTo(s.x2 - headLen * Math.cos(angle + Math.PI/6), s.y2 - headLen * Math.sin(angle + Math.PI/6));
-        context.closePath(); context.fill();
-      } else if (s.type === 'text') {
-        const fontSize = Math.max(20, Math.round(canvas.width * 0.028));
-        context.font = `bold ${fontSize}px sans-serif`; const m = context.measureText(s.text);
-        context.fillStyle = 'rgba(15,23,42,0.8)'; context.fillRect(s.x - 10, s.y - fontSize, m.width + 20, fontSize + 12);
-        context.fillStyle = '#FFF'; context.fillText(s.text, s.x, s.y);
-      }
-      context.restore();
-    }
-
-    async function saveReport() {
-      const site = document.getElementById('fieldSite').value.trim();
-      const title = document.getElementById('fieldTitle').value.trim();
-      if (!site || !title) { showToast('請填寫單位及標題'); return; }
-      const btn = document.getElementById('saveReportBtn'); btn.disabled = true; btn.textContent = '同步中';
-      const docId = editingReportId || ('rep-' + Date.now());
-      const existing = reports.find(r => r.id === docId);
-      const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件連結', url: d.url.trim() }));
-      const timeRange = formatTimeRange(document.getElementById('fieldTimeStart').value, document.getElementById('fieldTimeEnd').value);
-
-      const payload = {
-        site, assignee: document.getElementById('fieldAssignee').value.trim(),
-        date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
-        timeRange, status: document.getElementById('fieldStatus').value, title,
-        docs: validDocs,
-        docName: validDocs[0] ? validDocs[0].name : '',
-        docUrl: validDocs[0] ? validDocs[0].url : '',
-        summary: document.getElementById('fieldSummary').value.trim(),
-        followup: document.getElementById('fieldFollowup').value.trim(),
-        followupLogs: existing ? (existing.followupLogs || []) : [],
-        photos: draftPhotos.map(p => ({ id: p.id, base64Raw: (p.shapes && p.shapes.length > 0) ? p.base64Raw : '', base64Annotated: p.base64Annotated || p.base64Raw, shapes: p.shapes || [], note: p.note || '' })),
-        createdAt: existing ? existing.createdAt : Date.now(), updatedAt: Date.now()
-      };
-      try {
-        await db.collection(COLLECTION_NAME).doc(docId).set(payload);
-        closeEditor(); showToast('已儲存同步');
-      } catch (e) { showToast('儲存失敗（大量相片請用相簿）'); }
-      finally { btn.disabled = false; btn.textContent = '儲存同步'; }
-    }
-
-    async function deleteReport(id) {
-      if (!confirm('確定刪除此紀錄？')) return;
-      try { await db.collection(COLLECTION_NAME).doc(id).delete(); showToast('已刪除'); }
-      catch (e) { showToast('刪除失敗'); }
-    }
-
-    function openViewModal(id) {
-      const r = reports.find(rep => rep.id === id); if (!r) return;
-      viewingReportId = id; const stBadge = getStatusStyle(r.status);
-      const docs = getDocsList(r);
-      document.getElementById('viewModalHeader').textContent = `${r.site} — ${r.title}`;
-      const summaryHtml = renderSummaryWithInlineLink(r.summary, docs, r.id);
-      const docsHtml = docs.length > 0 ? `<div class="pt-2 mt-2 border-t border-slate-200 flex flex-wrap items-center gap-2"><span class="t-meta text-slate-500">文件：</span>${docs.map(d => (d.url && (d.url.startsWith('http') || d.url.startsWith('data:'))) ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-secondary py-1 px-2 text-blue-700">📄 ${escapeHtml(d.name)} ↗</a>` : `<span class="t-meta font-medium underline">${escapeHtml(d.name)}</span>`).join('')}</div>` : '';
-      const photosHtml = (r.photos && r.photos.length > 0)
-        ? `<div class="space-y-3">${r.photos.map((p, idx) => `<div class="border border-slate-200 rounded-md overflow-hidden bg-slate-50"><img src="${p.base64Annotated || p.base64Raw}" class="w-full max-h-[60vh] object-contain bg-slate-100" /><div class="p-2.5 bg-white border-t border-slate-200"><div class="t-meta font-semibold text-slate-700">#${idx+1}</div><div class="t-body text-slate-700 mt-0.5">${p.note ? escapeHtml(p.note) : '<span class="text-slate-400">無說明</span>'}</div></div></div>`).join('')}</div>`
-        : `<div class="p-4 border border-slate-200 rounded-md text-center t-meta text-slate-400">暫無相片</div>`;
-      document.getElementById('viewModalBody').innerHTML = `
-        <div class="site-card">
-          <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-baseline gap-2"><span class="t-site text-slate-900">${escapeHtml(r.site)}</span>${r.assignee ? `<span class="t-meta font-semibold text-slate-700">${escapeHtml(r.assignee)}</span>` : ''}</div>
-            <div class="flex items-center gap-2"><span class="t-body t-mono text-slate-600">${escapeHtml(r.date)} ${r.timeRange || ''}</span><span class="t-meta px-2 py-0.5 rounded border font-medium ${stBadge}">${escapeHtml(r.status)}</span></div>
-          </div>
-          <div class="p-3.5 space-y-2">
-            <div class="t-body font-bold text-slate-900">${escapeHtml(r.title)}</div>
-            ${summaryHtml ? `<div class="t-body text-slate-600 whitespace-pre-line">${summaryHtml}</div>` : ''}
-            ${renderFollowupBlock(r)}${docsHtml}
-          </div>
-        </div>${photosHtml}`;
-      document.getElementById('viewModal').classList.remove('hidden');
-    }
-    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); viewingReportId = null; }
-    function escapeHtml(str) { return !str ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    startRealtimeSync();
-  </script>
-</body>
-</html>
+            <div class="flex items-baseline gap-2"><span class="t
