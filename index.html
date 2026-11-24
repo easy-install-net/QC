@@ -6,7 +6,7 @@
   <title>築匠設計 ARTISAN STUDIO — 現場相片標註與 QC 總報告系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-     * {
+    * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
     }
@@ -49,6 +49,17 @@
       transition: background-color 0.15s;
     }
     .btn-secondary:hover { background-color: #F3F4F6; }
+    .btn-accent {
+      background-color: #EA580C;
+      color: #FFFFFF;
+      border: 1px solid #EA580C;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+    .btn-accent:hover { background-color: #C2410C; }
     .btn-active {
       background-color: #111827 !important;
       color: #FFFFFF !important;
@@ -79,22 +90,24 @@
 
   <!-- 頂部導航欄 -->
   <header class="bg-white border-b border-gray-200 sticky top-0 z-30">
-    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <span class="font-bold tracking-tight truncate" style="color: #EA580C; font-size: 15px;">築匠設計 ARTISAN STUDIO</span>
         <span class="text-gray-300">|</span>
-        <span class="text-gray-600 font-medium truncate text-sub-ui">現場 QC 報告系統</span>
+        <span class="text-gray-600 font-medium truncate text-sub-ui">QC 總報告中心</span>
         <span id="syncBadge" class="text-[11px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200 shrink-0">雲端連線中...</span>
       </div>
-      <div class="flex items-center gap-2 shrink-0" id="headerActions">
-        <button onclick="copyQuickCreateLink()" id="quickCreateLinkBtn" class="btn-secondary pad-btn flex items-center gap-1.5" title="複製手機桌面快捷建立網址 (?action=new)">
+      <div class="flex flex-wrap items-center gap-2 shrink-0" id="headerActions">
+        <button onclick="goToAlbum()" class="btn-accent pad-btn flex items-center gap-1.5" title="前往現場快拍相簿、逐張評價與二合一/四合一 PDF 工作台">
+          <span>現場相簿 & PDF 匯出 ↗</span>
+        </button>
+        <button onclick="copyQuickCreateLink()" id="quickCreateLinkBtn" class="btn-secondary pad-btn hidden sm:flex items-center gap-1" title="複製手機桌面快捷建立網址 (?action=new)">
           <span>快捷建單 Link</span>
         </button>
-        <button onclick="copyPublicLink()" class="btn-secondary pad-btn flex items-center gap-1.5" title="複製供任何人檢視的唯讀連結 (?view=public)">
-          <svg class="w-3.5 h-3.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        <button onclick="copyPublicLink()" class="btn-secondary pad-btn flex items-center gap-1" title="複製供任何人檢視的唯讀連結 (?view=public)">
           <span>公開連結</span>
         </button>
-        <button onclick="openEditor()" id="newReportBtn" class="btn-primary pad-btn flex items-center gap-1.5">
+        <button onclick="openEditor()" id="newReportBtn" class="btn-primary pad-btn flex items-center gap-1">
           <span>+ 新增報告</span>
         </button>
       </div>
@@ -103,9 +116,12 @@
 
   <!-- 唯讀模式提示橫幅 -->
   <div id="publicBanner" class="hidden bg-gray-100 border-b border-gray-200">
-    <div class="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between text-sub-ui text-gray-600">
-      <span>唯讀檢視模式（雲端實時同步｜任何人可透過此連結查閱現場相片與 QC 備註）</span>
-      <button onclick="exitPublicMode()" class="underline text-gray-800 hover:text-black">切換至編輯模式</button>
+    <div class="max-w-4xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-sub-ui text-gray-600">
+      <span>唯讀檢視模式（雲端實時同步｜同事可直接於各項目下方約期或留言跟進）</span>
+      <div class="flex items-center gap-3">
+        <button onclick="goToAlbum()" class="underline font-medium text-orange-700 hover:text-orange-900">開啟現場相簿牆 ↗</button>
+        <button onclick="exitPublicMode()" class="underline text-gray-800 hover:text-black">切換至編輯模式</button>
+      </div>
     </div>
   </div>
 
@@ -114,7 +130,7 @@
     <!-- 篩選與搜尋列 -->
     <div class="bg-white border border-gray-200 rounded-md pad-card mb-4 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
       <div class="flex items-center gap-2 flex-1">
-        <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、@跟進人、問題關鍵字..." class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+        <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、@跟進人、約期或問題關鍵字..." class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
       </div>
       <div class="flex items-center gap-2">
         <select id="siteFilter" onchange="renderReportList()" class="border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900">
@@ -123,6 +139,7 @@
         <select id="statusFilter" onchange="renderReportList()" class="border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900">
           <option value="ALL">全部狀態</option>
           <option value="需跟進">需跟進</option>
+          <option value="已約期">已約期</option>
           <option value="待確認">待確認</option>
           <option value="已完成">已完成</option>
         </select>
@@ -159,6 +176,7 @@
               <label class="block text-sub-ui font-medium text-gray-700 mb-1">跟進狀態</label>
               <select id="fieldStatus" class="w-full border border-gray-300 rounded-md pad-input text-base-ui bg-white focus:outline-none focus:border-gray-900">
                 <option value="需跟進">需跟進</option>
+                <option value="已約期">已約期</option>
                 <option value="待確認">待確認</option>
                 <option value="已完成">已完成</option>
               </select>
@@ -207,22 +225,20 @@
 
           <!-- 後續跟進欄 -->
           <div>
-            <label class="block text-sub-ui font-medium text-gray-700 mb-1">後續跟進（如留空則自動顯示「後續：_____________ / 暫無跟進」）</label>
-            <input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖 / 已安排師傅星期五上門執正（留空顯示暫無跟進）" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
+            <label class="block text-sub-ui font-medium text-gray-700 mb-1">後續跟進摘要（如留空則自動顯示「後續：_____________ / 暫無跟進」，同事亦可於主頁直接約期留言）</label>
+            <input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖 / 已安排師傅星期五上門執正" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900" />
           </div>
 
           <!-- 相片拍攝 / 上載與標註區 -->
           <div class="border-t border-gray-200 pt-3">
             <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
-              <span class="font-medium text-base-ui text-gray-900">現場相片與標註（支持透明線圈、箭咀、圖片打字）</span>
+              <span class="font-medium text-base-ui text-gray-900">附帶現場相片與標註（大量相片建議使用「現場相簿」分頁）</span>
               <div class="flex items-center gap-2">
                 <label class="btn-secondary pad-btn flex items-center gap-1.5 cursor-pointer">
-                  <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                   <span>現場影相</span>
                   <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" />
                 </label>
                 <label class="btn-primary pad-btn flex items-center gap-1.5 cursor-pointer">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                   <span>從相簿上載</span>
                   <input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" />
                 </label>
@@ -278,7 +294,66 @@
     </div>
   </div>
 
-  <!-- 彈窗 2：檢視單份完整報告 (供任何人查閱) -->
+  <!-- 彈窗 2：同事約期 & 後續留言對話視窗 (公開 Link 亦可直接操作) -->
+  <div id="followupModal" class="hidden fixed inset-0 z-50 bg-black/50 overflow-y-auto">
+    <div class="min-h-screen px-3 py-6 flex items-start justify-center">
+      <div class="bg-white border border-gray-300 rounded-lg w-full max-w-lg overflow-hidden shadow-lg">
+        <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <span class="font-semibold text-title-ui text-gray-900">後續跟進：預約時間 / 同事留言</span>
+          <button onclick="closeFollowupModal()" class="text-gray-500 hover:text-gray-900 text-sub-ui px-2 py-1">關閉 ✕</button>
+        </div>
+        <div class="p-4 space-y-3">
+          <div id="followupTargetTitle" class="text-sub-ui font-medium text-gray-800 bg-gray-50 p-2.5 rounded border border-gray-200"></div>
+
+          <!-- 現有跟進紀錄列表 -->
+          <div>
+            <div class="text-sub-ui font-medium text-gray-700 mb-1.5">雲端約期與留言紀錄</div>
+            <div id="followupHistoryList" class="space-y-2 max-h-56 overflow-y-auto border border-gray-200 rounded-md p-2.5 bg-gray-50"></div>
+          </div>
+
+          <!-- 新增約期 / 留言表單 -->
+          <div class="border-t border-gray-200 pt-3 space-y-2.5">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[12px] font-medium text-gray-700 mb-1">你的名字 / 稱呼 *</label>
+                <input type="text" id="fuAuthor" placeholder="例如：Johnny / Ringo" class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-medium text-gray-700 mb-1">預約上門 / 交貨日期（可選）</label>
+                <input type="date" id="fuDate" class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[12px] font-medium text-gray-700 mb-1">預約時段（可選）</label>
+                <input type="text" id="fuTime" placeholder="例如：14:00 - 16:00" class="w-full border border-gray-300 rounded-md pad-input text-sub-ui focus:outline-none focus:border-gray-900" />
+              </div>
+              <div>
+                <label class="block text-[12px] font-medium text-gray-700 mb-1">同步更新項目狀態</label>
+                <select id="fuNewStatus" class="w-full border border-gray-300 rounded-md pad-input text-sub-ui bg-white focus:outline-none focus:border-gray-900">
+                  <option value="KEEP">保持原狀態</option>
+                  <option value="已約期">改為：已約期</option>
+                  <option value="需跟進">改為：需跟進</option>
+                  <option value="待確認">改為：待確認</option>
+                  <option value="已完成">改為：已完成</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-[12px] font-medium text-gray-700 mb-1">留言 / 約期事項說明 *</label>
+              <textarea id="fuMessage" rows="2" placeholder="例如：已約工廠師傅星期五下午2點上門改床頭板 / 已覆核圖紙無問題" class="w-full border border-gray-300 rounded-md pad-input text-base-ui focus:outline-none focus:border-gray-900"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="px-4 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
+          <button type="button" onclick="closeFollowupModal()" class="btn-secondary pad-btn">取消</button>
+          <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="btn-primary pad-btn">發送並同步雲端</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 彈窗 3：檢視單份完整報告 (供任何人查閱) -->
   <div id="viewModal" class="hidden fixed inset-0 z-40 bg-black/50 overflow-y-auto">
     <div class="min-h-screen px-3 py-4 flex items-start justify-center">
       <div class="bg-white border border-gray-300 rounded-lg w-full max-w-3xl overflow-hidden shadow-lg">
@@ -301,14 +376,10 @@
   <!-- 輕量提示 Toast -->
   <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-4 py-2 rounded-md text-sub-ui shadow-md"></div>
 
-  <!-- Firebase Compat SDK (穩定支援即時監聽與雲端讀寫) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // ==========================================
-    // 1. Firebase 雲端資料庫初始化
-    // ==========================================
     const firebaseConfig = {
       apiKey: "AIzaSyCSRfZdAVh8ADPNtayW5lyDtmE0xDsJXNg",
       authDomain: "gen-lang-client-0208380044.firebaseapp.com",
@@ -322,12 +393,12 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const COLLECTION_NAME = 'artisan_qc_reports';
-
     const DEFAULT_EASY_INSTALL_BASE = 'https://easy-install-net.github.io/QC/index.html';
 
     let reports = [];
     let editingReportId = null;
     let viewingReportId = null;
+    let followupTargetId = null;
     let initialRouteHandled = false;
 
     let draftPhotos = [];
@@ -353,8 +424,11 @@
         title: '傢俬入單圖紙覆尺及床頭板安裝問題',
         docName: '《瓏門3座25H室-261124 ada advice.pdf》',
         docUrl: '#advice-pdf-longmen',
-        summary: '1. 已核對現場尺寸並發出《瓏門3座25H室-261124 ada advice.pdf》予 Johnny。\n2. 床頭板設計厚度會導致擺唔到六尺床，需通知客人改設計。\n3. 趁工廠剛展開生產盡快於廠內解決安裝隱患，避免日後現場保修。',
+        summary: '1. 已核對現場尺寸並發出《瓏門3座25H室-261124 ada advice.pdf》予 Johnny。
+2. 床頭板設計厚度會導致擺唔到六尺床，需通知客人改設計。
+3. 趁工廠剛展開生產盡快於廠內解決安裝隱患，避免日後現場保修。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1795478400000
       },
@@ -368,8 +442,10 @@
         title: '現場睇位及圖紙覆核',
         docName: '',
         docUrl: '',
-        summary: '1. 23日夜及24日早上前往良景現場睇位及覆核圖紙。\n2. 下午返公司與設計部對接細節。',
+        summary: '1. 23日夜及24日早上前往良景現場睇位及覆核圖紙。
+2. 下午返公司與設計部對接細節。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1795474800000
       },
@@ -383,8 +459,10 @@
         title: '埋尾安裝項目點算與安排',
         docName: '',
         docUrl: '',
-        summary: '1. 核實現場非單純小五金，包括安裝馬桶、坐凳、鞋櫃及洞洞板（門鐘未買）。\n2. 屋苑星期六禁止鑽牆等噪音工程，已由設計師 Rovena 協調兩批師傅分開跟進。',
+        summary: '1. 核實現場非單純小五金，包括安裝馬桶、坐凳、鞋櫃及洞洞板（門鐘未買）。
+2. 屋苑星期六禁止鑽牆等噪音工程，已由設計師 Rovena 協調兩批師傅分開跟進。',
         followup: '已由設計師 Rovena 安排兩批師傅分開跟進，暫無跟進',
+        followupLogs: [],
         photos: [],
         createdAt: 1795132800000
       },
@@ -398,8 +476,11 @@
         title: '現場覆尺及泥水斜水/石壆高度檢查',
         docName: '工程度尺圖 (Code: 701216)',
         docUrl: 'https://easy-install-net.github.io/site-record/measure/view.html?code=701216',
-        summary: '1. 廚房地台斜水唔夠，需安排泥水執正（詳見 工程度尺圖 (Code: 701216)）。\n2. 浴室石壆做高咗，設計師 Ringo 確認需要改低。\n3. 弧形紙已放回公司茶几。',
+        summary: '1. 廚房地台斜水唔夠，需安排泥水執正（詳見 工程度尺圖 (Code: 701216)）。
+2. 浴室石壆做高咗，設計師 Ringo 確認需要改低。
+3. 弧形紙已放回公司茶几。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1794960000000
       },
@@ -413,8 +494,10 @@
         title: '櫥櫃來水及電線位現場核對',
         docName: '《海翠花園最終效果圖.pdf》',
         docUrl: '#render-pdf-pierhead',
-        summary: '1. 現場來水未平，有雜物遮住部分電線位。\n2. 已對照《海翠花園最終效果圖.pdf》並於18日回公司同設計師夾圖確認。',
+        summary: '1. 現場來水未平，有雜物遮住部分電線位。
+2. 已對照《海翠花園最終效果圖.pdf》並於18日回公司同設計師夾圖確認。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1794873600000
       },
@@ -428,8 +511,10 @@
         title: '現場覆尺核對（修正前期 100mm 頭尺誤差）',
         docName: '《屯門景峰豪庭一庭32樓C室.pdf》',
         docUrl: '#plan-pdf-primeview',
-        summary: '1. 前期頭尺發現約有 100mm 差距，已於16日早上聯同 Jacky 到現場重新覆尺。\n2. 已核對《屯門景峰豪庭一庭32樓C室.pdf》平面圖及傢俬圖。',
+        summary: '1. 前期頭尺發現約有 100mm 差距，已於16日早上聯同 Jacky 到現場重新覆尺。
+2. 已核對《屯門景峰豪庭一庭32樓C室.pdf》平面圖及傢俬圖。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1794787200000
       },
@@ -445,6 +530,7 @@
         docUrl: '#furniture-pdf-sorrento',
         summary: '1. 16日下午完成現場覆尺，並核對《擎天半岛5-36G 傢俬圖.pdf》。',
         followup: '',
+        followupLogs: [],
         photos: [],
         createdAt: 1794783600000
       }
@@ -459,14 +545,12 @@
         : 'text-[11px] px-1.5 py-0.5 rounded bg-orange-50 text-orange-800 border border-orange-300 shrink-0';
     }
 
-    // 啟動 Firestore 實時監聽
     function startRealtimeSync() {
       db.collection(COLLECTION_NAME)
         .orderBy('createdAt', 'desc')
         .onSnapshot(async (snapshot) => {
           setSyncStatus('雲端已同步', true);
           if (snapshot.empty) {
-            // 若雲端尚未有任何資料，自動寫入初始 7 筆紀錄
             const batch = db.batch();
             SEED_REPORTS.forEach(item => {
               const ref = db.collection(COLLECTION_NAME).doc(item.id);
@@ -487,18 +571,17 @@
         }, (err) => {
           console.error('Firestore sync error:', err);
           setSyncStatus('連線受阻，請檢查 Firestore 權限', false);
-          document.getElementById('reportListContainer').innerHTML = `
-            <div class="bg-white border border-gray-300 rounded-md p-6 text-center space-y-2">
-              <div class="font-semibold text-gray-900">未能連接雲端資料庫</div>
-              <div class="text-sub-ui text-gray-600">請確認 Firebase Firestore 規則已設為 Test mode（允許讀寫），錯誤訊息：${escapeHtml(err.message)}</div>
-            </div>
-          `;
         });
     }
 
-    // ==========================================
-    // 2. 網址參數解析 & 連結複製
-    // ==========================================
+    function goToAlbum(siteName = '') {
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+      const url = new URL('album.html', window.location.href);
+      if (isPublic) url.searchParams.set('view', 'public');
+      if (siteName) url.searchParams.set('site', siteName);
+      window.location.href = url.toString();
+    }
+
     function checkUrlParams() {
       const params = new URLSearchParams(window.location.search);
       const isPublic = params.get('view') === 'public';
@@ -582,9 +665,6 @@
       window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2600);
     }
 
-    // ==========================================
-    // 3. 總報告列表渲染 (卡片分組 + 內文檔名變超連結)
-    // ==========================================
     function updateSiteFilterOptions() {
       const select = document.getElementById('siteFilter');
       const currentVal = select.value;
@@ -610,6 +690,43 @@
       return escaped;
     }
 
+    function renderFollowupBlock(r) {
+      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
+      const hasStatic = r.followup && r.followup.trim();
+
+      let logsHtml = '';
+      if (logs.length > 0) {
+        logsHtml = `<div class="mt-1.5 space-y-1">
+          ${logs.map(log => `
+            <div class="text-sub-ui bg-gray-50 border border-gray-200 rounded px-2.5 py-1.5 flex flex-wrap items-baseline justify-between gap-1">
+              <div>
+                <span class="font-semibold text-gray-900">${escapeHtml(log.author || '同事')}</span>
+                ${log.appointDate ? `<span class="ml-1.5 px-1.5 py-0.5 text-[11px] font-medium bg-orange-50 text-orange-800 border border-orange-200 rounded">約期：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</span>` : ''}
+                <span class="ml-1.5 text-gray-700">${escapeHtml(log.message)}</span>
+              </div>
+              <span class="text-[11px] text-gray-400">${escapeHtml(log.createdAtStr || '')}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      }
+
+      const headerLine = (!hasStatic && logs.length === 0)
+        ? `<span class="font-medium text-gray-800">後續：</span><span class="text-gray-400 tracking-wider">_____________</span> <span class="text-gray-500">/ 暫無跟進</span>`
+        : `<span class="font-medium text-gray-900">後續：</span>${hasStatic ? `<span>${escapeHtml(r.followup)}</span>` : `<span class="text-gray-500">共 ${logs.length} 條跟進 / 約期紀錄</span>`}`;
+
+      return `
+        <div class="mt-2.5 pt-2 border-t border-dashed border-gray-200 pl-1 text-sub-ui text-gray-700">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>${headerLine}</div>
+            <button type="button" onclick="openFollowupModal('${r.id}')" class="text-[12px] font-medium underline text-orange-700 hover:text-orange-900">
+              + 約時間 / 留言跟進
+            </button>
+          </div>
+          ${logsHtml}
+        </div>
+      `;
+    }
+
     function renderReportList() {
       const container = document.getElementById('reportListContainer');
       const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
@@ -621,7 +738,8 @@
         if (siteVal !== 'ALL' && r.site !== siteVal) return false;
         if (statusVal !== 'ALL' && r.status !== statusVal) return false;
         if (keyword) {
-          const hay = `${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${r.docName || ''} ${r.followup || ''}`.toLowerCase();
+          const logsText = (r.followupLogs || []).map(l => `${l.author} ${l.appointDate} ${l.message}`).join(' ');
+          const hay = `${r.site} ${r.assignee || ''} ${r.title} ${r.summary} ${r.docName || ''} ${r.followup || ''} ${logsText}`.toLowerCase();
           if (!hay.includes(keyword)) return false;
         }
         return true;
@@ -637,11 +755,7 @@
       filtered.forEach(r => {
         const key = r.site || '未分類項目';
         if (!groupMap[key]) {
-          groupMap[key] = {
-            site: key,
-            assignee: r.assignee || '',
-            items: []
-          };
+          groupMap[key] = { site: key, assignee: r.assignee || '', items: [] };
           groups.push(groupMap[key]);
         }
         groupMap[key].items.push(r);
@@ -652,9 +766,10 @@
 
         const itemsHtml = group.items.map((r, itemIdx) => {
           const photoCount = r.photos ? r.photos.length : 0;
-          const statusBadge = r.status === '已完成'
-            ? 'bg-gray-100 text-gray-600 border-gray-200'
-            : (r.status === '需跟進' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-800 border-gray-400');
+          let statusBadge = 'bg-white text-gray-800 border-gray-400';
+          if (r.status === '已完成') statusBadge = 'bg-gray-100 text-gray-600 border-gray-200';
+          else if (r.status === '需跟進') statusBadge = 'bg-gray-900 text-white border-gray-900';
+          else if (r.status === '已約期') statusBadge = 'bg-orange-50 text-orange-800 border-orange-300';
 
           const summaryHtml = renderSummaryWithInlineLink(r.summary, r.docName, r.docUrl, r.id);
 
@@ -699,28 +814,22 @@
               ${summaryHtml ? `<div class="text-base-ui text-gray-700 whitespace-pre-line leading-relaxed pl-1">${summaryHtml}</div>` : ''}
               ${extraDocLinkHtml}
               ${thumbsHtml}
-
-              <div class="mt-2.5 pt-2 border-t border-dashed border-gray-200 pl-1 text-sub-ui text-gray-700 flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  ${r.followup && r.followup.trim()
-                    ? `<span class="font-medium text-gray-900">後續：</span><span>${escapeHtml(r.followup)}</span>`
-                    : `<span class="font-medium text-gray-800">後續：</span><span class="text-gray-400 tracking-wider">_____________</span> <span class="text-gray-500">/ 暫無跟進</span>`
-                  }
-                </div>
-                ${!isPublic ? `<button type="button" onclick="quickEditFollowup('${r.id}')" class="text-[12px] underline text-gray-500 hover:text-gray-900">填寫後續</button>` : ''}
-              </div>
+              ${renderFollowupBlock(r)}
             </div>
           `;
         }).join('');
 
         return `
           <div class="bg-white border border-gray-200 rounded-md overflow-hidden shadow-xs">
-            <div class="px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2" style="background-color: #FEF9EC;">
+            <div class="px-4 py-2.5 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2" style="background-color: #FEF9EC;">
               <div class="flex flex-wrap items-baseline gap-2">
                 <span class="font-bold text-title-ui text-gray-900">${escapeHtml(group.site)}</span>
                 ${assigneeText ? `<span class="text-sub-ui font-medium" style="color: #9A3412;">${escapeHtml(assigneeText)}</span>` : ''}
               </div>
-              <span class="text-sub-ui text-gray-500">共 ${group.items.length} 條紀錄</span>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="goToAlbum('${escapeHtml(group.site).replace(/'/g, "\'")}')" class="text-[12px] underline font-medium text-orange-800 hover:text-black">查看此單位現場相簿 ↗</button>
+                <span class="text-sub-ui text-gray-500">｜ 共 ${group.items.length} 條</span>
+              </div>
             </div>
             <div class="pad-card">
               ${itemsHtml}
@@ -731,7 +840,104 @@
     }
 
     // ==========================================
-    // 4. 報告編輯器與檔案/相片處理
+    // 同事約期 & 後續留言彈窗邏輯
+    // ==========================================
+    function openFollowupModal(id) {
+      const r = reports.find(rep => rep.id === id);
+      if (!r) return;
+      followupTargetId = id;
+
+      document.getElementById('followupTargetTitle').textContent = `${r.site} — ${r.title}`;
+      const savedName = localStorage.getItem('artisan_user_name') || '';
+      document.getElementById('fuAuthor').value = savedName;
+      document.getElementById('fuDate').value = '';
+      document.getElementById('fuTime').value = '';
+      document.getElementById('fuNewStatus').value = 'KEEP';
+      document.getElementById('fuMessage').value = '';
+
+      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
+      const historyEl = document.getElementById('followupHistoryList');
+      if (logs.length === 0) {
+        historyEl.innerHTML = `<div class="text-sub-ui text-gray-400 text-center py-2">暫無約期或留言紀錄，成為第一位回覆的同事吧</div>`;
+      } else {
+        historyEl.innerHTML = logs.map(log => `
+          <div class="bg-white border border-gray-200 rounded p-2 text-sub-ui">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-gray-900">${escapeHtml(log.author || '同事')}</span>
+              <span class="text-[11px] text-gray-400">${escapeHtml(log.createdAtStr || '')}</span>
+            </div>
+            ${log.appointDate ? `<div class="mt-1 inline-block px-1.5 py-0.5 text-[11px] font-medium bg-orange-50 text-orange-800 border border-orange-200 rounded">預約時間：${escapeHtml(log.appointDate)} ${escapeHtml(log.appointTime || '')}</div>` : ''}
+            <div class="mt-1 text-gray-700">${escapeHtml(log.message)}</div>
+          </div>
+        `).join('');
+      }
+
+      document.getElementById('followupModal').classList.remove('hidden');
+    }
+
+    function closeFollowupModal() {
+      document.getElementById('followupModal').classList.add('hidden');
+      followupTargetId = null;
+    }
+
+    async function submitFollowupLog() {
+      if (!followupTargetId) return;
+      const author = document.getElementById('fuAuthor').value.trim();
+      const message = document.getElementById('fuMessage').value.trim();
+      const appointDate = document.getElementById('fuDate').value;
+      const appointTime = document.getElementById('fuTime').value.trim();
+      const newStatus = document.getElementById('fuNewStatus').value;
+
+      if (!author || !message) {
+        showToast('請填寫「你的名字」及「留言 / 約期說明」');
+        return;
+      }
+
+      localStorage.setItem('artisan_user_name', author);
+      const btn = document.getElementById('submitFollowupBtn');
+      btn.disabled = true;
+      btn.textContent = '發送中...';
+
+      const now = new Date();
+      const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+      const newLog = {
+        id: 'log-' + Date.now(),
+        author,
+        appointDate: appointDate || '',
+        appointTime: appointTime || '',
+        message,
+        createdAtStr: timeStr
+      };
+
+      const rep = reports.find(r => r.id === followupTargetId);
+      const updatedLogs = [...(rep.followupLogs || []), newLog];
+
+      const updateData = {
+        followupLogs: updatedLogs,
+        updatedAt: Date.now()
+      };
+
+      if (newStatus !== 'KEEP') {
+        updateData.status = newStatus;
+      } else if (appointDate && rep.status === '需跟進') {
+        updateData.status = '已約期';
+      }
+
+      try {
+        await db.collection(COLLECTION_NAME).doc(followupTargetId).update(updateData);
+        closeFollowupModal();
+        showToast('已更新雲端約期與留言');
+      } catch (err) {
+        showToast('發送失敗：' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '發送並同步雲端';
+      }
+    }
+
+    // ==========================================
+    // 報告編輯器與相片標註
     // ==========================================
     function openEditor(id = null) {
       editingReportId = id;
@@ -795,7 +1001,8 @@
         document.getElementById('fieldDocUrl').value = e.target.result;
         const sumEl = document.getElementById('fieldSummary');
         if (!sumEl.value.includes(formattedName)) {
-          sumEl.value = (sumEl.value ? sumEl.value + '\n' : '') + `已附帶報告檔案 ${formattedName} 供查閱。`;
+          sumEl.value = (sumEl.value ? sumEl.value + '
+' : '') + `已附帶報告檔案 ${formattedName} 供查閱。`;
         }
         showToast(`已載入檔案：${file.name}`);
       };
@@ -812,7 +1019,6 @@
         reader.onload = function(e) {
           const img = new Image();
           img.onload = function() {
-            // 壓縮至長邊 960px (JPEG 0.72) 確保 Firestore 單文件 1MB 內可穩定儲存多張現場相片
             const maxDim = 960;
             let w = img.width, h = img.height;
             if (w > maxDim || h > maxDim) {
@@ -871,10 +1077,10 @@
       renderPhotoThumbList();
     }
 
-    // ==========================================
-    // 5. 相片繪圖標註系統 (透明線圈 / 透明箭咀 / 圖片打字)
-    // ==========================================
     function selectPhotoForAnnotation(idx) {
+      if (draftPhotos[idx] && !draftPhotos[idx].base64Raw) {
+        draftPhotos[idx].base64Raw = draftPhotos[idx].base64Annotated;
+      }
       activePhotoIndex = idx;
       const photo = draftPhotos[idx];
       if (!photo) return;
@@ -1073,9 +1279,6 @@
       context.restore();
     }
 
-    // ==========================================
-    // 6. 雲端儲存、刪除與唯讀檢視彈窗
-    // ==========================================
     async function saveReport() {
       const site = document.getElementById('fieldSite').value.trim();
       const title = document.getElementById('fieldTitle').value.trim();
@@ -1091,7 +1294,6 @@
       const docId = editingReportId || ('rep-' + Date.now());
       const existing = reports.find(r => r.id === docId);
 
-      // 只儲存必要欄位（省去重複的 base64Raw 若未標註，節省雲端空間）
       const optimizedPhotos = draftPhotos.map(p => ({
         id: p.id,
         base64Raw: (p.shapes && p.shapes.length > 0) ? p.base64Raw : '',
@@ -1111,6 +1313,7 @@
         docUrl: document.getElementById('fieldDocUrl').value.trim(),
         summary: document.getElementById('fieldSummary').value.trim(),
         followup: document.getElementById('fieldFollowup').value.trim(),
+        followupLogs: existing ? (existing.followupLogs || []) : [],
         photos: optimizedPhotos,
         createdAt: existing ? existing.createdAt : Date.now(),
         updatedAt: Date.now()
@@ -1122,26 +1325,10 @@
         showToast('已成功儲存並同步至雲端');
       } catch (err) {
         console.error(err);
-        showToast('儲存失敗（可能單次相片過多超過 1MB，請分開兩條紀錄上傳）');
+        showToast('儲存失敗（大量相片請使用頂部「現場相簿 & PDF 匯出」分頁）');
       } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = '儲存並同步至雲端';
-      }
-    }
-
-    async function quickEditFollowup(id) {
-      const rep = reports.find(r => r.id === id);
-      if (!rep) return;
-      const val = prompt('請輸入後續跟進內容（留空則恢復「後續：_____________ / 暫無跟進」）：', rep.followup || '');
-      if (val === null) return;
-      try {
-        await db.collection(COLLECTION_NAME).doc(id).update({
-          followup: val.trim(),
-          updatedAt: Date.now()
-        });
-        showToast('已更新雲端後續狀態');
-      } catch (err) {
-        showToast('更新失敗：' + err.message);
       }
     }
 
@@ -1185,7 +1372,7 @@
               </div>
             `).join('')}
           </div>`
-        : `<div class="p-4 border border-gray-200 rounded-md text-center text-sub-ui text-gray-400">此份報告暫未附帶現場相片（可按「編輯」補加影相與標註）</div>`;
+        : `<div class="p-4 border border-gray-200 rounded-md text-center text-sub-ui text-gray-400">此份報告暫未附帶現場相片</div>`;
 
       document.getElementById('viewModalBody').innerHTML = `
         <div class="border border-gray-200 rounded-md overflow-hidden">
@@ -1199,12 +1386,7 @@
           <div class="p-4 bg-white space-y-2">
             <div class="text-base-ui font-semibold text-gray-900">${escapeHtml(r.title)}</div>
             ${summaryHtml ? `<div class="text-base-ui text-gray-700 whitespace-pre-line leading-relaxed">${summaryHtml}</div>` : ''}
-            <div class="pt-2 mt-2 border-t border-dashed border-gray-200 text-sub-ui text-gray-700">
-              ${r.followup && r.followup.trim()
-                ? `<span class="font-medium text-gray-900">後續：</span><span>${escapeHtml(r.followup)}</span>`
-                : `<span class="font-medium text-gray-800">後續：</span><span class="text-gray-400 tracking-wider">_____________</span> <span class="text-gray-500">/ 暫無跟進</span>`
-              }
-            </div>
+            ${renderFollowupBlock(r)}
             ${docBarHtml}
           </div>
         </div>
@@ -1227,15 +1409,6 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
     }
-
-    // 修復編輯舊相片時若 base64Raw 為空則退回使用 base64Annotated
-    const _origSelectPhoto = selectPhotoForAnnotation;
-    selectPhotoForAnnotation = function(idx) {
-      if (draftPhotos[idx] && !draftPhotos[idx].base64Raw) {
-        draftPhotos[idx].base64Raw = draftPhotos[idx].base64Annotated;
-      }
-      _origSelectPhoto(idx);
-    };
 
     startRealtimeSync();
   </script>
