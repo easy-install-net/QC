@@ -3,145 +3,124 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>築匠設計 ARTISAN STUDIO — 現場相簿 & PDF</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>築匠設計 — 連續截圖標記工作台</title>
+  <link rel="icon" href="data:," />
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang HK", "Microsoft JhengHei", sans-serif;
-      background-color: #F1F5F9;
-      color: #0F172A;
-      font-size: 14px;
-      line-height: 1.5;
-      margin: 0;
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif; background: #F1F5F9; color: #0F172A; font-size: 14px; margin: 0; }
+    .topbar { background: #FFF; border-bottom: 1px solid #CBD5E1; padding: 8px 14px; position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #0F172A; border-radius: 6px; font-size: 12px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
+    .btn-primary:disabled { opacity: 0.5; }
+    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 6px 10px; cursor: pointer; text-decoration: none; }
+    .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
+    .btn-link { background: none; border: none; font-size: 12px; text-decoration: underline; cursor: pointer; color: #1D4ED8; padding: 2px 4px; }
+    .input-ui { border: 1px solid #FDBA74; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #FFF7ED; color: #0F172A; font-family: inherit; }
+    .input-ui:focus { outline: none; border-color: #0F172A; background: #FFEDD5; }
+
+    .meta-bar { background: #FFF; border-bottom: 1px solid #E2E8F0; padding: 8px 14px; display: grid; grid-template-columns: 2fr 2fr 140px; gap: 8px; }
+    .workspace { display: flex; height: calc(100vh - 108px); overflow: hidden; }
+    .sidebar { width: 190px; background: #FFF; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    .stage { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+    @media (max-width: 720px) {
+      .meta-bar { grid-template-columns: 1fr; }
+      .workspace { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #CBD5E1; }
+      .page-thumb { width: 110px; flex-shrink: 0; }
     }
-    .t-site { font-size: 16px; line-height: 1.35; font-weight: 700; }
-    .t-body { font-size: 14px; line-height: 1.5; }
-    .t-meta { font-size: 12px; line-height: 1.4; }
-    .t-mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
 
-    .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #0F172A; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; cursor: pointer; }
-    .btn-primary:hover { background: #334155; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; cursor: pointer; }
-    .btn-secondary:hover { background: #F8FAFC; color: #0F172A; border-color: #94A3B8; }
-    .btn-link { background: transparent; border: none; padding: 2px 3px; font-size: 12px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+    .paste-zone { border: 2px dashed #94A3B8; background: #F8FAFC; border-radius: 8px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+    .page-thumb { border: 2px solid #CBD5E1; border-radius: 6px; overflow: hidden; cursor: pointer; background: #F8FAFC; }
+    .page-thumb.active { border-color: #0F172A; box-shadow: 0 0 0 2px #0F172A; }
+    .page-thumb img { width: 100%; height: 90px; object-fit: cover; display: block; }
+    .canvas-box { background: #CBD5E1; border: 1px solid #94A3B8; border-radius: 6px; display: flex; justify-content: center; overflow: auto; touch-action: none; }
+    canvas { max-width: 100%; max-height: 64vh; display: block; cursor: crosshair; background: #FFF; }
+    .color-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 0 0 1px #64748B; cursor: pointer; padding: 0; }
+    .hidden { display: none !important; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #0F172A; color: #FFF; padding: 8px 14px; border-radius: 6px; font-size: 12px; }
 
-    /* 全頁唯一允許淺橙色的位置：所有可打字/填寫的輸入框 */
-    .input-ui {
-      border: 1px solid #FDBA74;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 14px;
-      background-color: #FFF7ED;
-      color: #0F172A;
-    }
-    .input-ui:focus { outline: none; border-color: #0F172A; background-color: #FFEDD5; }
-    .select-ui { border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 8px; font-size: 12px; background-color: #FFF; color: #0F172A; }
-
-    .photo-card { background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; }
-
-    /* 列印 / 匯出 PDF 專用樣式 */
+    /* 列印 / 匯出 PDF 排版 */
+    #printReportView { display: none; padding: 16px; max-width: 900px; margin: 0 auto; }
+    .print-page { border: 1px solid #94A3B8; border-radius: 6px; margin-bottom: 16px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; background: #FFF; }
+    .print-page img { width: 100%; max-height: 440px; object-fit: contain; background: #F8FAFC; display: block; }
     @media print {
-      body { background: #FFF !important; }
+      body { background: #FFF; }
       .no-print { display: none !important; }
-      #printHeader { display: block !important; }
-      main { max-width: 100% !important; padding: 0 !important; }
-      #albumContainer { grid-template-columns: repeat(2, 1fr) !important; gap: 12px !important; }
-      .photo-card { border: 1px solid #94A3B8 !important; box-shadow: none !important; }
-      .photo-card img { max-height: 260px !important; object-fit: contain !important; background: #F8FAFC !important; }
+      #printReportView { display: block !important; padding: 0; max-width: 100%; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 頂部導航欄 -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 no-print">
-    <div class="max-w-5xl mx-auto px-3 py-2 flex flex-wrap items-center justify-between gap-2">
-      <div class="flex items-center gap-2 min-w-0">
-        <button onclick="goBackToReports()" class="btn-secondary">← 返回總報告</button>
-        <span class="font-bold tracking-tight truncate text-slate-900" style="font-size:16px;">現場相簿 & PDF</span>
-        <span id="syncBadge" class="t-meta px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 shrink-0">連線中</span>
-      </div>
-      <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-        <button onclick="copyAlbumSummary()" class="btn-secondary">複製重點</button>
-        <button onclick="copyAlbumShareLink()" class="btn-secondary">分享相簿Link</button>
-        <button onclick="exportToPdf()" class="btn-primary">匯出 / 另存 PDF</button>
-      </div>
+  <header class="topbar no-print">
+    <div class="row">
+      <a href="index.html" class="btn-secondary">← 總報告</a>
+      <b style="font-size:15px;">連續截圖標記工作台</b>
+      <span id="statusTag" style="font-size:12px;color:#64748B;">隨時按 Ctrl+V 貼入新截圖</span>
+    </div>
+    <div class="row">
+      <button type="button" onclick="copyAlbumSummary()" class="btn-link">複製重點</button>
+      <button type="button" onclick="copyAlbumLink()" class="btn-link">複製檔案Link</button>
+      <button type="button" onclick="exportPdf()" class="btn-secondary">匯出 PDF</button>
+      <button type="button" id="saveAlbumBtn" onclick="saveAlbumToCloud()" class="btn-primary">儲存並掛入報告</button>
     </div>
   </header>
 
-  <!-- PDF 列印專用抬頭 -->
-  <div id="printHeader" class="hidden border-b-2 border-slate-900 pb-3 mb-4">
-    <div class="flex items-baseline justify-between">
-      <div>
-        <div class="font-bold text-lg text-slate-900">築匠設計 ARTISAN STUDIO — 現場相片紀錄報告</div>
-        <div class="t-body font-bold text-slate-800 mt-1" id="printSiteTitle">全部單位</div>
-      </div>
-      <div class="t-meta text-slate-500 t-mono" id="printDateStr"></div>
+  <div id="editShell" class="no-print">
+    <div class="meta-bar">
+      <input type="text" id="albumSite" list="siteSuggestions" placeholder="屋苑 / 單位名稱 *（自動關聯至總報告）" class="input-ui" />
+      <datalist id="siteSuggestions"></datalist>
+      <input type="text" id="albumTitle" placeholder="檔案名稱 *（例如：261125 度尺及圖紙覆核）" class="input-ui" />
+      <input type="date" id="albumDate" class="input-ui" />
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar" id="thumbSidebar"></aside>
+
+      <section class="stage">
+        <div class="paste-zone">
+          <div><b>⚡ 連續截圖模式：</b>截圖後直接按鍵盤 <b>Ctrl + V</b>，自動新增一頁並切換至標記畫布</div>
+          <div class="row">
+            <button type="button" onclick="pasteFromClipboardBtn()" class="btn-primary">📋 貼上截圖</button>
+            <label class="btn-secondary" style="cursor:pointer;"><span>上傳圖片</span><input type="file" accept="image/*" multiple class="hidden" onchange="handleAlbumFiles(event)" /></label>
+            <label class="btn-secondary" style="cursor:pointer;"><span>拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleAlbumFiles(event)" /></label>
+            <button type="button" onclick="addBlankPage()" class="btn-secondary">+ 空白頁</button>
+          </div>
+        </div>
+
+        <div id="canvasArea" class="hidden" style="display:flex;flex-direction:column;gap:8px;">
+          <div class="row" style="justify-content:space-between;background:#FFF;padding:8px 10px;border:1px solid #CBD5E1;border-radius:6px;">
+            <div class="row">
+              <button type="button" onclick="setTool('freehand')" id="t-freehand" class="btn-secondary btn-active">✎ 手繪</button>
+              <button type="button" onclick="setTool('circle')" id="t-circle" class="btn-secondary">◯ 線圈</button>
+              <button type="button" onclick="setTool('arrow')" id="t-arrow" class="btn-secondary">↗ 箭咀</button>
+              <button type="button" onclick="setTool('text')" id="t-text" class="btn-secondary">T 打字</button>
+              <input type="text" id="textLabelInput" placeholder="輸入文字後點畫布..." class="input-ui hidden" style="width:170px;padding:4px 8px;" />
+            </div>
+            <div class="row">
+              <button type="button" onclick="setColor('rgba(220,38,38,0.92)')" class="color-dot" style="background:#DC2626;"></button>
+              <button type="button" onclick="setColor('rgba(37,99,235,0.92)')" class="color-dot" style="background:#2563EB;"></button>
+              <button type="button" onclick="setColor('rgba(234,179,8,0.95)')" class="color-dot" style="background:#EAB308;"></button>
+              <button type="button" onclick="setColor('rgba(15,23,42,0.92)')" class="color-dot" style="background:#0F172A;"></button>
+              <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
+              <button type="button" onclick="clearShapes()" class="btn-secondary">清除標記</button>
+            </div>
+          </div>
+
+          <div class="canvas-box"><canvas id="workCanvas"></canvas></div>
+          <input type="text" id="pageNoteInput" oninput="syncPageNote()" placeholder="此截圖重點說明 / 尺寸備註（儲存及匯出 PDF 時顯示）..." class="input-ui" />
+        </div>
+      </section>
     </div>
   </div>
 
-  <!-- 主內容 -->
-  <main class="max-w-5xl mx-auto px-3 py-3">
-    <!-- 篩選與快速上傳列 -->
-    <div class="bg-white border border-slate-200 rounded-lg p-2.5 mb-3 space-y-2.5 no-print">
-      <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center justify-between">
-        <input type="text" id="searchInput" oninput="renderAlbum()" placeholder="搜尋相片說明、標題或日期..." class="input-ui flex-1" />
-        <div class="flex items-center gap-2">
-          <select id="siteFilter" onchange="onSiteFilterChange()" class="select-ui flex-1 sm:flex-none">
-            <option value="ALL">全部單位</option>
-          </select>
-          <select id="dateFilter" onchange="renderAlbum()" class="select-ui">
-            <option value="ALL">全部日期</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- 快速批量上傳相片至目前單位 -->
-      <div id="quickUploadBar" class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-        <span class="t-meta text-slate-600" id="currentScopeText">顯示：全部單位相片</span>
-        <div class="flex flex-wrap items-center gap-1.5">
-          <label class="btn-secondary cursor-pointer">
-            <span>現場拍照</span>
-            <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleQuickAlbumUpload(event)" />
-          </label>
-          <label class="btn-primary cursor-pointer">
-            <span>+ 批量上傳相片到此單位</span>
-            <input type="file" accept="image/*" multiple class="hidden" onchange="handleQuickAlbumUpload(event)" />
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- 相片網格 -->
-    <div id="albumContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      <div class="col-span-full bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">載入中...</div>
-    </div>
-  </main>
-
-  <!-- 大圖預覽彈窗 -->
-  <div id="lightboxModal" class="hidden fixed inset-0 z-50 bg-slate-900/85 flex items-center justify-center p-3 no-print" onclick="closeLightbox()">
-    <div class="bg-white rounded-lg max-w-4xl w-full overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
-      <div class="px-3.5 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-        <span class="t-body font-bold text-slate-900 truncate" id="lbTitle">相片預覽</span>
-        <button onclick="closeLightbox()" class="t-meta text-slate-500 hover:text-slate-900 px-2 py-1">關閉 ✕</button>
-      </div>
-      <div class="bg-slate-900 flex items-center justify-center">
-        <img id="lbImg" src="" class="max-h-[75vh] max-w-full object-contain" />
-      </div>
-      <div class="p-3 bg-white flex flex-wrap items-center justify-between gap-2">
-        <div class="t-body text-slate-800" id="lbNote"></div>
-        <div class="t-meta t-mono text-slate-500" id="lbMeta"></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2 rounded-md t-meta shadow-lg no-print"></div>
+  <!-- 唯讀檢視 & 列印 PDF 共用視圖 -->
+  <div id="printReportView"></div>
+  <div id="toast" class="hidden no-print"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyCSRfZdAVh8ADPNtayW5lyDtmE0xDsJXNg",
@@ -152,335 +131,312 @@
       messagingSenderId: "17077391191",
       appId: "1:17077391191:web:cb936dd1bfe98b2f3d7812"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const COLLECTION_NAME = 'artisan_qc_reports';
+    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-    let reports = [];
-    let initialParamApplied = false;
+    const REPORTS_COL = 'artisan_qc_reports';
+    const ALBUMS_COL = 'artisan_qc_albums';
 
-    function setSyncStatus(text, isOk = true) {
-      const el = document.getElementById('syncBadge');
-      if (!el) return;
-      el.textContent = text;
-      el.className = isOk
-        ? 't-meta px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0'
-        : 't-meta px-1.5 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 shrink-0';
-    }
+    let currentAlbumId = null, linkedReportId = null;
+    let pages = [], activeIdx = -1;
+    let tool = 'freehand', color = 'rgba(220,38,38,0.92)';
+    let drawing = false, sx = 0, sy = 0, stroke = [], baseImg = null;
 
-    function startSync() {
-      db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot((snapshot) => {
-        setSyncStatus('已同步', true);
-        reports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        updateFilters();
-        if (!initialParamApplied) {
-          initialParamApplied = true;
-          const params = new URLSearchParams(window.location.search);
-          const siteParam = params.get('site');
-          const isPublic = params.get('view') === 'public';
-          if (isPublic) document.getElementById('quickUploadBar').classList.add('hidden');
-          if (siteParam) {
-            const sel = document.getElementById('siteFilter');
-            if ([...sel.options].some(o => o.value === siteParam)) {
-              sel.value = siteParam;
-              updateDateOptions();
-            }
-          }
-        }
-        renderAlbum();
-      }, () => setSyncStatus('離線', false));
-    }
+    const canvas = document.getElementById('workCanvas');
+    const ctx = canvas.getContext('2d');
 
-    function goBackToReports() {
+    async function init() {
       const params = new URLSearchParams(window.location.search);
-      const url = new URL('index.html', window.location.href);
-      if (params.get('view') === 'public') url.searchParams.set('view', 'public');
-      const siteVal = document.getElementById('siteFilter').value;
-      if (siteVal && siteVal !== 'ALL') url.searchParams.set('site', siteVal);
-      window.location.href = url.toString();
-    }
+      const site = params.get('site') || '';
+      const date = params.get('date') || new Date().toISOString().split('T')[0];
+      linkedReportId = params.get('reportId') || null;
+      currentAlbumId = params.get('albumId') || null;
+      const isPublic = params.get('view') === 'public';
 
-    function updateFilters() {
-      const siteSel = document.getElementById('siteFilter');
-      const curSite = siteSel.value;
-      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
-      siteSel.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-      if (sites.includes(curSite)) siteSel.value = curSite;
-      updateDateOptions();
-    }
+      document.getElementById('albumSite').value = site;
+      document.getElementById('albumDate').value = date;
+      if (site && !currentAlbumId) document.getElementById('albumTitle').value = `${date.slice(2).replace(/-/g,'')} 截圖標記紀錄`;
 
-    function onSiteFilterChange() {
-      updateDateOptions();
-      renderAlbum();
-    }
-
-    function updateDateOptions() {
-      const siteVal = document.getElementById('siteFilter').value;
-      const dateSel = document.getElementById('dateFilter');
-      const curDate = dateSel.value;
-      const targetReports = siteVal === 'ALL' ? reports : reports.filter(r => r.site === siteVal);
-      const dates = [...new Set(targetReports.map(r => r.date).filter(Boolean))].sort((a, b) => b.localeCompare(a));
-      dateSel.innerHTML = '<option value="ALL">全部日期</option>' + dates.map(d => `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
-      if (dates.includes(curDate)) dateSel.value = curDate;
-    }
-
-    function getFilteredPhotoEntries() {
-      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-      const siteVal = document.getElementById('siteFilter').value;
-      const dateVal = document.getElementById('dateFilter').value;
-      const entries = [];
-
-      const sortedReports = [...reports].sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
-
-      sortedReports.forEach(r => {
-        if (siteVal !== 'ALL' && r.site !== siteVal) return;
-        if (dateVal !== 'ALL' && r.date !== dateVal) return;
-        const photos = Array.isArray(r.photos) ? r.photos : [];
-        photos.forEach((p, idx) => {
-          const hay = `${r.site} ${r.date} ${r.title} ${p.note || ''}`.toLowerCase();
-          if (keyword && !hay.includes(keyword)) return;
-          entries.push({
-            reportId: r.id,
-            site: r.site,
-            assignee: r.assignee || '',
-            date: r.date,
-            title: r.title,
-            status: r.status,
-            photoIndex: idx,
-            photo: p
-          });
-        });
+      db.collection(REPORTS_COL).limit(50).get().then(snap => {
+        const sites = [...new Set(snap.docs.map(d => d.data().site).filter(Boolean))];
+        document.getElementById('siteSuggestions').innerHTML = sites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
       });
-      return entries;
+
+      if (currentAlbumId) await loadExistingAlbum(currentAlbumId, isPublic);
+      else renderSidebar();
     }
 
-    function renderAlbum() {
-      const container = document.getElementById('albumContainer');
-      const siteVal = document.getElementById('siteFilter').value;
-      const dateVal = document.getElementById('dateFilter').value;
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+    async function loadExistingAlbum(albumId, isPublic) {
+      document.getElementById('statusTag').textContent = '載入檔案中...';
+      const doc = await db.collection(ALBUMS_COL).doc(albumId).get();
+      if (!doc.exists) return showToast('找不到此截圖檔案');
+      const data = doc.data();
+      document.getElementById('albumSite').value = data.site || '';
+      document.getElementById('albumTitle').value = data.title || '';
+      document.getElementById('albumDate').value = data.date || '';
+      linkedReportId = data.linkedReportId || linkedReportId;
 
-      document.getElementById('currentScopeText').textContent = siteVal === 'ALL'
-        ? '目前顯示：全部單位（選定單一單位後可直接批量上傳）'
-        : `目前單位：${siteVal}${dateVal !== 'ALL' ? ' (' + dateVal + ')' : ''}`;
+      const pSnap = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').orderBy('order', 'asc').get();
+      pages = pSnap.docs.map(d => d.data());
+      document.getElementById('statusTag').textContent = `已載入 ${pages.length} 頁`;
 
-      const entries = getFilteredPhotoEntries();
+      if (isPublic) {
+        document.getElementById('editShell').classList.add('hidden');
+        document.getElementById('saveAlbumBtn').classList.add('hidden');
+        buildPrintView();
+        document.getElementById('printReportView').style.display = 'block';
+      } else {
+        renderSidebar();
+        if (pages.length) selectPage(0);
+      }
+    }
 
-      if (entries.length === 0) {
-        container.innerHTML = `<div class="col-span-full bg-white border border-slate-200 rounded-lg p-6 text-center text-slate-500 t-body">暫無相片紀錄</div>`;
+    // 全域 Ctrl+V 連續貼上截圖
+    window.addEventListener('paste', (e) => {
+      const items = (e.clipboardData || window.clipboardData)?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          addImageBlob(item.getAsFile());
+          return;
+        }
+      }
+    });
+
+    async function pasteFromClipboardBtn() {
+      try {
+        const items = await navigator.clipboard.read();
+        for (const item of items) {
+          const imgType = item.types.find(t => t.startsWith('image/'));
+          if (imgType) { const blob = await item.getType(imgType); addImageBlob(blob); return; }
+        }
+        showToast('剪貼簿內沒有截圖');
+      } catch (e) { showToast('請直接按鍵盤 Ctrl + V 貼上截圖'); }
+    }
+
+    function handleAlbumFiles(e) { Array.from(e.target.files || []).forEach(addImageBlob); e.target.value = ''; }
+
+    function addImageBlob(file) {
+      if (!file) return;
+      const rd = new FileReader();
+      rd.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height, max = 1280;
+          if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+          const off = document.createElement('canvas'); off.width = w; off.height = h;
+          off.getContext('2d').drawImage(img, 0, 0, w, h);
+          const b64 = off.toDataURL('image/jpeg', 0.8);
+          pages.push({ id: 'pg-' + Date.now() + '-' + Math.random().toString(36).slice(2,5), raw: b64, rendered: b64, shapes: [], note: '' });
+          renderSidebar();
+          selectPage(pages.length - 1);
+          showToast(`已貼上第 ${pages.length} 頁`);
+        };
+        img.src = ev.target.result;
+      };
+      rd.readAsDataURL(file);
+    }
+
+    function addBlankPage() {
+      const off = document.createElement('canvas'); off.width = 1000; off.height = 700;
+      const ox = off.getContext('2d'); ox.fillStyle = '#FFF'; ox.fillRect(0,0,1000,700);
+      const b64 = off.toDataURL('image/jpeg', 0.85);
+      pages.push({ id: 'pg-' + Date.now(), raw: b64, rendered: b64, shapes: [], note: '' });
+      renderSidebar(); selectPage(pages.length - 1);
+    }
+
+    function renderSidebar() {
+      const sb = document.getElementById('thumbSidebar');
+      if (!pages.length) {
+        sb.innerHTML = `<div style="color:#64748B;font-size:12px;text-align:center;padding:20px 4px;">尚無截圖<br>直接按 <b>Ctrl+V</b> 貼入</div>`;
+        document.getElementById('canvasArea').classList.add('hidden');
         return;
       }
-
-      container.innerHTML = entries.map((item, i) => {
-        const imgSrc = item.photo.base64Annotated || item.photo.base64Raw;
-        return `
-          <div class="photo-card flex flex-col">
-            <div onclick="openLightbox(${i})" class="relative bg-slate-100 border-b border-slate-200 cursor-pointer overflow-hidden" style="height:220px;">
-              <img src="${imgSrc}" class="w-full h-full object-cover hover:scale-[1.02] transition-transform" />
-              <span class="absolute top-2 left-2 bg-slate-900/80 text-white t-meta t-mono px-1.5 py-0.5 rounded">#${i + 1}</span>
-            </div>
-            <div class="p-2.5 flex-1 flex flex-col justify-between space-y-2">
-              <div>
-                <div class="flex items-center justify-between gap-1 t-meta text-slate-500">
-                  <span class="font-bold text-slate-900 truncate">${escapeHtml(item.site)}</span>
-                  <span class="t-mono shrink-0">${escapeHtml(item.date)}</span>
-                </div>
-                <div class="t-meta font-semibold text-slate-700 truncate mt-0.5">${escapeHtml(item.title)}</div>
-                ${!isPublic ? `
-                  <input type="text" value="${escapeHtml(item.photo.note || '')}"
-                    onchange="updatePhotoNote('${item.reportId}', ${item.photoIndex}, this.value)"
-                    placeholder="輸入相片說明..."
-                    class="input-ui w-full t-meta py-1 mt-1.5 no-print" />
-                  <div class="hidden print:block t-body text-slate-800 mt-1">${escapeHtml(item.photo.note || '')}</div>
-                ` : `
-                  <div class="t-body text-slate-800 mt-1">${escapeHtml(item.photo.note || '無說明')}</div>
-                `}
-              </div>
-              ${!isPublic ? `
-                <div class="pt-1.5 border-t border-slate-100 flex items-center justify-end gap-2 no-print">
-                  <button type="button" onclick="deleteSinglePhoto('${item.reportId}', ${item.photoIndex})" class="btn-link text-slate-400 hover:text-red-600">刪除相片</button>
-                </div>
-              ` : ''}
-            </div>
-          </div>`;
-      }).join('');
+      sb.innerHTML = pages.map((p, i) => `
+        <div onclick="selectPage(${i})" class="page-thumb ${i===activeIdx?'active':''}">
+          <img src="${p.rendered || p.raw}" />
+          <div class="row" style="justify-content:space-between;padding:3px 6px;background:#FFF;font-size:12px;">
+            <b>#${i+1}</b>
+            <button type="button" onclick="deletePage(event,${i})" class="btn-link" style="color:#DC2626;">刪</button>
+          </div>
+        </div>`).join('');
     }
 
-    async function updatePhotoNote(reportId, photoIndex, newNote) {
-      const rep = reports.find(r => r.id === reportId);
-      if (!rep || !rep.photos || !rep.photos[photoIndex]) return;
-      const updatedPhotos = JSON.parse(JSON.stringify(rep.photos));
-      updatedPhotos[photoIndex].note = newNote.trim();
-      try {
-        await db.collection(COLLECTION_NAME).doc(reportId).update({ photos: updatedPhotos, updatedAt: Date.now() });
-        showToast('說明已更新');
-      } catch (e) { showToast('更新失敗'); }
+    function deletePage(e, i) {
+      e.stopPropagation(); pages.splice(i, 1);
+      activeIdx = pages.length ? Math.max(0, i - 1) : -1;
+      renderSidebar(); if (activeIdx >= 0) selectPage(activeIdx);
     }
 
-    async function deleteSinglePhoto(reportId, photoIndex) {
-      if (!confirm('確定刪除此相片？')) return;
-      const rep = reports.find(r => r.id === reportId);
-      if (!rep || !rep.photos) return;
-      const updatedPhotos = rep.photos.filter((_, idx) => idx !== photoIndex);
-      try {
-        await db.collection(COLLECTION_NAME).doc(reportId).update({ photos: updatedPhotos, updatedAt: Date.now() });
-        showToast('已刪除相片');
-      } catch (e) { showToast('刪除失敗'); }
+    function selectPage(i) {
+      activeIdx = i; const p = pages[i]; if (!p) return;
+      document.getElementById('canvasArea').classList.remove('hidden');
+      document.getElementById('pageNoteInput').value = p.note || '';
+      renderSidebar();
+      baseImg = new Image();
+      baseImg.onload = () => { canvas.width = baseImg.width; canvas.height = baseImg.height; redraw(false); };
+      baseImg.src = p.raw || p.rendered;
     }
 
-    // 直接在相簿批量上傳相片到選定單位
-    async function handleQuickAlbumUpload(event) {
-      const files = Array.from(event.target.files || []);
-      event.target.value = '';
-      if (!files.length) return;
+    function syncPageNote() { if (activeIdx >= 0) pages[activeIdx].note = document.getElementById('pageNoteInput').value; }
+    function setTool(t) {
+      tool = t;
+      ['freehand','circle','arrow','text'].forEach(k => document.getElementById('t-'+k).classList.toggle('btn-active', k===t));
+      document.getElementById('textLabelInput').classList.toggle('hidden', t!=='text');
+      if (t === 'text') document.getElementById('textLabelInput').focus();
+    }
+    function setColor(c) { color = c; }
+    function undoShape() { if (activeIdx >= 0) { pages[activeIdx].shapes.pop(); redraw(true); } }
+    function clearShapes() { if (activeIdx >= 0) { pages[activeIdx].shapes = []; redraw(true); } }
 
-      let siteVal = document.getElementById('siteFilter').value;
-      if (siteVal === 'ALL') {
-        const inputSite = prompt('請輸入此批相片所屬的屋苑 / 單位名稱：');
-        if (!inputSite || !inputSite.trim()) return;
-        siteVal = inputSite.trim();
+    function coords(e) {
+      const r = canvas.getBoundingClientRect(), cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) };
+    }
+    canvas.addEventListener('mousedown', down); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', up);
+    canvas.addEventListener('touchstart', down, { passive: false }); canvas.addEventListener('touchmove', move, { passive: false }); canvas.addEventListener('touchend', up);
+
+    function down(e) {
+      if (activeIdx < 0) return; e.preventDefault(); const pos = coords(e);
+      if (tool === 'text') {
+        const txt = document.getElementById('textLabelInput').value.trim();
+        if (!txt) return showToast('請先輸入文字或尺寸');
+        pages[activeIdx].shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color });
+        redraw(true); return;
       }
+      drawing = true; sx = pos.x; sy = pos.y; if (tool === 'freehand') stroke = [pos];
+    }
+    function move(e) {
+      if (!drawing || activeIdx < 0) return; e.preventDefault(); const pos = coords(e); redraw(false);
+      if (tool === 'freehand') { stroke.push(pos); draw(ctx, { type: 'freehand', points: stroke, color }); }
+      else draw(ctx, { type: tool, x1: sx, y1: sy, x2: pos.x, y2: pos.y, color });
+    }
+    function up(e) {
+      if (!drawing || activeIdx < 0) return; drawing = false;
+      if (tool === 'freehand') { if (stroke.length > 1) pages[activeIdx].shapes.push({ type: 'freehand', points: stroke, color }); stroke = []; redraw(true); return; }
+      const r = canvas.getBoundingClientRect(), cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX, cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const ex = (cx - r.left) * (canvas.width / r.width), ey = (cy - r.top) * (canvas.height / r.height);
+      if (Math.hypot(ex - sx, ey - sy) > 6) pages[activeIdx].shapes.push({ type: tool, x1: sx, y1: sy, x2: ex, y2: ey, color });
+      redraw(true);
+    }
 
-      showToast(`正在處理 ${files.length} 張相片...`);
-      const compressedPhotos = [];
-      for (const file of files) {
-        const b64 = await compressImage(file);
-        compressedPhotos.push({
-          id: 'ph-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-          base64Raw: '',
-          base64Annotated: b64,
-          shapes: [],
-          note: ''
-        });
-      }
+    function redraw(saveSnap = false) {
+      if (!baseImg || activeIdx < 0) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(baseImg,0,0);
+      (pages[activeIdx].shapes || []).forEach(s => draw(ctx, s));
+      if (saveSnap) { pages[activeIdx].rendered = canvas.toDataURL('image/jpeg', 0.8); renderSidebar(); }
+    }
 
-      const today = new Date().toISOString().split('T')[0];
-      const existingToday = reports.find(r => r.site === siteVal && r.date === today);
+    function draw(c, s) {
+      c.save(); const lw = Math.max(4, Math.round(canvas.width * 0.0045)); c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+      if (s.type === 'freehand' && s.points?.length > 1) { c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y); s.points.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.stroke(); }
+      else if (s.type === 'circle') { c.beginPath(); c.ellipse((s.x1+s.x2)/2, (s.y1+s.y2)/2, Math.max(Math.abs(s.x2-s.x1)/2,4), Math.max(Math.abs(s.y2-s.y1)/2,4), 0, 0, Math.PI*2); c.stroke(); }
+      else if (s.type === 'arrow') { const hl = lw*4, a = Math.atan2(s.y2-s.y1, s.x2-s.x1); c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke(); c.beginPath(); c.moveTo(s.x2,s.y2); c.lineTo(s.x2-hl*Math.cos(a-Math.PI/6), s.y2-hl*Math.sin(a-Math.PI/6)); c.lineTo(s.x2-hl*Math.cos(a+Math.PI/6), s.y2-hl*Math.sin(a+Math.PI/6)); c.closePath(); c.fill(); }
+      else if (s.type === 'text') { const fs = Math.max(20, Math.round(canvas.width * 0.024)); c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text).width; c.fillStyle = 'rgba(15,23,42,0.85)'; c.fillRect(s.x-8, s.y-fs, w+16, fs+10); c.fillStyle = '#FFF'; c.fillText(s.text, s.x, s.y); }
+      c.restore();
+    }
 
+    // 儲存獨立檔案並自動掛回總報告該單位右側文件區
+    async function saveAlbumToCloud() {
+      const site = document.getElementById('albumSite').value.trim();
+      const title = document.getElementById('albumTitle').value.trim();
+      const date = document.getElementById('albumDate').value || new Date().toISOString().split('T')[0];
+      if (!site || !title) return showToast('請填寫「單位名稱」及「檔案名稱」');
+      if (!pages.length) return showToast('請先貼上至少一張截圖');
+
+      const btn = document.getElementById('saveAlbumBtn'); btn.disabled = true; btn.textContent = '儲存中...';
       try {
-        if (existingToday && (existingToday.photos || []).length + compressedPhotos.length <= 8) {
-          await db.collection(COLLECTION_NAME).doc(existingToday.id).update({
-            photos: [...(existingToday.photos || []), ...compressedPhotos],
-            updatedAt: Date.now()
-          });
-        } else {
-          const docId = 'rep-' + Date.now();
-          await db.collection(COLLECTION_NAME).doc(docId).set({
-            site: siteVal,
-            assignee: '',
-            date: today,
-            timeRange: '',
-            status: '需跟進',
-            title: `現場相片紀錄 (${compressedPhotos.length}張)`,
-            docs: [],
-            docName: '',
-            docUrl: '',
-            summary: '',
-            followup: '',
-            followupLogs: [],
-            photos: compressedPhotos,
-            createdAt: Date.now(),
-            updatedAt: Date.now()
+        const albumId = currentAlbumId || ('alb-' + Date.now());
+        await db.collection(ALBUMS_COL).doc(albumId).set({ site, title, date, pageCount: pages.length, linkedReportId: linkedReportId || '', updatedAt: Date.now() });
+
+        const oldPages = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').get();
+        const delBatch = db.batch(); oldPages.docs.forEach(d => delBatch.delete(d.ref)); await delBatch.commit();
+
+        for (let i = 0; i < pages.length; i++) {
+          const p = pages[i];
+          await db.collection(ALBUMS_COL).doc(albumId).collection('pages').doc(`p_${String(i).padStart(3,'0')}`).set({
+            id: p.id, order: i, raw: p.shapes?.length ? p.raw : '', rendered: p.rendered || p.raw, shapes: p.shapes || [], note: p.note || ''
           });
         }
-        document.getElementById('siteFilter').value = siteVal;
-        showToast(`已成功上傳 ${compressedPhotos.length} 張相片`);
-      } catch (e) {
-        showToast('上傳失敗（單次建議不超過 6 張）');
-      }
+        currentAlbumId = albumId;
+        const newUrl = new URL(window.location.href); newUrl.search = `?albumId=${albumId}`;
+        window.history.replaceState({}, '', newUrl);
+
+        // 自動掛回總報告右側文件欄
+        const albumSharePath = `album.html?view=public&albumId=${albumId}`;
+        const docLabel = `📷 ${title} (${pages.length}頁)`;
+        let targetRepDoc = null;
+        if (linkedReportId) {
+          const d = await db.collection(REPORTS_COL).doc(linkedReportId).get();
+          if (d.exists) targetRepDoc = d;
+        }
+        if (!targetRepDoc) {
+          const q = await db.collection(REPORTS_COL).where('site', '==', site).get();
+          const match = q.docs.find(d => d.data().date === date) || q.docs[0];
+          if (match) targetRepDoc = match;
+        }
+
+        if (targetRepDoc) {
+          const rData = targetRepDoc.data();
+          const docs = Array.isArray(rData.docs) ? [...rData.docs] : (rData.docName ? [{ name: rData.docName, url: rData.docUrl || '' }] : []);
+          const exIdx = docs.findIndex(d => d.url && d.url.includes(albumId));
+          if (exIdx >= 0) docs[exIdx].name = docLabel; else docs.push({ name: docLabel, url: albumSharePath });
+          await targetRepDoc.ref.update({ docs, updatedAt: Date.now() });
+        } else {
+          const newRepId = 'rep-' + Date.now();
+          linkedReportId = newRepId;
+          await db.collection(REPORTS_COL).doc(newRepId).set({
+            site, assignee: '', date, timeRange: '', status: '需跟進', title,
+            docs: [{ name: docLabel, url: albumSharePath }], docName: docLabel, docUrl: albumSharePath,
+            summary: `共 ${pages.length} 頁截圖標記紀錄`, followup: '', followupLogs: [], photos: [],
+            createdAt: Date.now(), updatedAt: Date.now()
+          });
+        }
+        document.getElementById('statusTag').textContent = '✓ 已儲存並掛入總報告';
+        showToast('已儲存並自動掛入總報告！');
+      } catch (err) {
+        console.error(err);
+        showToast('儲存失敗：' + err.message);
+      } finally { btn.disabled = false; btn.textContent = '儲存並掛入報告'; }
     }
 
-    function compressImage(file) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const img = new Image();
-          img.onload = () => {
-            const maxDim = 900;
-            let w = img.width, h = img.height;
-            if (w > maxDim || h > maxDim) {
-              if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-              else { w = Math.round(w * maxDim / h); h = maxDim; }
-            }
-            const off = document.createElement('canvas');
-            off.width = w; off.height = h;
-            off.getContext('2d').drawImage(img, 0, 0, w, h);
-            resolve(off.toDataURL('image/jpeg', 0.68));
-          };
-          img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      });
+    function buildPrintView() {
+      const site = document.getElementById('albumSite').value || '未命名單位';
+      const title = document.getElementById('albumTitle').value || '截圖標記紀錄';
+      const date = document.getElementById('albumDate').value || '';
+      document.getElementById('printReportView').innerHTML = `
+        <div style="border-bottom:2px solid #0F172A;padding-bottom:10px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline;">
+          <div><div style="font-size:18px;font-weight:700;">築匠設計 ARTISAN STUDIO — ${escapeHtml(title)}</div><div style="font-weight:600;margin-top:4px;">單位：${escapeHtml(site)}</div></div>
+          <div style="font-size:12px;color:#64748B;">日期：${escapeHtml(date)}（共 ${pages.length} 頁）</div>
+        </div>
+        ${pages.map((p, i) => `<div class="print-page">
+          <img src="${p.rendered || p.raw}" />
+          <div style="padding:8px 12px;border-top:1px solid #E2E8F0;font-size:13px;"><b>#${i+1}</b> ${escapeHtml(p.note || '')}</div>
+        </div>`).join('')}`;
     }
 
-    // 一鍵匯出 / 另存 PDF
-    function exportToPdf() {
-      const siteVal = document.getElementById('siteFilter').value;
-      const dateVal = document.getElementById('dateFilter').value;
-      document.getElementById('printSiteTitle').textContent = siteVal === 'ALL'
-        ? '全部單位現場相片總覽'
-        : `單位：${siteVal}${dateVal !== 'ALL' ? ' ｜ 日期：' + dateVal : ''}`;
-      document.getElementById('printDateStr').textContent = `列印日期：${new Date().toISOString().split('T')[0]}`;
-      window.print();
+    function exportPdf() { buildPrintView(); window.print(); }
+
+    function copyAlbumLink() {
+      if (!currentAlbumId) return showToast('請先按「儲存並掛入報告」再複製連結');
+      const u = new URL('album.html', window.location.href); u.search = `?view=public&albumId=${currentAlbumId}`;
+      navigator.clipboard.writeText(u.toString()).then(() => showToast('已複製此截圖檔獨立 Link'));
     }
 
-    // 複製相簿重點記錄到剪貼簿
     function copyAlbumSummary() {
-      const siteVal = document.getElementById('siteFilter').value;
-      const entries = getFilteredPhotoEntries();
-      const shareUrl = new URL(window.location.href);
-      shareUrl.search = siteVal !== 'ALL' ? `?view=public&site=${encodeURIComponent(siteVal)}` : '?view=public';
-
-      const lines = [`【築匠設計 現場相簿重點】${siteVal === 'ALL' ? '全部單位' : siteVal}（共 ${entries.length} 張相片）`];
-      entries.forEach((item, idx) => {
-        lines.push(`#${idx + 1} [${item.date}] ${item.title}${item.photo.note ? ' — ' + item.photo.note : ''}`);
-      });
-      lines.push(`相簿及 PDF 檢視：${shareUrl.toString()}`);
-      copyText(lines.join('\n'), '已複製相簿重點記錄');
+      const site = document.getElementById('albumSite').value || '';
+      const title = document.getElementById('albumTitle').value || '截圖標記';
+      const lines = [`【築匠設計 截圖重點】${site} — ${title} (${pages.length}頁)`];
+      pages.forEach((p, i) => { if (p.note) lines.push(`#${i+1} ${p.note}`); });
+      if (currentAlbumId) { const u = new URL('album.html', window.location.href); u.search = `?view=public&albumId=${currentAlbumId}`; lines.push(`檔案連結：${u.toString()}`); }
+      navigator.clipboard.writeText(lines.join('\n')).then(() => showToast('已複製重點記錄'));
     }
 
-    function copyAlbumShareLink() {
-      const siteVal = document.getElementById('siteFilter').value;
-      const url = new URL(window.location.href);
-      url.search = siteVal !== 'ALL' ? `?view=public&site=${encodeURIComponent(siteVal)}` : '?view=public';
-      copyText(url.toString(), siteVal !== 'ALL' ? `已複製「${siteVal}」相簿分享 Link` : '已複製總相簿 Link');
-    }
+    function showToast(m) { const el = document.getElementById('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2200); }
+    function escapeHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-    function copyText(text, msg) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast(msg));
-      } else {
-        const ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        showToast(msg);
-      }
-    }
-
-    function openLightbox(idx) {
-      const entries = getFilteredPhotoEntries();
-      const item = entries[idx];
-      if (!item) return;
-      document.getElementById('lbTitle').textContent = `${item.site} — ${item.title}`;
-      document.getElementById('lbImg').src = item.photo.base64Annotated || item.photo.base64Raw;
-      document.getElementById('lbNote').textContent = item.photo.note || '無相片說明';
-      document.getElementById('lbMeta').textContent = `${item.date} (#${idx + 1})`;
-      document.getElementById('lightboxModal').classList.remove('hidden');
-    }
-
-    function closeLightbox() { document.getElementById('lightboxModal').classList.add('hidden'); }
-
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.classList.remove('hidden');
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 2200);
-    }
-
-    function escapeHtml(str) { return !str ? '' : String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    startSync();
+    init();
   </script>
 </body>
 </html>
