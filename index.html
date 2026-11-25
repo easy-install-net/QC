@@ -25,6 +25,10 @@
 
     .btn-orange { background: #EA580C; color: #FFF; border: 1px solid #EA580C; border-radius: 5px; font-size: 13px; font-weight: 600; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .btn-orange:hover { background: #C2410C; border-color: #C2410C; }
+    .btn-frameless-orange { background: none; color: #EA580C; border: none; border-radius: 4px; font-size: 13px; font-weight: 700; padding: 3px 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+    .btn-frameless-orange:hover { background: #FFEDD5; color: #C2410C; }
+    .btn-boxed-link { background: #FFF; color: #1D4ED8; border: 1px solid #93C5FD; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 4px 9px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .btn-boxed-link:hover { background: #EFF6FF; }
     .btn-wa { background: #059669; color: #FFF; border: none; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 5px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
     .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 5px; font-size: 13px; padding: 4px 8px; cursor: pointer; }
@@ -41,25 +45,25 @@
 
     /* 搜尋列獨立一行，唔同頂欄或按鈕疊住 */
     .filter-zone { background: #F1F5F9; padding: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filter-zone .search-wrap { flex: 1 1 260px; min-width: 180px; }
+    .filter-zone .search-wrap { flex: 1 1 280px; min-width: 180px; }
 
     /* 單位報告區（淺色分區 + 橙色左線） */
     .site-card { background: #FFFFFF; border-left: 4px solid #EA580C; margin: 14px 0; }
     .site-header { background: #FFFBEB; padding: 10px 16px; border-bottom: 1px solid #FDE68A; }
     .site-body { padding: 14px 16px; }
 
-    /* 左欄放日期、時段、狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
+    /* 左欄放日期、時段、加框狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
     .entry-row { display: flex; gap: 16px; align-items: flex-start; }
     .entry-row + .entry-row { margin-top: 16px; padding-top: 16px; border-top: 1px solid #E2E8F0; }
-    .step-left { width: 132px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; padding-top: 2px; }
+    .step-left { width: 136px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
     .step-right { flex: 1; min-width: 0; border-left: 1px solid #E2E8F0; padding-left: 16px; }
     .entry-title { font-size: 15px; font-weight: 700; color: #0F172A; }
     .entry-summary { color: #1E293B; white-space: pre-line; margin-top: 6px; font-size: 14px; line-height: 1.65; }
 
-    /* 文檔／截圖檔放喺工程內容下方，清晰易睇 */
-    .docs-strip { margin-top: 10px; padding: 8px 12px; background: #F8FAFC; border-left: 3px solid #94A3B8; display: flex; flex-direction: column; gap: 5px; }
-    .docs-strip-title { font-size: 12px; font-weight: 700; color: #475569; }
+    /* 文檔／截圖檔放喺工程內容下方，無多餘小標題，支援直接更換／刪除 */
+    .docs-strip { margin-top: 10px; padding: 8px 12px; background: #F8FAFC; border-left: 3px solid #94A3B8; display: flex; flex-direction: column; gap: 6px; }
     .doc-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .doc-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
     .inline-edit-form { display: flex; flex-direction: column; gap: 8px; }
     .inline-edit-top { display: grid; grid-template-columns: 165px 1fr 1fr; gap: 8px; align-items: center; }
@@ -70,11 +74,12 @@
       .inline-edit-top { grid-template-columns: 1fr; }
     }
 
-    .st-label { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
-    .st-todo { color: #EA580C; }
-    .st-appoint { color: #1D4ED8; }
-    .st-wait { color: #B45309; }
-    .st-done { color: #047857; }
+    /* 有制框嘅狀態顯示 */
+    .st-pill { font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; background: #FFF; }
+    .st-todo { color: #EA580C; background: #FFF7ED; }
+    .st-appoint { color: #1D4ED8; background: #EFF6FF; }
+    .st-wait { color: #B45309; background: #FFFBEB; }
+    .st-done { color: #047857; background: #ECFDF5; }
     .sync-ok { color: #047857; font-size: 12px; font-weight: 600; }
     .sync-err { color: #DC2626; font-size: 12px; font-weight: 600; }
 
@@ -82,7 +87,7 @@
     .thumb-box { width: 64px; height: 64px; overflow: hidden; flex-shrink: 0; background: #F1F5F9; display: block; border: 1px solid #CBD5E1; }
     .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-    /* 有留言／跟進先顯示，清晰分區 */
+    /* 有留言／跟進先顯示，唔顯示「暫無跟進」 */
     .fu-area { margin-top: 10px; padding: 8px 12px; background: #FFFBEB; border-left: 3px solid #EA580C; font-size: 13px; }
     .fu-log { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #FDE68A; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 13px; }
 
@@ -131,7 +136,6 @@
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
       <div class="row" id="adminHeaderBtns">
-        <a href="album.html" target="_blank" class="btn-secondary">截圖工作台 ↗</a>
         <button type="button" onclick="openEditor()" class="btn-orange">+ 新增報告</button>
       </div>
       <div class="row hidden" id="standaloneHeaderBtns">
@@ -462,7 +466,7 @@
             </div>
             <div class="row">
               <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange || '')}</span>
-              <span class="st-label ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span>
+              <span class="st-pill ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span>
             </div>
           </div>
           <div class="site-body">
@@ -471,7 +475,6 @@
 
             ${docs.filter(d => !d.url.includes('albumId=')).length ? `
               <div class="docs-strip">
-                <div class="docs-strip-title">相關文件</div>
                 ${docs.filter(d => !d.url.includes('albumId=')).map(d => `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue">📄 ${escapeHtml(d.name)} ↗</a></div>`).join('')}
               </div>
             ` : ''}
@@ -691,6 +694,53 @@
       return [];
     }
 
+    async function replaceReportDoc(reportId, idx, e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep) return;
+      const docs = [...getDocsList(rep)];
+      if (!docs[idx]) return;
+
+      if (file.type === 'application/pdf' && file.size <= 650 * 1024) {
+        const rd = new FileReader();
+        rd.onload = async ev => {
+          docs[idx] = { name: file.name, url: ev.target.result };
+          await db.collection(COLLECTION_NAME).doc(reportId).update({
+            docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+          });
+          showToast('已更換檔案');
+        };
+        rd.readAsDataURL(file);
+        return;
+      }
+
+      const newUrl = prompt('輸入新連結／檔案網址：', docs[idx].url || '');
+      if (newUrl === null) return;
+      const newName = prompt('修改檔案名稱：', file.name || docs[idx].name || '');
+      if (newName === null) return;
+      docs[idx] = { name: newName.trim() || file.name || '附件檔案', url: newUrl.trim() };
+      await db.collection(COLLECTION_NAME).doc(reportId).update({
+        docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+      });
+      showToast('已更換連結');
+    }
+
+    async function removeReportDoc(reportId, idx) {
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep) return;
+      const docs = [...getDocsList(rep)];
+      const target = docs[idx];
+      if (!target) return;
+      if (!confirm(`確定要刪除「${target.name}」嗎？`)) return;
+      docs.splice(idx, 1);
+      await db.collection(COLLECTION_NAME).doc(reportId).update({
+        docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+      });
+      showToast('已刪除文檔');
+    }
+
     function parseTimeRange(str) {
       const m = (str || '').match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
       return m ? { start: m[1].padStart(5, '0'), end: m[2].padStart(5, '0') } : { start: '', end: '' };
@@ -804,26 +854,31 @@
             </div>`;
           }
 
-          /* 文檔／截圖檔放喺工程內容下方 */
-          const docsHtml = docs.length ? `<div class="docs-strip"><div class="docs-strip-title">文檔 / 截圖檔</div>
-            ${docs.map(d => {
-              if (!d.url) return `<div class="t-meta">${escapeHtml(d.name)}</div>`;
+          /* 文檔／截圖檔放喺工程內容下方，無小標題，支援直接更換／刪除 */
+          const docsHtml = docs.length ? `<div class="docs-strip">
+            ${docs.map((d, dIdx) => {
               const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
               return `<div class="doc-item-row">
-                <a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>
-                ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange no-print">改圖</a>` : ''}
+                ${d.url
+                  ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
+                  : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
+                ${!IS_PUBLIC ? `<div class="doc-actions no-print">
+                  ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : ''}
+                  <label class="btn-link" style="cursor:pointer;"><span>換</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
+                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="btn-link danger">刪</button>
+                </div>` : ''}
               </div>`;
             }).join('')}
           </div>` : '';
 
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
-          /* 左欄放日期、時段、狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
+          /* 左欄放日期、時段、加框狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
           return `<div class="entry-row">
             <div class="step-left">
               <div class="t-mono" style="font-weight:700;">${escapeHtml(r.date)}</div>
               ${r.timeRange ? `<div class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</div>` : ''}
-              <div>${!IS_PUBLIC ? `<button type="button" onclick="cycleStatus('${r.id}')" class="btn-link st-label ${stCls}" style="text-decoration:none;padding-left:0;">${escapeHtml(r.status)} ↻</button>` : `<span class="st-label ${stCls}">${escapeHtml(r.status)}</span>`}</div>
+              <div>${!IS_PUBLIC ? `<button type="button" onclick="cycleStatus('${r.id}')" class="st-pill ${stCls}" style="cursor:pointer;">${escapeHtml(r.status)} ↻</button>` : `<span class="st-pill ${stCls}">${escapeHtml(r.status)}</span>`}</div>
               ${!IS_PUBLIC ? `<div class="no-print"><button type="button" onclick="openFollowupModal('${r.id}','comment')" class="btn-link orange" style="padding-left:0;">+ 留言</button></div>` : ''}
             </div>
             <div class="step-right">
@@ -852,12 +907,12 @@
             <div class="row">
               <span class="t-site">${escapeHtml(g.site)}</span>
               ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!IS_PUBLIC ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print">改名</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print">✏️ 改名</button>` : ''}
             </div>
             ${!IS_PUBLIC ? `
               <div class="row no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-orange">+ 加工作日期</button>
-                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-link blue">截圖工作台 ↗</button>
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-frameless-orange">+ 加工作日期</button>
+                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-boxed-link">截圖工作台 ↗</button>
                 <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="btn-wa">💬 Share</button>
               </div>
             ` : ''}
