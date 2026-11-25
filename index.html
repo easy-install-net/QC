@@ -57,7 +57,7 @@
           <div class="grid-3">
             <div>
               <label class="field-label">屋苑 / 單位 *</label>
-              <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput()" onfocus="onFieldSiteInput()" class="input-ui" />
+              <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput(); renderSameSiteQuickBox();" onfocus="onFieldSiteInput()" class="input-ui" />
               <div id="siteSuggestBox" class="site-suggest-box hidden"></div>
             </div>
             <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
@@ -96,6 +96,8 @@
             </div>
             <div id="docRowsContainer" style="display:flex;flex-direction:column;gap:5px;"></div>
           </div>
+
+          <div id="sameSiteQuickBox" class="same-site-box hidden"></div>
         </div>
 
         <div class="editor-band">
@@ -163,16 +165,16 @@
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
         <div style="padding-bottom:8px;border-bottom:1px solid #E2E8F0;display:flex;flex-direction:column;gap:6px;">
-          <div style="font-weight:700;font-size:12.5px;">1. 修改名稱 / @負責人</div>
-          <div><label class="field-label">單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
+          <div style="font-weight:700;font-size:12.5px;">1. 批量修改名稱 / @負責人</div>
+          <div><label class="field-label">正確單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
           <div><label class="field-label">@負責人</label><input type="text" id="manageNewAssignee" class="input-ui t-meta" /></div>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitRenameSite()" class="btn-orange">儲存修改</button>
+            <button type="button" onclick="submitRenameSite()" class="btn-orange">批量儲存修改</button>
           </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:6px;">
-          <div style="font-weight:700;font-size:12.5px;">2. 合併去另一個現有地址（執返打錯字）</div>
+          <div style="font-weight:700;font-size:12.5px;">2. 合併去另一個現有地址（需輸入 "Y" 確認）</div>
           <div class="t-meta muted" id="mergeHintText"></div>
           <select id="manageMergeTarget" class="input-ui t-meta"></select>
           <div style="display:flex;justify-content:flex-end;">
@@ -249,7 +251,6 @@
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
     let managingOldSite = '';
 
-    /* 時間表分頁、日期範圍及輸出狀態 */
     let schedulePage = 0;
     let scheduleRangeStart = '';
     let scheduleRangeEnd = '';
@@ -267,9 +268,9 @@
     const canvas = document.getElementById('annotCanvas');
     const ctx = canvas.getContext('2d');
 
-    function confirmYesAction(promptMsg) {
-      const ans = prompt(`${promptMsg}\n請輸入 "yes" 確認：`);
-      return ans !== null && ans.trim().toLowerCase() === 'yes';
+    function confirmYAction(promptMsg) {
+      const ans = prompt(`${promptMsg}\n請輸入 "Y" 確認：`);
+      return ans !== null && ans.trim().toUpperCase() === 'Y';
     }
 
     function isTypingInputTarget(el) {
@@ -340,7 +341,7 @@
       }
 
       box.innerHTML = `
-        <div class="site-suggest-title">${val ? '入過的同類型 / 相似地址（點選直接套用）：' : '現有單位（點選直接套用）：'}</div>
+        <div class="site-suggest-title">${val ? '現有相似地址（點選直接套用）：' : '現有單位（點選直接套用）：'}</div>
         <div class="site-suggest-list">
           ${matched.map(s => `<button type="button" onclick="pickSuggestedSite('${escapeAttr(s)}')" class="site-suggest-item">${escapeHtml(s)}</button>`).join('')}
         </div>`;
@@ -353,6 +354,79 @@
       const assEl = document.getElementById('fieldAssignee');
       if (found && !assEl.value.trim()) assEl.value = found.assignee;
       document.getElementById('siteSuggestBox').classList.add('hidden');
+      renderSameSiteQuickBox();
+    }
+
+    /* 同單位其他日期快速加減區 */
+    function renderSameSiteQuickBox() {
+      const box = document.getElementById('sameSiteQuickBox');
+      if (!box) return;
+      const siteVal = (document.getElementById('fieldSite').value || '').trim();
+      if (!siteVal) { box.classList.add('hidden'); return; }
+
+      const others = reports
+        .filter(r => r.site === siteVal && r.id !== editingReportId)
+        .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      box.innerHTML = `
+        <div class="row-between">
+          <span class="t-meta" style="font-weight:700;color:#9A3412;">同單位其他日期工作（快速加減）</span>
+          <div class="row">
+            <input type="date" id="quickAddOtherDate" value="${todayStr}" class="input-ui" style="width:auto;height:24px;padding:1px 5px;font-size:12px;" />
+            <button type="button" onclick="quickAddOtherDateWork()" class="btn-orange" style="height:24px;padding:1px 7px;font-size:12px;">+ 加此日</button>
+          </div>
+        </div>
+        ${others.length ? others.map(o => `
+          <div class="same-site-item">
+            <div class="same-site-item-info" title="${escapeHtml(`${o.date || ''} ${o.timeRange || ''} — ${o.title || ''}`)}">
+              <b class="t-mono">${escapeHtml(o.date || '')}</b>
+              ${o.timeRange ? `<span class="muted t-mono">${escapeHtml(o.timeRange)}</span>` : ''}
+              <span>— ${escapeHtml(o.title || '未命名')}</span>
+            </div>
+            <div class="row" style="gap:3px;flex-shrink:0;">
+              <button type="button" onclick="openEditor('${o.id}')" class="btn-link orange" style="font-size:12px;">改</button>
+              <button type="button" onclick="quickDeleteOtherDateWork('${o.id}')" class="btn-link danger" style="font-size:12px;">減</button>
+            </div>
+          </div>
+        `).join('') : `<div class="t-meta muted">此單位暫無其他日期紀錄</div>`}
+      `;
+      box.classList.remove('hidden');
+    }
+
+    async function quickAddOtherDateWork() {
+      const site = (document.getElementById('fieldSite').value || '').trim();
+      const dateVal = document.getElementById('quickAddOtherDate')?.value || new Date().toISOString().split('T')[0];
+      const titleVal = (document.getElementById('fieldTitle').value || '').trim() || `${dateVal} 現場跟進`;
+      if (!site) return showToast('請先填寫單位名稱');
+
+      const newId = 'rep-' + Date.now();
+      await db.collection(COLLECTION_NAME).doc(newId).set({
+        site,
+        assignee: (document.getElementById('fieldAssignee').value || '').trim(),
+        date: dateVal,
+        timeRange: '',
+        title: titleVal,
+        docs: [], docName: '', docUrl: '',
+        summary: '', followup: '', followupLogs: [],
+        photoMeta: [], photos: [],
+        createdAt: Date.now(), updatedAt: Date.now()
+      });
+      renderSameSiteQuickBox();
+      showToast(`已新增 ${dateVal} 紀錄`);
+    }
+
+    async function quickDeleteOtherDateWork(targetId) {
+      const target = reports.find(r => r.id === targetId);
+      const label = target ? `${target.date || ''} — ${target.title || ''}` : '此條紀錄';
+      if (!confirmYAction(`確定刪走同單位紀錄「${label}」嗎？`)) return;
+      if (target && Array.isArray(target.photoMeta)) {
+        target.photoMeta.forEach(m => db.collection(PHOTOS_COL).doc(m.id).delete().catch(() => {}));
+      }
+      await db.collection(COLLECTION_NAME).doc(targetId).delete();
+      renderSameSiteQuickBox();
+      showToast('已減除紀錄');
     }
 
     document.addEventListener('click', (e) => {
@@ -441,6 +515,9 @@
         reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateSiteFilterOptions();
         renderCurrentView();
+        if (!document.getElementById('editorModal').classList.contains('hidden')) {
+          renderSameSiteQuickBox();
+        }
       }, () => setSyncStatus('離線', false));
     }
 
@@ -508,7 +585,6 @@
       });
     }
 
-    /* 時間表：近10日上下頁、幾時至幾時範圍設定、輸出、加內容 / 詳編 */
     function getScheduleDayGroups(filtered) {
       const dayMap = {};
       filtered.forEach(r => {
@@ -525,12 +601,6 @@
           date: dKey,
           items: dayMap[dKey].sort((a, b) => (a.timeRange || '').localeCompare(b.timeRange || '') || (a.createdAt || 0) - (b.createdAt || 0))
         }));
-    }
-
-    function getDefaultRecentTenStartIndex(totalDays) {
-      if (totalDays <= SCHEDULE_PAGE_SIZE) return 0;
-      const todayStr = new Date().toISOString().split('T')[0];
-      return 0;
     }
 
     function buildScheduleExportText(dayGroups) {
@@ -671,16 +741,18 @@
           const encSite = encodeURIComponent(sName);
 
           return `<div class="schedule-slot-row">
+            <div class="schedule-time-col">
+              <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
+            </div>
             <div class="schedule-slot-main">
               <div class="schedule-slot-top">
-                <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
                 <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="只顯示此地址工作紀錄">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
             </div>
-            ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="openEditor('${r.id}')" class="btn-link orange">加內容 / 詳編</button>
+            ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
+              <button type="button" onclick="openEditor('${r.id}')" class="btn-link orange">加內容</button>
             </div>` : ''}
           </div>`;
         }).join('');
@@ -977,7 +1049,7 @@
       const docs = [...getDocsList(rep)];
       const target = docs[idx];
       if (!target) return;
-      if (!confirmYesAction(`確定要刪除文檔「${target.name}」嗎？`)) return;
+      if (!confirmYAction(`確定要刪除文檔「${target.name}」嗎？`)) return;
       docs.splice(idx, 1);
       await db.collection(COLLECTION_NAME).doc(reportId).update({
         docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
@@ -1035,14 +1107,14 @@
       const sel = document.getElementById('siteFilter');
       if (sel.value === managingOldSite) sel.value = newSite;
       closeSiteManageModal();
-      showToast('已更新單位資料');
+      showToast('已批量更新單位資料');
     }
 
     async function submitMergeSite() {
       const targetSite = document.getElementById('manageMergeTarget').value;
       if (!targetSite) return showToast('請先選擇要合併過去的目標地址');
       const itemsToMerge = reports.filter(r => r.site === managingOldSite);
-      if (!confirmYesAction(`確定將「${managingOldSite}」（${itemsToMerge.length} 條紀錄）全部合併去「${targetSite}」嗎？`)) return;
+      if (!confirmYAction(`確定將「${managingOldSite}」（${itemsToMerge.length} 條紀錄）全部合併去「${targetSite}」嗎？`)) return;
 
       const targetRefItem = reports.find(r => r.site === targetSite && r.assignee);
       const batch = db.batch();
@@ -1126,7 +1198,7 @@
             return `<div class="entry-row">
               <div class="inline-edit-form">
                 <div class="inline-edit-top">
-                  <div class="grid-2" style="gap:4px;"><input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" /></div>
+                  <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
                   <div class="grid-2" style="gap:4px;"><input type="time" id="ie-ts-${r.id}" value="${pt.start}" class="input-ui t-meta" style="padding:2px 4px;" /><input type="time" id="ie-te-${r.id}" value="${pt.end}" class="input-ui t-meta" style="padding:2px 4px;" /></div>
                   <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
                 </div>
@@ -1190,7 +1262,7 @@
             </div>
             ${!IS_PUBLIC ? `
               <div class="site-header-actions no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add" title="加日期">⊕</button>
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add" title="加日期">+ 加</button>
                 <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-album" title="截圖台">圖</button>
                 <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-share" title="Share">分</button>
               </div>
@@ -1253,8 +1325,19 @@
       e.target.value = '';
     }
 
-    function openEditorForSite(site, ass) { openEditor(null); document.getElementById('fieldSite').value = site; document.getElementById('fieldAssignee').value = ass || ''; document.getElementById('siteSuggestBox').classList.add('hidden'); }
-    function openEditorForDate(dateStr) { openEditor(null); if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr; }
+    function openEditorForSite(site, ass) {
+      openEditor(null);
+      document.getElementById('fieldSite').value = site;
+      document.getElementById('fieldAssignee').value = ass || '';
+      document.getElementById('siteSuggestBox').classList.add('hidden');
+      renderSameSiteQuickBox();
+    }
+
+    function openEditorForDate(dateStr) {
+      openEditor(null);
+      if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr;
+      renderSameSiteQuickBox();
+    }
 
     async function openEditor(id = null) {
       editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
@@ -1292,6 +1375,7 @@
         document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
         renderDocRows();
       }
+      renderSameSiteQuickBox();
       renderPhotoThumbList();
       if (draftPhotos.length) selectPhotoForAnnotation(0);
     }
@@ -1357,7 +1441,7 @@
 
     function removeDraftPhoto(e, i) {
       e.stopPropagation();
-      if (!confirmYesAction(`確定要刪除第 #${i + 1} 張相片嗎？`)) return;
+      if (!confirmYAction(`確定要刪除第 #${i + 1} 張相片嗎？`)) return;
       draftPhotos.splice(i, 1); selectedShapeIdx = -1;
       activePhotoIndex = draftPhotos.length ? Math.min(i, draftPhotos.length - 1) : -1;
       renderPhotoThumbList();
@@ -1622,7 +1706,7 @@
     }
 
     async function deleteReport(id) {
-      if (!confirmYesAction('確定刪除此工作紀錄？')) return;
+      if (!confirmYAction('確定刪除此工作紀錄？')) return;
       const r = reports.find(x => x.id === id);
       if (r && Array.isArray(r.photoMeta)) {
         r.photoMeta.forEach(m => db.collection(PHOTOS_COL).doc(m.id).delete().catch(() => {}));
