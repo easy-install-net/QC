@@ -90,15 +90,25 @@
   .schedule-time-col { width: 68px; padding-right: 6px; }
 }
 
+/* 編輯彈窗各區深淺底色與關聯文件行防貼邊 */
+.band-sec-1 { background: #F8FAFC; }
+.band-sec-2 { background: #FFFFFF; }
+.band-sec-3 { background: #E2E8F0; }
+.doc-edit-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto 22px;
+  gap: 5px; align-items: center; min-width: 0; max-width: 100%;
+}
+.doc-edit-row > * { min-width: 0; max-width: 100%; }
+
 /* 同單位其他日期快速加減區 */
 .same-site-box {
-  margin-top: 8px; padding: 7px 9px; background: #FFF7ED;
-  border: 1px solid #FDBA74; border-left: 3px solid #EA580C; border-radius: 4px;
+  margin-top: 8px; padding: 7px 9px; background: #FFFBEB;
+  border: 1px solid #FDE68A; border-left: 3px solid #EA580C; border-radius: 4px;
   display: flex; flex-direction: column; gap: 5px; min-width: 0; max-width: 100%;
 }
 .same-site-item {
   display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 3px;
+  background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 3px;
   padding: 4px 6px; font-size: 12px; min-width: 0; max-width: 100%;
 }
 .same-site-item-info { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
