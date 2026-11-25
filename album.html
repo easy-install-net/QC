@@ -138,9 +138,9 @@
     const ctx = canvas.getContext('2d');
     const scrollBox = document.getElementById('canvasScrollBox');
 
-    function confirmYesAction(promptMsg) {
-      const ans = prompt(`${promptMsg}\n請輸入 "yes" 確認：`);
-      return ans !== null && ans.trim().toLowerCase() === 'yes';
+    function confirmYAction(promptMsg) {
+      const ans = prompt(`${promptMsg}\n請輸入 "Y" 確認：`);
+      return ans !== null && ans.trim().toUpperCase() === 'Y';
     }
 
     function isInputFocused(el) {
@@ -261,7 +261,7 @@
 
     async function deleteCurrentAlbumWithConfirm() {
       if (!currentAlbumId) return;
-      if (!confirmYesAction('確定要刪除整份截圖檔嗎？')) return;
+      if (!confirmYAction('確定要刪除整份截圖檔嗎？')) return;
       const albId = currentAlbumId;
       try {
         const pSnap = await db.collection(ALBUMS_COL).doc(albId).collection('pages').get();
@@ -431,13 +431,13 @@
 
     function deletePage(e, i) {
       e.stopPropagation();
-      if (!confirmYesAction(`確定要刪除第 #${i + 1} 頁嗎？`)) return;
+      if (!confirmYAction(`確定要刪除第 #${i + 1} 頁嗎？`)) return;
       removePageAtIndex(i);
     }
 
     function deleteCurrentPageWithConfirm() {
       if (activeIdx < 0) return;
-      if (!confirmYesAction(`確定要刪除目前第 #${activeIdx + 1} 頁嗎？`)) return;
+      if (!confirmYAction(`確定要刪除目前第 #${activeIdx + 1} 頁嗎？`)) return;
       removePageAtIndex(activeIdx);
     }
 
