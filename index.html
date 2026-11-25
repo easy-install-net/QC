@@ -34,13 +34,6 @@
       <select id="siteFilter" onchange="renderCurrentView()" class="select-site-lg">
         <option value="ALL">全部單位</option>
       </select>
-      <select id="statusFilter" onchange="renderCurrentView()" class="select-status-sm">
-        <option value="ALL">全部狀態</option>
-        <option value="需跟進">需跟進</option>
-        <option value="已約期">已約期</option>
-        <option value="待確認">待確認</option>
-        <option value="已完成">已完成</option>
-      </select>
       <div class="search-eight-wrap">
         <input type="text" id="searchInput" oninput="renderCurrentView()" class="search-eight-input" />
         <span class="search-lens-icon" aria-hidden="true">🔍</span>
@@ -64,20 +57,14 @@
           <div class="grid-3">
             <div><label class="field-label">屋苑 / 單位 *</label><input type="text" id="fieldSite" class="input-ui" /></div>
             <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
-            <div>
-              <label class="field-label">狀態</label>
-              <select id="fieldStatus" class="select-ui" style="width:100%;">
-                <option value="需跟進">需跟進</option><option value="已約期">已約期</option><option value="待確認">待確認</option><option value="已完成">已完成</option>
-              </select>
-            </div>
+            <div><label class="field-label">項目重點標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
           </div>
-          <div class="grid-3" style="margin-top:8px;">
+          <div class="grid-2" style="margin-top:8px;">
             <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
               <label class="field-label">時段（開始 / 結束）</label>
               <div class="grid-2"><input type="time" id="fieldTimeStart" class="input-ui" /><input type="time" id="fieldTimeEnd" class="input-ui" /></div>
             </div>
-            <div><label class="field-label">項目重點標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
           </div>
         </div>
 
@@ -164,15 +151,7 @@
       <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
         <div id="followupTargetTitle" class="t-meta" style="font-weight:600;background:#F8FAFC;padding:6px 8px;"></div>
         <div id="followupHistoryList" style="max-height:160px;overflow-y:auto;background:#F8FAFC;padding:6px;"></div>
-        <div class="grid-2">
-          <div><label class="field-label">名字 *</label><input type="text" id="fuAuthor" class="input-ui t-meta" /></div>
-          <div>
-            <label class="field-label">更新狀態</label>
-            <select id="fuNewStatus" class="select-ui" style="width:100%;">
-              <option value="KEEP">保持原狀態</option><option value="已約期">已約期</option><option value="需跟進">需跟進</option><option value="待確認">待確認</option><option value="已完成">已完成</option>
-            </select>
-          </div>
-        </div>
+        <div><label class="field-label">名字 *</label><input type="text" id="fuAuthor" class="input-ui t-meta" /></div>
         <div><label class="field-label">留言內容 *</label><textarea id="fuMessage" rows="2" class="input-ui"></textarea></div>
       </div>
       <div class="modal-foot">
@@ -214,14 +193,14 @@
     const COLLECTION_NAME = 'artisan_qc_reports';
     const PHOTOS_COL = 'artisan_qc_photos';
     const ALBUMS_COL = 'artisan_qc_albums';
-    const STATUS_ORDER = ['需跟進', '已約期', '待確認', '已完成'];
+    const PERIOD_OPTIONS = ['上午', '下午', '全日'];
 
     const urlParams = new URLSearchParams(window.location.search);
     const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
     const SINGLE_SITE = urlParams.get('site') || '';
     const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
 
-    // 預設以「時間表（按日期遞增）」做入口，亦可切去「工作紀錄」搜約會加內容
+    // 預設以「時間表（按日期遞增）」做入口，亦可切去「工作紀錄」搜尋加內容
     let activeMainView = urlParams.get('tab') === 'reports' ? 'reports' : 'schedule';
     let reports = [];
     let singleReportData = null;
@@ -261,16 +240,6 @@
       } else {
         renderReportList();
       }
-    }
-
-    function jumpToWorkRecordSearch(queryText, siteName = 'ALL') {
-      switchMainView('reports');
-      if (siteName && siteName !== 'ALL') {
-        const sf = document.getElementById('siteFilter');
-        if ([...sf.options].some(o => o.value === siteName)) sf.value = siteName;
-      }
-      document.getElementById('searchInput').value = queryText || '';
-      renderReportList();
     }
 
     function bootApp() {
@@ -366,12 +335,10 @@
     function getFilteredReports() {
       const kw = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
       const siteVal = SINGLE_SITE || document.getElementById('siteFilter').value;
-      const statusVal = document.getElementById('statusFilter').value;
 
       return reports.filter(r => {
         if (!r.site && !r.title) return false;
         if (siteVal !== 'ALL' && r.site !== siteVal) return false;
-        if (!SINGLE_SITE && statusVal !== 'ALL' && r.status !== statusVal) return false;
         if (!SINGLE_SITE && kw) {
           const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${r.timeRange||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
@@ -380,7 +347,28 @@
       });
     }
 
-    /* 時間表：按日期每天遞增自動呈現，只要有新增工作紀錄就即時列出嗰日地盤清單 */
+    function detectPeriodValue(timeRangeStr) {
+      const raw = (timeRangeStr || '').trim();
+      if (PERIOD_OPTIONS.includes(raw)) return raw;
+      const m = raw.match(/^(\d{1,2}):(\d{2})/);
+      if (m) {
+        const hr = parseInt(m[1], 10);
+        if (hr < 12) return '上午';
+        return '下午';
+      }
+      return '全日';
+    }
+
+    async function updateSchedulePeriod(reportId, newPeriod) {
+      if (!PERIOD_OPTIONS.includes(newPeriod)) return;
+      await db.collection(COLLECTION_NAME).doc(reportId).update({
+        timeRange: newPeriod,
+        updatedAt: Date.now()
+      });
+      showToast(`已改為${newPeriod}`);
+    }
+
+    /* 時間表：按日期每天遞增自動呈現，兩行版面、可揀上午/下午/全日、無狀態、保留詳編 */
     function renderScheduleTimeline() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
@@ -397,7 +385,6 @@
         dayMap[dKey].push(r);
       });
 
-      // 每天遞增排列（由早到晚）
       const sortedDates = Object.keys(dayMap).sort((a, b) => a.localeCompare(b));
 
       container.innerHTML = sortedDates.map(dKey => {
@@ -405,19 +392,24 @@
         const encDate = encodeURIComponent(dKey);
 
         const slotHtml = items.map(r => {
-          const stCls = getStatusClass(r.status);
-          const searchKey = `${r.site || ''} ${r.title || ''}`.trim();
+          const curPeriod = detectPeriodValue(r.timeRange);
+          const rawTime = (r.timeRange || '').trim();
+          const showExactRange = rawTime && !PERIOD_OPTIONS.includes(rawTime);
+
           return `<div class="schedule-slot-row">
             <div class="schedule-slot-main">
-              <span class="t-mono schedule-time-tag">${escapeHtml(r.timeRange || '全日')}</span>
-              <span class="schedule-site-name">${escapeHtml(r.site || '未分類單位')}</span>
-              ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-              <span class="schedule-topic">${escapeHtml(r.title || '')}</span>
-              <span class="st-pill ${stCls}">${escapeHtml(r.status)}</span>
+              <div class="schedule-slot-top">
+                <span class="t-mono schedule-time-tag">${escapeHtml(showExactRange ? rawTime : curPeriod)}</span>
+                ${!IS_PUBLIC ? `<select aria-label="時段" onchange="updateSchedulePeriod('${r.id}', this.value)" class="schedule-period-select no-print">
+                  ${PERIOD_OPTIONS.map(p => `<option value="${p}" ${curPeriod === p ? 'selected' : ''}>${p}</option>`).join('')}
+                </select>` : ''}
+                <span class="schedule-site-name">${escapeHtml(r.site || '未分類單位')}</span>
+                ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+              </div>
+              ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="jumpToWorkRecordSearch(decodeURIComponent('${encodeURIComponent(searchKey)}'))" class="btn-link blue">搜此約會加內容 →</button>
-              <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
+              <button type="button" onclick="openEditor('${r.id}')" class="btn-link orange">詳編</button>
             </div>` : ''}
           </div>`;
         }).join('');
@@ -453,7 +445,6 @@
             </div>
             <div class="row">
               <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange || '')}</span>
-              <span class="st-pill ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span>
             </div>
           </div>
           <div class="site-body">
@@ -466,7 +457,7 @@
               </div>
             ` : ''}
 
-            ${renderFollowupBlock(r, true)}
+            ${renderFollowupBlock(r)}
             <div id="standalonePhotosWrap"></div>
             <div id="embeddedAlbumsWrap"></div>
           </div>
@@ -668,13 +659,6 @@
       if (sites.includes(cur)) select.value = cur;
     }
 
-    function getStatusClass(st) {
-      if (st === '需跟進') return 'st-todo';
-      if (st === '已約期') return 'st-appoint';
-      if (st === '待確認') return 'st-wait';
-      return 'st-done';
-    }
-
     function getDocsList(r) {
       if (Array.isArray(r.docs) && r.docs.length > 0) return r.docs;
       if (r.docName) return [{ name: r.docName, url: r.docUrl || '' }];
@@ -735,13 +719,6 @@
 
     function formatTimeRange(s, e) { return (s && e) ? `${s} - ${e}` : (s || e || ''); }
 
-    async function cycleStatus(id) {
-      const rep = reports.find(r => r.id === id); if (!rep) return;
-      const next = STATUS_ORDER[(STATUS_ORDER.indexOf(rep.status) + 1) % STATUS_ORDER.length];
-      await db.collection(COLLECTION_NAME).doc(id).update({ status: next, updatedAt: Date.now() });
-      showToast(`狀態：${next}`);
-    }
-
     async function quickEditSiteHeader(oldSite, oldAssignee) {
       const newSite = prompt('修改單位名稱：', oldSite);
       if (!newSite || !newSite.trim()) return;
@@ -770,8 +747,8 @@
 
     function toggleExpandSite(s) { expandedSites.has(s) ? expandedSites.delete(s) : expandedSites.add(s); renderReportList(); }
 
-    /* 有留言／跟進先顯示，唔顯示「暫無跟進」 */
-    function renderFollowupBlock(r, cleanReadOnly = false) {
+    /* 有留言／跟進先顯示 */
+    function renderFollowupBlock(r) {
       const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
       const hasFollowupText = Boolean(r.followup && r.followup.trim());
       if (!hasFollowupText && logs.length === 0) return '';
@@ -809,7 +786,7 @@
         const rowsHtml = vis.map(r => {
           const thumbs = getReportThumbs(r);
           const pCount = thumbs.length;
-          const docs = getDocsList(r), stCls = getStatusClass(r.status);
+          const docs = getDocsList(r);
           const singleUrl = getSingleReportUrl(r.id);
 
           if (!IS_PUBLIC && inlineEditId === r.id) {
@@ -828,7 +805,6 @@
             </div>`;
           }
 
-          /* 文檔／截圖檔放喺工程內容下方，無小標題，支援直接更換／刪除 */
           const docsHtml = docs.length ? `<div class="docs-strip">
             ${docs.map((d, dIdx) => {
               const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
@@ -847,12 +823,10 @@
 
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
-          /* 左欄放日期、時段、加框狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
           return `<div class="entry-row">
             <div class="step-left">
               <div class="t-mono" style="font-weight:700;">${escapeHtml(r.date)}</div>
               ${r.timeRange ? `<div class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</div>` : ''}
-              <div>${!IS_PUBLIC ? `<button type="button" onclick="cycleStatus('${r.id}')" class="st-pill ${stCls}" style="cursor:pointer;">${escapeHtml(r.status)} ↻</button>` : `<span class="st-pill ${stCls}">${escapeHtml(r.status)}</span>`}</div>
               ${!IS_PUBLIC ? `<div class="no-print"><button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange" style="padding-left:0;">+ 留言</button></div>` : ''}
             </div>
             <div class="step-right">
@@ -870,7 +844,7 @@
               ${r.summary ? `<div class="entry-summary">${escapeHtml(r.summary)}</div>` : ''}
               ${thumbsHtml}
               ${docsHtml}
-              ${renderFollowupBlock(r, IS_PUBLIC)}
+              ${renderFollowupBlock(r)}
             </div>
           </div>`;
         }).join('');
@@ -904,7 +878,6 @@
       document.getElementById('followupModalTitle').textContent = '新增留言';
       document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
       document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
-      document.getElementById('fuNewStatus').value = 'KEEP';
       document.getElementById('fuMessage').value = '';
       const logs = r.followupLogs || [];
       document.getElementById('followupHistoryList').innerHTML = logs.length
@@ -916,13 +889,11 @@
 
     async function submitFollowupLog() {
       const author = document.getElementById('fuAuthor').value.trim(), message = document.getElementById('fuMessage').value.trim();
-      const newSt = document.getElementById('fuNewStatus').value;
       if (!author || !message) return showToast('請填寫名字及內容');
       localStorage.setItem('artisan_user_name', author);
       const now = new Date(), timeStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
       const rep = reports.find(r => r.id === followupTargetId);
       const upd = { followupLogs: [...(rep.followupLogs||[]), { id: 'log-'+Date.now(), author, message, createdAtStr: timeStr }], updatedAt: Date.now() };
-      if (newSt !== 'KEEP') upd.status = newSt;
       await db.collection(COLLECTION_NAME).doc(followupTargetId).update(upd);
       closeFollowupModal(); showToast('已同步');
     }
@@ -965,7 +936,7 @@
         document.getElementById('fieldSite').value = r.site || ''; document.getElementById('fieldAssignee').value = r.assignee || '';
         document.getElementById('fieldDate').value = r.date || '';
         const pt = parseTimeRange(r.timeRange); document.getElementById('fieldTimeStart').value = pt.start; document.getElementById('fieldTimeEnd').value = pt.end;
-        document.getElementById('fieldStatus').value = r.status || '需跟進'; document.getElementById('fieldTitle').value = r.title || '';
+        document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
         renderDocRows();
@@ -976,7 +947,7 @@
       } else {
         document.getElementById('editorModalTitle').textContent = '新增單位';
         ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
-        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0]; document.getElementById('fieldStatus').value = '需跟進';
+        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
         renderDocRows();
       }
       renderPhotoThumbList();
@@ -1292,7 +1263,7 @@
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
           date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
           timeRange: formatTimeRange(document.getElementById('fieldTimeStart').value, document.getElementById('fieldTimeEnd').value),
-          status: document.getElementById('fieldStatus').value, title,
+          title,
           docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
           summary: document.getElementById('fieldSummary').value.trim(),
           followup: document.getElementById('fieldFollowup').value.trim(),
