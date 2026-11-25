@@ -57,7 +57,7 @@
           <div class="grid-3">
             <div>
               <label class="field-label">屋苑 / 單位 *</label>
-              <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput(); renderSameSiteQuickBox();" onfocus="onFieldSiteInput()" class="input-ui" />
+              <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput()" onfocus="onFieldSiteInput()" class="input-ui" />
               <div id="siteSuggestBox" class="site-suggest-box hidden"></div>
             </div>
             <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
@@ -146,8 +146,6 @@
           </div>
 
           <div id="photoThumbList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;"></div>
-
-          <div id="sameSiteQuickBox" class="same-site-box hidden"></div>
         </div>
       </div>
       <div class="modal-foot">
@@ -231,7 +229,19 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    try {
+      if (firebase.firestore.persistentLocalCache && firebase.firestore.persistentMultipleTabManager) {
+        db.settings({
+          localCache: firebase.firestore.persistentLocalCache({
+            tabManager: firebase.firestore.persistentMultipleTabManager()
+          })
+        });
+      } else {
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+      }
+    } catch (_) {
+      db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    }
 
     const COLLECTION_NAME = 'artisan_qc_reports';
     const PHOTOS_COL = 'artisan_qc_photos';
@@ -354,78 +364,6 @@
       const assEl = document.getElementById('fieldAssignee');
       if (found && !assEl.value.trim()) assEl.value = found.assignee;
       document.getElementById('siteSuggestBox').classList.add('hidden');
-      renderSameSiteQuickBox();
-    }
-
-    function renderSameSiteQuickBox() {
-      const box = document.getElementById('sameSiteQuickBox');
-      if (!box) return;
-      const siteVal = (document.getElementById('fieldSite').value || '').trim();
-      if (!siteVal) { box.classList.add('hidden'); return; }
-
-      const others = reports
-        .filter(r => r.site === siteVal && r.id !== editingReportId)
-        .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0));
-
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      box.innerHTML = `
-        <div class="row-between">
-          <span class="t-meta" style="font-weight:700;color:#9A3412;">同單位其他日期工作（快速加減）</span>
-          <div class="row">
-            <input type="date" id="quickAddOtherDate" value="${todayStr}" class="input-ui" style="width:auto;height:24px;padding:1px 5px;font-size:12px;" />
-            <button type="button" onclick="quickAddOtherDateWork()" class="btn-orange" style="height:24px;padding:1px 7px;font-size:12px;">+ 加此日</button>
-          </div>
-        </div>
-        ${others.length ? others.map(o => `
-          <div class="same-site-item">
-            <div class="same-site-item-info" title="${escapeHtml(`${o.date || ''} ${o.timeRange || ''} — ${o.title || ''}`)}">
-              <b class="t-mono">${escapeHtml(o.date || '')}</b>
-              ${o.timeRange ? `<span class="muted t-mono">${escapeHtml(o.timeRange)}</span>` : ''}
-              <span>— ${escapeHtml(o.title || '未命名')}</span>
-            </div>
-            <div class="row" style="gap:3px;flex-shrink:0;">
-              <button type="button" onclick="openEditor('${o.id}')" class="btn-link orange" style="font-size:12px;">改</button>
-              <button type="button" onclick="quickDeleteOtherDateWork('${o.id}')" class="btn-link danger" style="font-size:12px;">減</button>
-            </div>
-          </div>
-        `).join('') : `<div class="t-meta muted">此單位暫無其他日期紀錄</div>`}
-      `;
-      box.classList.remove('hidden');
-    }
-
-    async function quickAddOtherDateWork() {
-      const site = (document.getElementById('fieldSite').value || '').trim();
-      const dateVal = document.getElementById('quickAddOtherDate')?.value || new Date().toISOString().split('T')[0];
-      const titleVal = (document.getElementById('fieldTitle').value || '').trim() || `${dateVal} 現場跟進`;
-      if (!site) return showToast('請先填寫單位名稱');
-
-      const newId = 'rep-' + Date.now();
-      await db.collection(COLLECTION_NAME).doc(newId).set({
-        site,
-        assignee: (document.getElementById('fieldAssignee').value || '').trim(),
-        date: dateVal,
-        timeRange: '',
-        title: titleVal,
-        docs: [], docName: '', docUrl: '',
-        summary: '', followup: '', followupLogs: [],
-        photoMeta: [], photos: [],
-        createdAt: Date.now(), updatedAt: Date.now()
-      });
-      renderSameSiteQuickBox();
-      showToast(`已新增 ${dateVal} 紀錄`);
-    }
-
-    async function quickDeleteOtherDateWork(targetId) {
-      const target = reports.find(r => r.id === targetId);
-      const label = target ? `${target.date || ''} — ${target.title || ''}` : '此條紀錄';
-      if (!confirmYAction(`確定刪走同單位紀錄「${label}」嗎？`)) return;
-      if (target && Array.isArray(target.photoMeta)) {
-        target.photoMeta.forEach(m => db.collection(PHOTOS_COL).doc(m.id).delete().catch(() => {}));
-      }
-      await db.collection(COLLECTION_NAME).doc(targetId).delete();
-      renderSameSiteQuickBox();
-      showToast('已減除紀錄');
     }
 
     document.addEventListener('click', (e) => {
@@ -514,9 +452,6 @@
         reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         updateSiteFilterOptions();
         renderCurrentView();
-        if (!document.getElementById('editorModal').classList.contains('hidden')) {
-          renderSameSiteQuickBox();
-        }
       }, () => setSyncStatus('離線', false));
     }
 
@@ -751,7 +686,7 @@
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-              <button type="button" onclick="openEditor('${r.id}')" class="btn-link orange">加內容</button>
+              <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="btn-link orange">加內容</button>
             </div>` : ''}
           </div>`;
         }).join('');
@@ -1329,13 +1264,11 @@
       document.getElementById('fieldSite').value = site;
       document.getElementById('fieldAssignee').value = ass || '';
       document.getElementById('siteSuggestBox').classList.add('hidden');
-      renderSameSiteQuickBox();
     }
 
     function openEditorForDate(dateStr) {
       openEditor(null);
       if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr;
-      renderSameSiteQuickBox();
     }
 
     async function openEditor(id = null) {
@@ -1374,7 +1307,6 @@
         document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
         renderDocRows();
       }
-      renderSameSiteQuickBox();
       renderPhotoThumbList();
       if (draftPhotos.length) selectPhotoForAnnotation(0);
     }
