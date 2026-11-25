@@ -103,10 +103,7 @@ input.input-ui, select.input-ui { height: 28px; }
 .modal-foot { background: #E2E8F0; border-top: 1px solid #CBD5E1; padding: 7px 11px; display: flex; justify-content: flex-end; gap: 6px; }
 
 /* 各區域深淺底色分層 */
-.editor-band { background: #F1F5F9; padding: 8px 10px; border-bottom: 1px solid #CBD5E1; min-width: 0; max-width: 100%; }
-.editor-band-warm { background: #FFFBEB; }
-.editor-band-light { background: #FFFFFF; }
-.editor-band-cool { background: #E2E8F0; }
+.editor-band { padding: 8px 10px; border-bottom: 1px solid #CBD5E1; min-width: 0; max-width: 100%; }
 .editor-band:last-child { border-bottom: none; }
 .editor-band-title { font-size: 12.5px; font-weight: 700; color: #EA580C; margin-bottom: 6px; }
 
