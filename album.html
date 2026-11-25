@@ -10,10 +10,14 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif; background: #F1F5F9; color: #0F172A; font-size: 14px; margin: 0; }
     .topbar { background: #FFF; border-bottom: 1px solid #CBD5E1; padding: 8px 14px; position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
     .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .tool-sep { width: 1px; height: 20px; background: #CBD5E1; margin: 0 2px; }
+
     .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #0F172A; border-radius: 6px; font-size: 12px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-wa { background: #059669; color: #FFF; border: 1px solid #059669; border-radius: 6px; font-size: 12px; font-weight: 600; padding: 6px 10px; cursor: pointer; }
     .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 9px; cursor: pointer; text-decoration: none; }
+    .btn-mode { background: #EFF6FF; color: #1E40AF; border: 1px solid #93C5FD; border-radius: 6px; font-size: 12px; font-weight: 700; padding: 5px 10px; cursor: pointer; }
+    .btn-mode.shoot-mode { background: #FFF7ED; color: #9A3412; border-color: #FDBA74; }
     .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FECACA; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 8px; cursor: pointer; }
     .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
     .btn-link { background: none; border: none; font-size: 12px; text-decoration: underline; cursor: pointer; color: #1D4ED8; padding: 2px 4px; }
@@ -21,27 +25,29 @@
     .input-ui:focus { outline: none; border-color: #0F172A; background: #FFEDD5; }
     .select-ui { border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 8px; font-size: 12px; background: #FFF; color: #0F172A; }
 
-    .meta-bar { background: #FFF; border-bottom: 1px solid #E2E8F0; padding: 8px 14px; display: grid; grid-template-columns: 2fr 2fr 140px; gap: 8px; }
-    .workspace { display: flex; height: calc(100vh - 108px); overflow: hidden; }
-    .sidebar { width: 185px; background: #FFF; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-    .stage { flex: 1; min-width: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    /* 分區 1：基本資料列 */
+    .meta-bar { background: #FFF; border-bottom: 1px solid #E2E8F0; padding: 8px 14px; display: grid; grid-template-columns: 2fr 2fr 145px; gap: 8px; }
+    /* 分區 2 & 3：左側頁數欄 + 右側大型畫布工作區 */
+    .workspace { display: flex; min-height: calc(100vh - 104px); }
+    .sidebar { width: 175px; background: #FFF; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    .stage { flex: 1; min-width: 0; padding: 10px 14px 18px; display: flex; flex-direction: column; gap: 8px; }
+    .panel-card { background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 10px; }
 
     @media (max-width: 720px) {
       .meta-bar { grid-template-columns: 1fr; }
-      .workspace { flex-direction: column; height: auto; }
+      .workspace { flex-direction: column; }
       .sidebar { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #CBD5E1; }
       .page-thumb { width: 110px; flex-shrink: 0; }
     }
 
-    .paste-zone { border: 2px dashed #94A3B8; background: #F8FAFC; border-radius: 8px; padding: 8px 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
     .page-thumb { border: 2px solid #CBD5E1; border-radius: 6px; overflow: hidden; cursor: pointer; background: #F8FAFC; }
     .page-thumb.active { border-color: #0F172A; box-shadow: 0 0 0 2px #0F172A; }
-    .page-thumb img { width: 100%; height: 88px; object-fit: cover; display: block; }
+    .page-thumb img { width: 100%; height: 84px; object-fit: cover; display: block; }
 
-    /* 修正置中與放大縮小捲動容器 */
+    /* 分區 3：大型畫布視窗與置中 */
     .canvas-scroll {
       width: 100%;
-      height: 58vh;
+      height: 66vh;
       background: #CBD5E1;
       border: 1px solid #94A3B8;
       border-radius: 6px;
@@ -51,17 +57,8 @@
       padding: 12px;
       touch-action: none;
     }
-    .canvas-stage-inner {
-      position: relative;
-      display: inline-block;
-      line-height: 0;
-    }
-    canvas {
-      display: block;
-      cursor: crosshair;
-      background: #FFF;
-      box-shadow: 0 4px 16px rgba(15,23,42,0.18);
-    }
+    .canvas-stage-inner { position: relative; display: inline-block; line-height: 0; }
+    canvas { display: block; cursor: crosshair; background: #FFF; box-shadow: 0 4px 16px rgba(15,23,42,0.18); }
     canvas.move-cursor { cursor: grab; }
     canvas.move-cursor:active { cursor: grabbing; }
     canvas.pan-cursor { cursor: grab; }
@@ -90,11 +87,11 @@
     <div class="row">
       <a href="index.html" id="backToMainBtn" class="btn-secondary">← 總報告</a>
       <b style="font-size:15px;" id="topHeaderTitle">築匠設計 ARTISAN STUDIO</b>
-      <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:240px;">
+      <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:230px;">
         <option value="">📂 開啟已儲存截圖檔...</option>
       </select>
       <button type="button" id="newBlankAlbumBtn" onclick="startNewAlbum()" class="btn-secondary">+ 開新檔</button>
-      <span id="statusTag" style="font-size:12px;color:#64748B;">隨時按 Ctrl+V 貼圖</span>
+      <span id="statusTag" style="font-size:12px;color:#64748B;"></span>
     </div>
     <div class="row" id="adminAlbumBtns">
       <button type="button" onclick="copyAlbumWhatsApp('client')" class="btn-wa">💬 WhatsApp 客人</button>
@@ -109,6 +106,7 @@
   </header>
 
   <div id="editShell" class="no-print">
+    <!-- 1. 基本資料區 -->
     <div class="meta-bar">
       <input type="text" id="albumSite" list="siteSuggestions" placeholder="屋苑 / 單位名稱 *（自動關聯至總報告）" class="input-ui" />
       <datalist id="siteSuggestions"></datalist>
@@ -117,26 +115,32 @@
     </div>
 
     <div class="workspace">
+      <!-- 2. 頁數縮圖欄 -->
       <aside class="sidebar" id="thumbSidebar"></aside>
 
+      <!-- 3. 大型標記與貼圖工作區 -->
       <section class="stage">
-        <div class="paste-zone">
-          <div><b>⚡ 貼圖：</b>空白處按 <b>Ctrl+V</b> 開新頁；或用 <b>📌 貼小圖落此頁</b> 疊加局部圖</div>
+        <!-- 模式切換與貼圖來源列 -->
+        <div class="panel-card row" style="justify-content:space-between;">
           <div class="row">
-            <button type="button" onclick="pasteStickerToCurrentPage()" class="btn-primary">📌 貼小圖落此頁</button>
-            <button type="button" onclick="pasteFromClipboardBtn()" class="btn-secondary">📋 貼做新頁</button>
-            <label class="btn-secondary" style="cursor:pointer;"><span>📷 拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleAlbumFiles(event)" /></label>
-            <label class="btn-secondary" style="cursor:pointer;"><span>🖼 批量圖片</span><input type="file" accept="image/*" multiple class="hidden" onchange="handleAlbumFiles(event)" /></label>
+            <button type="button" id="captureModeToggleBtn" onclick="toggleCaptureMode()" class="btn-mode">📌 貼小圖模式</button>
+            <span id="captureModeHint" style="font-size:12px;color:#475569;">Ctrl+V 或選相會疊加落目前呢張圖（可拖位）</span>
+          </div>
+          <div class="row">
+            <button type="button" onclick="pasteFromClipboard()" class="btn-primary">📋 貼上剪貼簿</button>
+            <label class="btn-secondary" style="cursor:pointer;"><span>📷 影相</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleAlbumFiles(event)" /></label>
+            <label class="btn-secondary" style="cursor:pointer;"><span>🖼 揀相片</span><input type="file" accept="image/*" multiple class="hidden" onchange="handleAlbumFiles(event)" /></label>
             <button type="button" onclick="addBlankPage()" class="btn-secondary">+ 空白頁</button>
-            <button type="button" onclick="deleteCurrentPageWithConfirm()" class="btn-danger-outline">🗑 刪此頁</button>
           </div>
         </div>
 
         <div id="canvasArea" class="hidden" style="display:flex;flex-direction:column;gap:8px;">
-          <div class="row" style="justify-content:space-between;background:#FFF;padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;">
+          <!-- 分組工具列：操作模式 | 畫圖與標記 | 縮放與頁面管理 -->
+          <div class="panel-card row" style="justify-content:space-between;">
             <div class="row">
               <button type="button" onclick="setTool('move')" id="t-move" class="btn-secondary" title="點選文字、小圖或標記即可拖曳移動">✋ 移動</button>
-              <button type="button" onclick="setTool('pan')" id="t-pan" class="btn-secondary" title="放大後拖曳畫面查看細節">🔍 拖動檢視</button>
+              <button type="button" onclick="setTool('pan')" id="t-pan" class="btn-secondary" title="放大後拖曳畫面查看細節">🔍 拖動</button>
+              <div class="tool-sep"></div>
               <button type="button" onclick="setTool('freehand')" id="t-freehand" class="btn-secondary btn-active">✎ 手繪</button>
               <button type="button" onclick="setTool('circle')" id="t-circle" class="btn-secondary">◯ 線圈</button>
               <button type="button" onclick="setTool('arrow')" id="t-arrow" class="btn-secondary">↗ 箭咀</button>
@@ -147,7 +151,10 @@
                 <option value="0.034">字體：大</option>
                 <option value="0.046">字體：特大</option>
               </select>
-              <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" placeholder="輸入文字後點畫布貼上..." class="input-ui hidden" style="width:175px;padding:4px 8px;" />
+              <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot active-color" style="background:#DC2626;"></button>
+              <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
+              <button type="button" onclick="setColor('rgba(234,179,8,0.95)', this)" class="color-dot" style="background:#EAB308;"></button>
+              <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
             </div>
 
             <div class="row">
@@ -155,16 +162,15 @@
               <span id="zoomPercentLabel" class="zoom-pill">100%</span>
               <button type="button" onclick="stepZoom(0.25)" class="btn-secondary" title="放大">＋</button>
               <button type="button" onclick="setZoomLevel(1)" class="btn-secondary" title="適應畫面">適應</button>
-              <span style="color:#CBD5E1">|</span>
-              <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot active-color" style="background:#DC2626;"></button>
-              <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
-              <button type="button" onclick="setColor('rgba(234,179,8,0.95)', this)" class="color-dot" style="background:#EAB308;"></button>
-              <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
+              <div class="tool-sep"></div>
               <button type="button" id="delSelBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
               <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
               <button type="button" onclick="clearShapes()" class="btn-secondary">全清</button>
+              <button type="button" onclick="deleteCurrentPageWithConfirm()" class="btn-danger-outline">🗑 刪此頁</button>
             </div>
           </div>
+
+          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" placeholder="輸入文字或尺寸後，點擊下方畫布貼上..." class="input-ui hidden" style="padding:5px 10px;" />
 
           <div class="canvas-scroll" id="canvasScrollBox">
             <div class="canvas-stage-inner">
@@ -202,6 +208,8 @@
 
     let currentAlbumId = null, linkedReportId = null;
     let pages = [], activeIdx = -1;
+    // 'sticker' = 編輯中貼小圖落目前頁；'shoot' = 影相／連續拍開新頁
+    let captureMode = 'sticker';
     let tool = 'freehand', color = 'rgba(220,38,38,0.92)', fontScale = 0.024;
     let zoomLevel = 1, fitScale = 1, baseCanvasW = 1000, baseCanvasH = 700;
     let selectedIdx = -1, drawing = false, draggingShape = false, panningView = false;
@@ -216,6 +224,26 @@
       if (!el) return false;
       const tag = el.tagName;
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
+    function applyCaptureModeUI() {
+      const btn = document.getElementById('captureModeToggleBtn');
+      const hint = document.getElementById('captureModeHint');
+      if (captureMode === 'shoot') {
+        btn.textContent = '📸 連續拍模式';
+        btn.classList.add('shoot-mode');
+        hint.textContent = '每次影相、揀相或 Ctrl+V 都會自動新增新分頁';
+      } else {
+        btn.textContent = '📌 貼小圖模式';
+        btn.classList.remove('shoot-mode');
+        hint.textContent = 'Ctrl+V 或選相會疊加落目前呢張圖（可直接用「✋ 移動」拖位）';
+      }
+    }
+
+    function toggleCaptureMode() {
+      captureMode = captureMode === 'sticker' ? 'shoot' : 'sticker';
+      applyCaptureModeUI();
+      showToast(captureMode === 'shoot' ? '已切換為「連續拍模式」（每次新增新頁）' : '已切換為「貼小圖模式」（疊加於本頁可拖位）');
     }
 
     async function init() {
@@ -247,8 +275,14 @@
       document.getElementById('albumDate').value = date;
       if (site && !currentAlbumId) document.getElementById('albumTitle').value = `${date.slice(2).replace(/-/g,'')} 截圖標記紀錄`;
 
-      if (currentAlbumId) await loadExistingAlbum(currentAlbumId, isPublic);
-      else renderSidebar();
+      if (currentAlbumId) {
+        captureMode = 'sticker';
+        await loadExistingAlbum(currentAlbumId, isPublic);
+      } else {
+        captureMode = 'shoot';
+        renderSidebar();
+      }
+      applyCaptureModeUI();
     }
 
     window.addEventListener('resize', () => {
@@ -271,7 +305,6 @@
     function setZoomLevel(z) { computeFitAndApplyZoom(z); }
     function stepZoom(delta) { computeFitAndApplyZoom(zoomLevel + delta); }
 
-    // Ctrl + 滾輪放大縮小
     scrollBox.addEventListener('wheel', (e) => {
       if (e.ctrlKey || e.metaKey) {
         e.preventDefault();
@@ -302,6 +335,8 @@
         }
       }
       currentAlbumId = albId;
+      captureMode = 'sticker';
+      applyCaptureModeUI();
       const newUrl = new URL(window.location.href);
       newUrl.search = `?albumId=${encodeURIComponent(albId)}`;
       window.history.replaceState({}, '', newUrl);
@@ -311,11 +346,13 @@
     function startNewAlbum() {
       if (pages.length > 0 && !confirm('確定清空目前畫布並開新截圖檔？')) return;
       currentAlbumId = null; linkedReportId = null; pages = []; activeIdx = -1; selectedIdx = -1;
+      captureMode = 'shoot';
+      applyCaptureModeUI();
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('albumTitle').value = '';
       document.getElementById('albumDate').value = today;
       document.getElementById('historyAlbumSelect').value = '';
-      document.getElementById('statusTag').textContent = '已開新檔，隨時按 Ctrl+V 貼圖';
+      document.getElementById('statusTag').textContent = '已開新檔';
       const newUrl = new URL('album.html', window.location.href);
       window.history.replaceState({}, '', newUrl);
       renderSidebar();
@@ -346,7 +383,6 @@
       }
     }
 
-    // 貼圖監聽：若游標在輸入框打字，則放行貼字而不誤加新分頁
     window.addEventListener('paste', (e) => {
       if (document.getElementById('editShell').classList.contains('hidden')) return;
       if (isInputFocused(document.activeElement) || isInputFocused(e.target)) return;
@@ -354,37 +390,34 @@
       for (const item of items) {
         if (item.type.startsWith('image/')) {
           e.preventDefault();
-          addImageBlob(item.getAsFile(), false);
+          handleIncomingImageFile(item.getAsFile());
           return;
         }
       }
     });
 
-    async function pasteFromClipboardBtn() {
+    async function pasteFromClipboard() {
       try {
         const items = await navigator.clipboard.read();
         for (const item of items) {
           const imgType = item.types.find(t => t.startsWith('image/'));
-          if (imgType) { const blob = await item.getType(imgType); addImageBlob(blob, false); return; }
+          if (imgType) { const blob = await item.getType(imgType); handleIncomingImageFile(blob); return; }
         }
-        showToast('剪貼簿內沒有截圖');
-      } catch (e) { showToast('請直接按鍵盤 Ctrl + V 貼上新截圖頁'); }
+        showToast('剪貼簿內沒有圖片');
+      } catch (e) { showToast('請直接按鍵盤 Ctrl + V 貼上圖片'); }
     }
 
-    // 貼小圖／局部圖落目前呢張圖（唔開新頁，可直接拖曳擺位）
-    async function pasteStickerToCurrentPage() {
-      if (activeIdx < 0) return showToast('請先載入或貼上一張底圖');
-      try {
-        const items = await navigator.clipboard.read();
-        for (const item of items) {
-          const imgType = item.types.find(t => t.startsWith('image/'));
-          if (imgType) { const blob = await item.getType(imgType); addImageBlob(blob, true); return; }
-        }
-        showToast('剪貼簿內沒有小圖可貼上');
-      } catch (e) { showToast('瀏覽器限制讀取剪貼簿，請先按 Ctrl+V 貼入後或改用「批量圖片」'); }
+    function handleAlbumFiles(e) {
+      Array.from(e.target.files || []).forEach(f => handleIncomingImageFile(f));
+      e.target.value = '';
     }
 
-    function handleAlbumFiles(e) { Array.from(e.target.files || []).forEach(f => addImageBlob(f, false)); e.target.value = ''; }
+    function handleIncomingImageFile(file) {
+      if (!file) return;
+      // 若目前係貼小圖模式且已有底圖，貼做小圖落目前頁；否則開新分頁
+      const asSticker = (captureMode === 'sticker' && activeIdx >= 0);
+      addImageBlob(file, asSticker);
+    }
 
     function addImageBlob(file, asStickerOnCurrentPage = false) {
       if (!file) return;
@@ -409,7 +442,7 @@
             selectedIdx = pages[activeIdx].shapes.length - 1;
             syncSelUI();
             redraw(true);
-            showToast('已貼上小圖至本頁！可直接拖曳擺位');
+            showToast('已貼做小圖至本頁！可直接拖曳擺位');
             return;
           }
 
@@ -476,7 +509,6 @@
       document.getElementById('pageNoteInput').value = p.note || '';
       renderSidebar();
 
-      // 預載小圖物件以支援拖曳重繪
       (p.shapes || []).forEach(s => {
         if (s.type === 'image' && s.imgSrc && !s._imgObj) {
           const im = new Image();
