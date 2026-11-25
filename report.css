@@ -1,0 +1,63 @@
+/* 篩選列：+ 新增單位 / 全部單位（放大）/ 全部狀態（小）/ 搜尋列（八字位）+ 🔍 */
+.filter-zone { background: #F1F5F9; padding: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.select-site-lg { border: 1px solid #94A3B8; border-radius: 6px; padding: 7px 11px; font-size: 15px; font-weight: 600; background: #FFF; color: #0F172A; min-height: 38px; }
+.select-site-lg:focus { outline: none; border-color: #EA580C; }
+.select-status-sm { border: 1px solid #CBD5E1; border-radius: 5px; padding: 4px 7px; font-size: 12px; background: #FFF; color: #334155; height: 30px; }
+.select-status-sm:focus { outline: none; border-color: #EA580C; }
+.search-eight-wrap { position: relative; display: inline-flex; align-items: center; width: 8.5em; min-width: 112px; }
+.search-eight-input { border: 1px solid #CBD5E1; border-radius: 5px; padding: 5px 26px 5px 8px; font-size: 13px; background: #FFF; color: #0F172A; width: 100%; height: 32px; font-family: inherit; }
+.search-eight-input:focus { outline: none; border-color: #EA580C; }
+.search-lens-icon { position: absolute; right: 7px; font-size: 13px; color: #64748B; pointer-events: none; line-height: 1; }
+
+/* 單位報告區（淺色分區 + 橙色左線） */
+.site-card { background: #FFFFFF; border-left: 4px solid #EA580C; margin: 14px 0; }
+.site-header { background: #FFFBEB; padding: 10px 16px; border-bottom: 1px solid #FDE68A; }
+.site-body { padding: 14px 16px; }
+
+/* 左欄放日期、時段、加框狀態同 + 留言；右欄直排工程內容、縮圖同文檔 */
+.entry-row { display: flex; gap: 16px; align-items: flex-start; }
+.entry-row + .entry-row { margin-top: 16px; padding-top: 16px; border-top: 1px solid #E2E8F0; }
+.step-left { width: 136px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; padding-top: 2px; }
+.step-right { flex: 1; min-width: 0; border-left: 1px solid #E2E8F0; padding-left: 16px; }
+.entry-title { font-size: 15px; font-weight: 700; color: #0F172A; }
+.entry-summary { color: #1E293B; white-space: pre-line; margin-top: 6px; font-size: 14px; line-height: 1.65; }
+
+/* 文檔／截圖檔放喺工程內容下方，支援直接更換／刪除 */
+.docs-strip { margin-top: 10px; padding: 8px 12px; background: #F8FAFC; border-left: 3px solid #94A3B8; display: flex; flex-direction: column; gap: 6px; }
+.doc-item-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.doc-actions { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+
+.inline-edit-form { display: flex; flex-direction: column; gap: 8px; }
+.inline-edit-top { display: grid; grid-template-columns: 165px 1fr 1fr; gap: 8px; align-items: center; }
+@media (max-width: 640px) {
+  .entry-row { flex-direction: column; gap: 8px; }
+  .step-left { width: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .step-right { border-left: none; padding-left: 0; border-top: 1px dashed #E2E8F0; padding-top: 8px; }
+  .inline-edit-top { grid-template-columns: 1fr; }
+}
+
+/* 有制框嘅狀態顯示 */
+.st-pill { font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; background: #FFF; }
+.st-todo { color: #EA580C; background: #FFF7ED; }
+.st-appoint { color: #1D4ED8; background: #EFF6FF; }
+.st-wait { color: #B45309; background: #FFFBEB; }
+.st-done { color: #047857; background: #ECFDF5; }
+
+.thumbs { display: flex; gap: 8px; overflow-x: auto; margin-top: 10px; padding-bottom: 2px; }
+.thumb-box { width: 64px; height: 64px; overflow: hidden; flex-shrink: 0; background: #F1F5F9; display: block; border: 1px solid #CBD5E1; }
+.thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 有留言／跟進先顯示 */
+.fu-area { margin-top: 10px; padding: 8px 12px; background: #FFFBEB; border-left: 3px solid #EA580C; font-size: 13px; }
+.fu-log { margin-top: 6px; padding-top: 6px; border-top: 1px dashed #FDE68A; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 13px; }
+
+.standalone-photo { border-top: 1px solid #E2E8F0; background: #FFF; margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }
+.standalone-photo img { width: 100%; max-height: 75vh; object-fit: contain; background: #F8FAFC; display: block; }
+
+@media print {
+  body { background: #FFF; }
+  .no-print, .topbar, .filter-zone { display: none !important; }
+  .container { max-width: 100%; padding: 0; }
+  .site-card { margin: 0; }
+  .standalone-photo img { max-height: 460px; }
+}
