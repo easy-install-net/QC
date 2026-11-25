@@ -52,7 +52,7 @@
         <button type="button" onclick="closeEditor()" class="btn-link">關閉 ✕</button>
       </div>
       <div class="modal-body" style="padding:0;">
-        <div class="editor-band">
+        <div class="editor-band band-sec-1">
           <div class="editor-band-title">1. 單位與時間</div>
           <div class="grid-3">
             <div>
@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="editor-band" style="background:#FFF;">
+        <div class="editor-band band-sec-2">
           <div class="editor-band-title">2. 工程內容與文件</div>
           <div style="margin-bottom:6px;"><label class="field-label">檢查要點 / 事項內容</label><textarea id="fieldSummary" rows="3" class="input-ui"></textarea></div>
           <div style="margin-bottom:6px;"><label class="field-label">後續跟進</label><input type="text" id="fieldFollowup" class="input-ui" /></div>
@@ -96,11 +96,9 @@
             </div>
             <div id="docRowsContainer" style="display:flex;flex-direction:column;gap:5px;"></div>
           </div>
-
-          <div id="sameSiteQuickBox" class="same-site-box hidden"></div>
         </div>
 
-        <div class="editor-band">
+        <div class="editor-band band-sec-3">
           <div class="row-between" style="margin-bottom:6px;">
             <div>
               <div class="editor-band-title" style="margin-bottom:1px;">3. 現場相片與標記</div>
@@ -148,6 +146,8 @@
           </div>
 
           <div id="photoThumbList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;"></div>
+
+          <div id="sameSiteQuickBox" class="same-site-box hidden"></div>
         </div>
       </div>
       <div class="modal-foot">
@@ -164,7 +164,7 @@
         <button type="button" onclick="closeSiteManageModal()" class="btn-link">關閉 ✕</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
-        <div style="padding-bottom:8px;border-bottom:1px solid #E2E8F0;display:flex;flex-direction:column;gap:6px;">
+        <div style="padding-bottom:8px;border-bottom:1px solid #CBD5E1;display:flex;flex-direction:column;gap:6px;">
           <div style="font-weight:700;font-size:12.5px;">1. 批量修改名稱 / @負責人</div>
           <div><label class="field-label">正確單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
           <div><label class="field-label">@負責人</label><input type="text" id="manageNewAssignee" class="input-ui t-meta" /></div>
@@ -357,7 +357,6 @@
       renderSameSiteQuickBox();
     }
 
-    /* 同單位其他日期快速加減區 */
     function renderSameSiteQuickBox() {
       const box = document.getElementById('sameSiteQuickBox');
       if (!box) return;
@@ -1307,7 +1306,7 @@
       if (!draftDocs.length) { c.innerHTML = ''; return; }
       c.innerHTML = draftDocs.map((d, i) => {
         const editUrl = getAlbumEditUrl(d.url);
-        return `<div style="display:grid;grid-template-columns:5fr 5fr auto 24px;gap:5px;align-items:center;">
+        return `<div class="doc-edit-row">
           <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" />
           <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" />
           ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : `<span></span>`}
