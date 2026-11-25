@@ -120,12 +120,10 @@
         <span class="t-meta muted" id="headerSubTitle">QC 總報告</span>
         <span id="syncBadge" class="badge" style="background:#F1F5F9;border-color:#E2E8F0;">連線中</span>
       </div>
-      <!-- 內部管理員按鈕列 -->
       <div class="row" id="adminHeaderBtns">
         <a href="album.html" target="_blank" class="btn-secondary">截圖工作台 ↗</a>
         <button type="button" onclick="openEditor()" class="btn-primary">+ 新增報告</button>
       </div>
-      <!-- 公開分享極簡頂欄：只留單一「列印 / 儲存 PDF」掣 -->
       <div class="row hidden" id="standaloneHeaderBtns">
         <button type="button" onclick="window.print()" class="btn-secondary">列印 / 儲存 PDF</button>
       </div>
@@ -197,7 +195,6 @@
         <div><label class="field-label">檢查要點 / 事項內容</label><textarea id="fieldSummary" rows="3" placeholder="輸入檢查內容..." class="input-ui"></textarea></div>
         <div><label class="field-label">後續摘要（可留空）</label><input type="text" id="fieldFollowup" placeholder="例如：待工廠回覆修改確認圖" class="input-ui" /></div>
 
-        <!-- 現場無限相片與可拖曳標記區 -->
         <div style="border-top:1px solid #E2E8F0;padding-top:10px;">
           <div class="row-between" style="margin-bottom:8px;">
             <span style="font-weight:600;">現場相片與標記 <span id="photoCountHint" class="t-meta muted">（支援連續拍照、批量揀相及 Ctrl+V，不限張數）</span></span>
@@ -343,6 +340,12 @@
     const canvas = document.getElementById('annotCanvas');
     const ctx = canvas.getContext('2d');
 
+    function isTypingInputTarget(el) {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
     function bootApp() {
       if (SINGLE_REPORT_ID) {
         enterCleanPublicUI('現場記錄報告');
@@ -394,7 +397,6 @@
       el.className = 'badge ' + (ok ? 'sync-ok' : 'sync-err');
     }
 
-    // 轉換公開截圖檔網址為「工作台編輯網址」
     function getAlbumEditUrl(docUrl) {
       if (!docUrl || !docUrl.includes('albumId=')) return '';
       const m = docUrl.match(/albumId=([^&]+)/);
@@ -626,8 +628,13 @@
 
     window.addEventListener('paste', (e) => {
       if (document.getElementById('editorModal').classList.contains('hidden')) return;
+      if (isTypingInputTarget(document.activeElement) || isTypingInputTarget(e.target)) return;
       for (const item of (e.clipboardData || window.clipboardData).items) {
-        if (item.type.indexOf('image') !== -1) processImageFile(item.getAsFile());
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          processImageFile(item.getAsFile());
+          return;
+        }
       }
     });
 
@@ -787,7 +794,6 @@
             </div>`;
           }
 
-          // 右側文件 / 截圖檔欄（管理員模式下，截圖檔旁邊自動出現「✎ 改圖」掣）
           const docsHtml = docs.length ? `<div class="docs-col"><div class="t-meta muted" style="font-weight:600;margin-bottom:4px;">相關文件 / 圖紙</div>
             ${docs.map(d => {
               if (!d.url) return `<div class="t-meta">${escapeHtml(d.name)}</div>`;
@@ -893,7 +899,6 @@
       closeFollowupModal(); showToast('已同步');
     }
 
-    // 編輯彈窗內亦支援一鍵「✎ 改圖」
     function renderDocRows() {
       const c = document.getElementById('docRowsContainer');
       if (!draftDocs.length) { c.innerHTML = `<div class="t-meta muted">未附加檔案（可開截圖工作台或貼 Google Drive 連結）</div>`; return; }
@@ -1009,7 +1014,9 @@
     }
 
     function removeDraftPhoto(e, i) {
-      e.stopPropagation(); draftPhotos.splice(i, 1); selectedShapeIdx = -1;
+      e.stopPropagation();
+      if (!confirm(`確定要刪除第 #${i + 1} 張相片嗎？`)) return;
+      draftPhotos.splice(i, 1); selectedShapeIdx = -1;
       activePhotoIndex = draftPhotos.length ? Math.min(i, draftPhotos.length - 1) : -1;
       renderPhotoThumbList();
       if (activePhotoIndex >= 0) selectPhotoForAnnotation(activePhotoIndex);
