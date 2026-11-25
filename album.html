@@ -3,75 +3,74 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>築匠設計 — 連續截圖標記工作台</title>
+  <title>築匠設計 — 截圖工作台</title>
   <link rel="icon" href="data:," />
   <style>
     * { box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif; background: #F1F5F9; color: #0F172A; font-size: 14px; margin: 0; }
-    .topbar { background: #FFF; border-bottom: 1px solid #CBD5E1; padding: 8px 14px; position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-    .tool-sep { width: 1px; height: 20px; background: #CBD5E1; margin: 0 2px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif; background: #E2E8F0; color: #0F172A; font-size: 13px; margin: 0; }
 
-    .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #0F172A; border-radius: 6px; font-size: 12px; font-weight: 600; padding: 6px 12px; cursor: pointer; }
+    /* 黑底頂欄 */
+    .topbar { background: #0F172A; color: #F8FAFC; padding: 7px 12px; position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+    .tool-sep { width: 1px; height: 18px; background: #CBD5E1; margin: 0 2px; }
+
+    .btn-primary { background: #2563EB; color: #FFF; border: 1px solid #2563EB; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 4px 10px; cursor: pointer; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-wa { background: #059669; color: #FFF; border: 1px solid #059669; border-radius: 6px; font-size: 12px; font-weight: 600; padding: 6px 10px; cursor: pointer; }
-    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 9px; cursor: pointer; text-decoration: none; }
-    .btn-mode { background: #EFF6FF; color: #1E40AF; border: 1px solid #93C5FD; border-radius: 6px; font-size: 12px; font-weight: 700; padding: 5px 10px; cursor: pointer; }
+    .btn-wa { background: #059669; color: #FFF; border: 1px solid #059669; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 4px 9px; cursor: pointer; }
+    .btn-secondary { background: #FFF; color: #1E293B; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 4px 8px; cursor: pointer; text-decoration: none; }
+    .btn-mode { background: #EFF6FF; color: #1E40AF; border: 1px solid #93C5FD; border-radius: 5px; font-size: 13px; font-weight: 600; padding: 4px 9px; cursor: pointer; }
     .btn-mode.shoot-mode { background: #FFF7ED; color: #9A3412; border-color: #FDBA74; }
-    .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FECACA; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 8px; cursor: pointer; }
+    .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FECACA; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 4px 8px; cursor: pointer; }
     .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
-    .btn-link { background: none; border: none; font-size: 12px; text-decoration: underline; cursor: pointer; color: #1D4ED8; padding: 2px 4px; }
-    .input-ui { border: 1px solid #FDBA74; border-radius: 6px; padding: 6px 10px; font-size: 13px; background: #FFF7ED; color: #0F172A; font-family: inherit; }
-    .input-ui:focus { outline: none; border-color: #0F172A; background: #FFEDD5; }
-    .select-ui { border: 1px solid #CBD5E1; border-radius: 6px; padding: 5px 8px; font-size: 12px; background: #FFF; color: #0F172A; }
+    .btn-link { background: none; border: none; font-size: 13px; text-decoration: underline; cursor: pointer; color: #93C5FD; padding: 2px 4px; }
+    .input-ui { border: 1px solid #CBD5E1; border-radius: 5px; padding: 5px 8px; font-size: 13px; background: #FFF; color: #0F172A; font-family: inherit; }
+    .input-ui:focus { outline: none; border-color: #0F172A; }
+    .select-ui { border: 1px solid #CBD5E1; border-radius: 5px; padding: 4px 7px; font-size: 13px; background: #FFF; color: #0F172A; }
 
-    /* 分區 1：基本資料列 */
-    .meta-bar { background: #FFF; border-bottom: 1px solid #E2E8F0; padding: 8px 14px; display: grid; grid-template-columns: 2fr 2fr 145px; gap: 8px; }
-    /* 分區 2 & 3：左側頁數欄 + 右側大型畫布工作區 */
-    .workspace { display: flex; min-height: calc(100vh - 104px); }
-    .sidebar { width: 175px; background: #FFF; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
-    .stage { flex: 1; min-width: 0; padding: 10px 14px 18px; display: flex; flex-direction: column; gap: 8px; }
-    .panel-card { background: #FFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 8px 10px; }
+    /* 灰底資料列 */
+    .meta-bar { background: #CBD5E1; padding: 6px 12px; display: grid; grid-template-columns: 2fr 2fr 140px; gap: 6px; }
+    .workspace { display: flex; min-height: calc(100vh - 82px); }
+    .sidebar { width: 148px; background: #F8FAFC; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 8px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .stage { flex: 1; min-width: 0; padding: 8px 10px 14px; display: flex; flex-direction: column; gap: 6px; background: #FFF; }
 
     @media (max-width: 720px) {
       .meta-bar { grid-template-columns: 1fr; }
       .workspace { flex-direction: column; }
       .sidebar { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #CBD5E1; }
-      .page-thumb { width: 110px; flex-shrink: 0; }
+      .page-thumb { width: 96px; flex-shrink: 0; }
     }
 
-    .page-thumb { border: 2px solid #CBD5E1; border-radius: 6px; overflow: hidden; cursor: pointer; background: #F8FAFC; }
-    .page-thumb.active { border-color: #0F172A; box-shadow: 0 0 0 2px #0F172A; }
-    .page-thumb img { width: 100%; height: 84px; object-fit: cover; display: block; }
+    .page-thumb { border: 2px solid #E2E8F0; border-radius: 5px; overflow: hidden; cursor: pointer; background: #FFF; }
+    .page-thumb.active { border-color: #0F172A; }
+    .page-thumb img { width: 100%; height: 74px; object-fit: cover; display: block; }
 
-    /* 分區 3：大型畫布視窗與置中 */
+    /* 大型畫布視窗 */
     .canvas-scroll {
       width: 100%;
-      height: 66vh;
-      background: #CBD5E1;
-      border: 1px solid #94A3B8;
-      border-radius: 6px;
+      height: 70vh;
+      background: #E2E8F0;
+      border-radius: 5px;
       overflow: auto;
       display: grid;
       place-items: center;
-      padding: 12px;
+      padding: 8px;
       touch-action: none;
     }
     .canvas-stage-inner { position: relative; display: inline-block; line-height: 0; }
-    canvas { display: block; cursor: crosshair; background: #FFF; box-shadow: 0 4px 16px rgba(15,23,42,0.18); }
-    canvas.move-cursor { cursor: grab; }
-    canvas.move-cursor:active { cursor: grabbing; }
+    canvas { display: block; cursor: grab; background: #FFF; }
+    canvas:active { cursor: grabbing; }
+    canvas.draw-cursor { cursor: crosshair; }
     canvas.pan-cursor { cursor: grab; }
     canvas.pan-cursor:active { cursor: grabbing; }
 
-    .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 0 0 1px #64748B; cursor: pointer; padding: 0; }
-    .color-dot.active-color { box-shadow: 0 0 0 2px #0F172A; transform: scale(1.12); }
-    .zoom-pill { font-size: 12px; font-weight: 700; min-width: 44px; text-align: center; background: #F8FAFC; border: 1px solid #CBD5E1; border-radius: 5px; padding: 4px 6px; }
+    .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 0 0 1px #64748B; cursor: pointer; padding: 0; }
+    .color-dot.active-color { box-shadow: 0 0 0 2px #0F172A; transform: scale(1.1); }
+    .zoom-pill { font-size: 13px; font-weight: 600; min-width: 42px; text-align: center; }
     .hidden { display: none !important; }
-    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #0F172A; color: #FFF; padding: 8px 14px; border-radius: 6px; font-size: 12px; max-width: 90vw; text-align: center; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #0F172A; color: #FFF; padding: 7px 14px; border-radius: 5px; font-size: 13px; max-width: 90vw; text-align: center; }
 
     #printReportView { display: none; padding: 20px 14px 40px; max-width: 920px; margin: 0 auto; }
-    .print-page { border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 18px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; background: #FFF; }
+    .print-page { border: 1px solid #CBD5E1; border-radius: 6px; margin-bottom: 16px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; background: #FFF; }
     .print-page img { width: 100%; max-height: 75vh; object-fit: contain; background: #F8FAFC; display: block; }
     @media print {
       body { background: #FFF; }
@@ -86,12 +85,12 @@
   <header class="topbar no-print">
     <div class="row">
       <a href="index.html" id="backToMainBtn" class="btn-secondary">← 總報告</a>
-      <b style="font-size:15px;" id="topHeaderTitle">築匠設計 ARTISAN STUDIO</b>
-      <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:230px;">
+      <b style="font-size:14px;" id="topHeaderTitle">截圖工作台</b>
+      <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:220px;">
         <option value="">📂 開啟已儲存截圖檔...</option>
       </select>
       <button type="button" id="newBlankAlbumBtn" onclick="startNewAlbum()" class="btn-secondary">+ 開新檔</button>
-      <span id="statusTag" style="font-size:12px;color:#64748B;"></span>
+      <span id="statusTag" style="font-size:12px;color:#CBD5E1;"></span>
     </div>
     <div class="row" id="adminAlbumBtns">
       <button type="button" onclick="copyAlbumWhatsApp('client')" class="btn-wa">💬 WhatsApp 客人</button>
@@ -106,25 +105,21 @@
   </header>
 
   <div id="editShell" class="no-print">
-    <!-- 1. 基本資料區 -->
     <div class="meta-bar">
-      <input type="text" id="albumSite" list="siteSuggestions" placeholder="屋苑 / 單位名稱 *（自動關聯至總報告）" class="input-ui" />
+      <input type="text" id="albumSite" list="siteSuggestions" placeholder="屋苑 / 單位名稱 *" class="input-ui" />
       <datalist id="siteSuggestions"></datalist>
       <input type="text" id="albumTitle" placeholder="檔案名稱 *（例如：261125 生產圖小問題）" class="input-ui" />
       <input type="date" id="albumDate" class="input-ui" />
     </div>
 
     <div class="workspace">
-      <!-- 2. 頁數縮圖欄 -->
       <aside class="sidebar" id="thumbSidebar"></aside>
 
-      <!-- 3. 大型標記與貼圖工作區 -->
       <section class="stage">
-        <!-- 模式切換與貼圖來源列 -->
-        <div class="panel-card row" style="justify-content:space-between;">
+        <div class="row" style="justify-content:space-between;padding-bottom:4px;border-bottom:1px solid #E2E8F0;">
           <div class="row">
             <button type="button" id="captureModeToggleBtn" onclick="toggleCaptureMode()" class="btn-mode">📌 貼小圖模式</button>
-            <span id="captureModeHint" style="font-size:12px;color:#475569;">Ctrl+V 或選相會疊加落目前呢張圖（可拖位）</span>
+            <span id="captureModeHint" style="color:#475569;">貼圖或揀相會疊加落目前呢張圖（可拖位）</span>
           </div>
           <div class="row">
             <button type="button" onclick="pasteFromClipboard()" class="btn-primary">📋 貼上剪貼簿</button>
@@ -134,18 +129,17 @@
           </div>
         </div>
 
-        <div id="canvasArea" class="hidden" style="display:flex;flex-direction:column;gap:8px;">
-          <!-- 分組工具列：操作模式 | 畫圖與標記 | 縮放與頁面管理 -->
-          <div class="panel-card row" style="justify-content:space-between;">
+        <div id="canvasArea" class="hidden" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="row" style="justify-content:space-between;">
             <div class="row">
-              <button type="button" onclick="setTool('move')" id="t-move" class="btn-secondary" title="點選文字、小圖或標記即可拖曳移動">✋ 移動</button>
-              <button type="button" onclick="setTool('pan')" id="t-pan" class="btn-secondary" title="放大後拖曳畫面查看細節">🔍 拖動</button>
+              <button type="button" onclick="setTool('move')" id="t-move" class="btn-secondary btn-active">✋ 移動</button>
+              <button type="button" onclick="setTool('pan')" id="t-pan" class="btn-secondary">🔍 拖動</button>
               <div class="tool-sep"></div>
-              <button type="button" onclick="setTool('freehand')" id="t-freehand" class="btn-secondary btn-active">✎ 手繪</button>
+              <button type="button" onclick="setTool('freehand')" id="t-freehand" class="btn-secondary">✎ 手繪</button>
               <button type="button" onclick="setTool('circle')" id="t-circle" class="btn-secondary">◯ 線圈</button>
               <button type="button" onclick="setTool('arrow')" id="t-arrow" class="btn-secondary">↗ 箭咀</button>
               <button type="button" onclick="setTool('text')" id="t-text" class="btn-secondary">T 打字</button>
-              <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui" title="字體大細">
+              <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui">
                 <option value="0.016">字體：細</option>
                 <option value="0.024" selected>字體：中</option>
                 <option value="0.034">字體：大</option>
@@ -158,10 +152,10 @@
             </div>
 
             <div class="row">
-              <button type="button" onclick="stepZoom(-0.25)" class="btn-secondary" title="縮小">－</button>
+              <button type="button" onclick="stepZoom(-0.25)" class="btn-secondary">－</button>
               <span id="zoomPercentLabel" class="zoom-pill">100%</span>
-              <button type="button" onclick="stepZoom(0.25)" class="btn-secondary" title="放大">＋</button>
-              <button type="button" onclick="setZoomLevel(1)" class="btn-secondary" title="適應畫面">適應</button>
+              <button type="button" onclick="stepZoom(0.25)" class="btn-secondary">＋</button>
+              <button type="button" onclick="setZoomLevel(1)" class="btn-secondary">適應</button>
               <div class="tool-sep"></div>
               <button type="button" id="delSelBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
               <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
@@ -170,7 +164,7 @@
             </div>
           </div>
 
-          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" placeholder="輸入文字或尺寸後，點擊下方畫布貼上..." class="input-ui hidden" style="padding:5px 10px;" />
+          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" placeholder="輸入文字或尺寸後，點擊下方畫布貼上..." class="input-ui hidden" />
 
           <div class="canvas-scroll" id="canvasScrollBox">
             <div class="canvas-stage-inner">
@@ -178,7 +172,7 @@
             </div>
           </div>
 
-          <input type="text" id="pageNoteInput" oninput="syncPageNote()" placeholder="此頁重點說明 / 尺寸備註（儲存及匯出 PDF 時顯示）..." class="input-ui" />
+          <input type="text" id="pageNoteInput" oninput="syncPageNote()" placeholder="此頁重點說明 / 尺寸備註..." class="input-ui" />
         </div>
       </section>
     </div>
@@ -208,9 +202,8 @@
 
     let currentAlbumId = null, linkedReportId = null;
     let pages = [], activeIdx = -1;
-    // 'sticker' = 編輯中貼小圖落目前頁；'shoot' = 影相／連續拍開新頁
     let captureMode = 'sticker';
-    let tool = 'freehand', color = 'rgba(220,38,38,0.92)', fontScale = 0.024;
+    let tool = 'move', color = 'rgba(220,38,38,0.92)', fontScale = 0.024;
     let zoomLevel = 1, fitScale = 1, baseCanvasW = 1000, baseCanvasH = 700;
     let selectedIdx = -1, drawing = false, draggingShape = false, panningView = false;
     let sx = 0, sy = 0, lx = 0, ly = 0, panStartClientX = 0, panStartClientY = 0, panStartScrollL = 0, panStartScrollT = 0;
@@ -232,18 +225,18 @@
       if (captureMode === 'shoot') {
         btn.textContent = '📸 連續拍模式';
         btn.classList.add('shoot-mode');
-        hint.textContent = '每次影相、揀相或 Ctrl+V 都會自動新增新分頁';
+        hint.textContent = '每次影相、揀相或 Ctrl+V 都會自動新增新頁';
       } else {
         btn.textContent = '📌 貼小圖模式';
         btn.classList.remove('shoot-mode');
-        hint.textContent = 'Ctrl+V 或選相會疊加落目前呢張圖（可直接用「✋ 移動」拖位）';
+        hint.textContent = '貼圖或揀相會疊加落目前呢張圖（可直接用「✋ 移動」拖位）';
       }
     }
 
     function toggleCaptureMode() {
       captureMode = captureMode === 'sticker' ? 'shoot' : 'sticker';
       applyCaptureModeUI();
-      showToast(captureMode === 'shoot' ? '已切換為「連續拍模式」（每次新增新頁）' : '已切換為「貼小圖模式」（疊加於本頁可拖位）');
+      showToast(captureMode === 'shoot' ? '已切換為「連續拍模式」' : '已切換為「貼小圖模式」');
     }
 
     async function init() {
@@ -263,7 +256,6 @@
         document.getElementById('publicAlbumBtns').classList.remove('hidden');
         document.getElementById('editShell').classList.add('hidden');
       } else {
-        document.getElementById('topHeaderTitle').textContent = '截圖工作台';
         db.collection(REPORTS_COL).limit(50).get().then(snap => {
           const sites = [...new Set(snap.docs.map(d => d.data().site).filter(Boolean))];
           document.getElementById('siteSuggestions').innerHTML = sites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
@@ -293,8 +285,8 @@
 
     function computeFitAndApplyZoom(newZoom) {
       zoomLevel = Math.max(0.5, Math.min(4, newZoom));
-      const boxW = Math.max(260, scrollBox.clientWidth - 28);
-      const boxH = Math.max(220, scrollBox.clientHeight - 28);
+      const boxW = Math.max(260, scrollBox.clientWidth - 20);
+      const boxH = Math.max(220, scrollBox.clientHeight - 20);
       fitScale = Math.min(boxW / baseCanvasW, boxH / baseCanvasH, 1);
       const displayScale = fitScale * zoomLevel;
       canvas.style.width = `${Math.round(baseCanvasW * displayScale)}px`;
@@ -359,7 +351,7 @@
     }
 
     async function loadExistingAlbum(albumId, isPublic) {
-      document.getElementById('statusTag').textContent = '載入檔案中...';
+      document.getElementById('statusTag').textContent = '載入中...';
       const doc = await db.collection(ALBUMS_COL).doc(albumId).get();
       if (!doc.exists) return showToast('找不到此截圖檔案');
       const data = doc.data();
@@ -370,7 +362,7 @@
 
       const pSnap = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').orderBy('order', 'asc').get();
       pages = pSnap.docs.map(d => d.data());
-      document.getElementById('statusTag').textContent = `已載入 ${pages.length} 頁`;
+      document.getElementById('statusTag').textContent = `${pages.length} 頁`;
 
       if (isPublic) {
         document.title = `${data.site || ''} — ${data.title || '現場圖紙紀錄'}`;
@@ -414,7 +406,6 @@
 
     function handleIncomingImageFile(file) {
       if (!file) return;
-      // 若目前係貼小圖模式且已有底圖，貼做小圖落目前頁；否則開新分頁
       const asSticker = (captureMode === 'sticker' && activeIdx >= 0);
       addImageBlob(file, asSticker);
     }
@@ -467,16 +458,16 @@
     function renderSidebar() {
       const sb = document.getElementById('thumbSidebar');
       if (!pages.length) {
-        sb.innerHTML = `<div style="color:#64748B;font-size:12px;text-align:center;padding:20px 4px;">尚無截圖<br>直接按 <b>Ctrl+V</b> 貼入<br>或於上方開啟舊檔</div>`;
+        sb.innerHTML = `<div style="color:#64748B;text-align:center;padding:18px 4px;">尚無截圖<br>按 <b>Ctrl+V</b> 貼入</div>`;
         document.getElementById('canvasArea').classList.add('hidden');
         return;
       }
       sb.innerHTML = pages.map((p, i) => `
         <div onclick="selectPage(${i})" class="page-thumb ${i===activeIdx?'active':''}">
           <img src="${p.rendered || p.raw}" />
-          <div class="row" style="justify-content:space-between;padding:3px 6px;background:#FFF;font-size:12px;">
+          <div class="row" style="justify-content:space-between;padding:2px 5px;background:#FFF;">
             <b>#${i+1}</b>
-            <button type="button" onclick="deletePage(event,${i})" class="btn-link" style="color:#DC2626;">刪</button>
+            <button type="button" onclick="deletePage(event,${i})" style="background:none;border:none;color:#DC2626;text-decoration:underline;cursor:pointer;font-size:12px;">刪</button>
           </div>
         </div>`).join('');
     }
@@ -486,7 +477,7 @@
       activeIdx = pages.length ? Math.max(0, i - 1) : -1;
       renderSidebar();
       if (activeIdx >= 0) selectPage(activeIdx);
-      showToast('已刪除該頁（記得按「儲存並掛入報告」同步）');
+      showToast('已刪除該頁');
     }
 
     function deletePage(e, i) {
@@ -534,7 +525,7 @@
     function setTool(t) {
       tool = t;
       ['move','pan','freehand','circle','arrow','text'].forEach(k => document.getElementById('t-'+k).classList.toggle('btn-active', k===t));
-      canvas.classList.toggle('move-cursor', t === 'move');
+      canvas.classList.toggle('draw-cursor', t !== 'move' && t !== 'pan');
       canvas.classList.toggle('pan-cursor', t === 'pan');
       if (t !== 'move') { selectedIdx = -1; redraw(false); }
       syncSelUI();
@@ -632,266 +623,4 @@
     function down(e) {
       if (activeIdx < 0) return; e.preventDefault();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cy = e.touches ? e.touches[0].clientY : e.clientY;
-
-      if (tool === 'pan') {
-        panningView = true;
-        panStartClientX = cx; panStartClientY = cy;
-        panStartScrollL = scrollBox.scrollLeft; panStartScrollT = scrollBox.scrollTop;
-        return;
-      }
-
-      const pos = coords(e);
-      const shapes = pages[activeIdx].shapes || [];
-
-      if (tool === 'move') {
-        const hit = hitTest(shapes, pos.x, pos.y);
-        selectedIdx = hit; syncSelUI(); redraw(false);
-        if (hit >= 0) { draggingShape = true; lx = pos.x; ly = pos.y; }
-        return;
-      }
-
-      if (tool === 'text') {
-        const hit = hitTest(shapes, pos.x, pos.y);
-        if (hit >= 0 && shapes[hit].type === 'text') {
-          setTool('move'); selectedIdx = hit; syncSelUI(); redraw(false);
-          draggingShape = true; lx = pos.x; ly = pos.y;
-          return;
-        }
-        const txt = document.getElementById('textLabelInput').value.trim();
-        if (!txt) return showToast('請先在輸入框打字或尺寸，再點畫布貼上');
-        shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color, scale: fontScale });
-        document.getElementById('textLabelInput').value = '';
-        tool = 'move';
-        ['move','pan','freehand','circle','arrow','text'].forEach(k => document.getElementById('t-'+k).classList.toggle('btn-active', k==='move'));
-        canvas.classList.remove('pan-cursor'); canvas.classList.add('move-cursor');
-        selectedIdx = shapes.length - 1;
-        syncSelUI(); redraw(true);
-        showToast('已貼上文字！可直接拖曳擺位');
-        return;
-      }
-
-      drawing = true; sx = pos.x; sy = pos.y;
-      if (tool === 'freehand') stroke = [pos];
-    }
-
-    function move(e) {
-      if (panningView) {
-        e.preventDefault();
-        const cx = e.touches ? e.touches[0].clientX : e.clientX;
-        const cy = e.touches ? e.touches[0].clientY : e.clientY;
-        scrollBox.scrollLeft = panStartScrollL - (cx - panStartClientX);
-        scrollBox.scrollTop = panStartScrollT - (cy - panStartClientY);
-        return;
-      }
-      if (activeIdx < 0) return;
-      if (draggingShape && selectedIdx >= 0) {
-        e.preventDefault();
-        const pos = coords(e);
-        shiftShape(pages[activeIdx].shapes[selectedIdx], pos.x - lx, pos.y - ly);
-        lx = pos.x; ly = pos.y;
-        redraw(false);
-        return;
-      }
-      if (!drawing) return; e.preventDefault();
-      const pos = coords(e); redraw(false);
-      if (tool === 'freehand') { stroke.push(pos); draw(ctx, { type: 'freehand', points: stroke, color }); }
-      else draw(ctx, { type: tool, x1: sx, y1: sy, x2: pos.x, y2: pos.y, color });
-    }
-
-    function up(e) {
-      if (panningView) { panningView = false; return; }
-      if (draggingShape) { draggingShape = false; redraw(true); return; }
-      if (!drawing || activeIdx < 0) return; drawing = false;
-      if (tool === 'freehand') { if (stroke.length > 1) pages[activeIdx].shapes.push({ type: 'freehand', points: stroke, color }); stroke = []; redraw(true); return; }
-      const r = canvas.getBoundingClientRect(), cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX, cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
-      const ex = (cx - r.left) * (canvas.width / r.width), ey = (cy - r.top) * (canvas.height / r.height);
-      if (Math.hypot(ex - sx, ey - sy) > 6) pages[activeIdx].shapes.push({ type: tool, x1: sx, y1: sy, x2: ex, y2: ey, color });
-      redraw(true);
-    }
-
-    function redraw(saveSnap = false) {
-      if (!baseImg || activeIdx < 0) return;
-      ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(baseImg,0,0);
-      const shapes = pages[activeIdx].shapes || [];
-      shapes.forEach(s => draw(ctx, s));
-      if (saveSnap) { pages[activeIdx].rendered = canvas.toDataURL('image/jpeg', 0.8); renderSidebar(); }
-      if (selectedIdx >= 0 && shapes[selectedIdx]) {
-        const b = bounds(ctx, shapes[selectedIdx]);
-        ctx.save();
-        ctx.strokeStyle = '#0EA5E9';
-        ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.003));
-        ctx.setLineDash([8, 6]);
-        ctx.strokeRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
-        ctx.restore();
-      }
-    }
-
-    function draw(c, s) {
-      c.save();
-      if (s.type === 'image' && s.imgSrc) {
-        if (s._imgObj && s._imgObj.complete) {
-          c.drawImage(s._imgObj, s.x1, s.y1, s.x2 - s.x1, s.y2 - s.y1);
-        } else {
-          const im = new Image();
-          im.onload = () => { s._imgObj = im; redraw(false); };
-          im.src = s.imgSrc;
-        }
-        c.strokeStyle = '#475569'; c.lineWidth = 2;
-        c.strokeRect(s.x1, s.y1, s.x2 - s.x1, s.y2 - s.y1);
-        c.restore();
-        return;
-      }
-      const lw = Math.max(4, Math.round(canvas.width * 0.0045)); c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
-      if (s.type === 'freehand' && s.points?.length > 1) { c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y); s.points.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.stroke(); }
-      else if (s.type === 'circle') { c.beginPath(); c.ellipse((s.x1+s.x2)/2, (s.y1+s.y2)/2, Math.max(Math.abs(s.x2-s.x1)/2,4), Math.max(Math.abs(s.y2-s.y1)/2,4), 0, 0, Math.PI*2); c.stroke(); }
-      else if (s.type === 'arrow') { const hl = lw*4, a = Math.atan2(s.y2-s.y1, s.x2-s.x1); c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke(); c.beginPath(); c.moveTo(s.x2,s.y2); c.lineTo(s.x2-hl*Math.cos(a-Math.PI/6), s.y2-hl*Math.sin(a-Math.PI/6)); c.lineTo(s.x2-hl*Math.cos(a+Math.PI/6), s.y2-hl*Math.sin(a+Math.PI/6)); c.closePath(); c.fill(); }
-      else if (s.type === 'text') {
-        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.024)));
-        c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text).width;
-        c.fillStyle = 'rgba(15,23,42,0.85)'; c.fillRect(s.x-8, s.y-fs, w+16, fs+10);
-        c.fillStyle = s.color && s.color.includes('234,179,8') ? '#FEF08A' : '#FFF';
-        c.strokeStyle = s.color; c.lineWidth = 2; c.strokeRect(s.x-8, s.y-fs, w+16, fs+10);
-        c.fillText(s.text, s.x, s.y);
-      }
-      c.restore();
-    }
-
-    async function saveAlbumToCloud() {
-      const site = document.getElementById('albumSite').value.trim();
-      const title = document.getElementById('albumTitle').value.trim();
-      const date = document.getElementById('albumDate').value || new Date().toISOString().split('T')[0];
-      if (!site || !title) return showToast('請填寫「單位名稱」及「檔案名稱」');
-      if (!pages.length) return showToast('請先貼上至少一張截圖');
-
-      const btn = document.getElementById('saveAlbumBtn'); btn.disabled = true; btn.textContent = '儲存中...';
-      try {
-        const albumId = currentAlbumId || ('alb-' + Date.now());
-        await db.collection(ALBUMS_COL).doc(albumId).set({ site, title, date, pageCount: pages.length, linkedReportId: linkedReportId || '', updatedAt: Date.now() });
-
-        const oldPages = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').get();
-        const delBatch = db.batch(); oldPages.docs.forEach(d => delBatch.delete(d.ref)); await delBatch.commit();
-
-        for (let i = 0; i < pages.length; i++) {
-          const p = pages[i];
-          const cleanShapes = (p.shapes || []).map(s => {
-            const copy = { ...s };
-            delete copy._imgObj;
-            return copy;
-          });
-          await db.collection(ALBUMS_COL).doc(albumId).collection('pages').doc(`p_${String(i).padStart(3,'0')}`).set({
-            id: p.id, order: i, raw: p.raw || p.rendered, rendered: p.rendered || p.raw, shapes: cleanShapes, note: p.note || ''
-          });
-        }
-        currentAlbumId = albumId;
-        const newUrl = new URL(window.location.href); newUrl.search = `?albumId=${albumId}`;
-        window.history.replaceState({}, '', newUrl);
-        await refreshAlbumListDropdown();
-
-        const albumSharePath = `album.html?view=public&albumId=${albumId}`;
-        const docLabel = `📷 ${title} (${pages.length}頁)`;
-        let targetRepDoc = null;
-        if (linkedReportId) {
-          const d = await db.collection(REPORTS_COL).doc(linkedReportId).get();
-          if (d.exists) targetRepDoc = d;
-        }
-        if (!targetRepDoc) {
-          const q = await db.collection(REPORTS_COL).where('site', '==', site).get();
-          const match = q.docs.find(d => d.data().date === date) || q.docs[0];
-          if (match) targetRepDoc = match;
-        }
-
-        if (targetRepDoc) {
-          const rData = targetRepDoc.data();
-          const docs = Array.isArray(rData.docs) ? [...rData.docs] : (rData.docName ? [{ name: rData.docName, url: rData.docUrl || '' }] : []);
-          const exIdx = docs.findIndex(d => d.url && d.url.includes(albumId));
-          if (exIdx >= 0) docs[exIdx].name = docLabel; else docs.push({ name: docLabel, url: albumSharePath });
-          await targetRepDoc.ref.update({ docs, updatedAt: Date.now() });
-        } else {
-          const newRepId = 'rep-' + Date.now();
-          linkedReportId = newRepId;
-          await db.collection(REPORTS_COL).doc(newRepId).set({
-            site, assignee: '', date, timeRange: '', status: '需跟進', title,
-            docs: [{ name: docLabel, url: albumSharePath }], docName: docLabel, docUrl: albumSharePath,
-            summary: `共 ${pages.length} 頁截圖標記紀錄`, followup: '', followupLogs: [], photoMeta: [], photos: [],
-            createdAt: Date.now(), updatedAt: Date.now()
-          });
-        }
-        document.getElementById('statusTag').textContent = '✓ 已儲存並掛入總報告';
-        showToast('已儲存並自動掛入總報告！');
-      } catch (err) {
-        console.error(err);
-        showToast('儲存失敗：' + err.message);
-      } finally { btn.disabled = false; btn.textContent = '儲存並掛入報告'; }
-    }
-
-    function buildPrintView() {
-      const site = document.getElementById('albumSite').value || '未命名單位';
-      const title = document.getElementById('albumTitle').value || '截圖標記紀錄';
-      const date = document.getElementById('albumDate').value || '';
-      document.getElementById('printReportView').innerHTML = `
-        <div style="background:#FFF;border:1px solid #CBD5E1;border-left:4px solid #0F172A;border-radius:8px;padding:14px 16px;margin-bottom:18px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;">
-          <div>
-            <div style="font-size:17px;font-weight:700;">${escapeHtml(site)} — ${escapeHtml(title)}</div>
-            <div style="font-size:12px;color:#64748B;margin-top:2px;">築匠設計 ARTISAN STUDIO</div>
-          </div>
-          <div style="font-size:13px;font-weight:600;color:#334155;">日期：${escapeHtml(date)}（共 ${pages.length} 頁）</div>
-        </div>
-        ${pages.map((p, i) => `<div class="print-page">
-          <img src="${p.rendered || p.raw}" />
-          ${p.note ? `<div style="padding:10px 14px;border-top:1px solid #E2E8F0;font-size:13px;"><b>#${i+1}</b> ${escapeHtml(p.note)}</div>` : `<div style="padding:6px 14px;border-top:1px solid #F1F5F9;font-size:12px;color:#64748B;">#${i+1}</div>`}
-        </div>`).join('')}`;
-    }
-
-    function exportPdf() { buildPrintView(); window.print(); }
-
-    function getPublicAlbumUrl() {
-      if (!currentAlbumId) return '';
-      const u = new URL('album.html', window.location.href);
-      u.search = `?view=public&albumId=${currentAlbumId}`;
-      return u.toString();
-    }
-
-    function copyPureAlbumLink() {
-      const url = getPublicAlbumUrl();
-      if (!url) return showToast('請先按「儲存並掛入報告」再複製連結');
-      navigator.clipboard.writeText(url).then(() => showToast('已複製純網址'));
-    }
-
-    function copyAlbumWhatsApp(audience) {
-      const url = getPublicAlbumUrl();
-      if (!url) return showToast('請先按「儲存並掛入報告」再複製 WhatsApp 訊息');
-      const site = document.getElementById('albumSite').value.trim() || '單位工程';
-      const title = document.getElementById('albumTitle').value.trim() || '圖紙及現場標記';
-      const date = document.getElementById('albumDate').value || '';
-
-      const msg = audience === 'client'
-        ? [
-            `你好！以下為 *${site}* 的最新圖紙／現場標記記錄（共 ${pages.length} 頁），請查閱：`,
-            date ? `📅 日期：${date}` : '',
-            `📌 項目：${title}`,
-            `🔗 圖紙連結：${url}`,
-            ``,
-            `如有任何疑問或需調整之處，歡迎隨時聯絡我們跟進，謝謝！`,
-            `— 築匠設計 ARTISAN STUDIO`
-          ].filter(Boolean).join('\n')
-        : [
-            `麻煩跟進以下單位最新標記圖紙（共 ${pages.length} 頁）：`,
-            `🏠 單位：*${site}*`,
-            date ? `📅 日期：${date}` : '',
-            `📌 重點：${title}`,
-            `🔗 標記圖連結：${url}`,
-            ``,
-            `請查閱並回覆確認，唔該晒！`
-          ].filter(Boolean).join('\n');
-
-      navigator.clipboard.writeText(msg).then(() => showToast(audience === 'client' ? '已複製 WhatsApp 客人禮貌訊息！' : '已複製 WhatsApp 師傅/廠跟進訊息！'));
-    }
-
-    function showToast(m) { const el = document.getElementById('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2400); }
-    function escapeHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-    init();
-  </script>
-</body>
-</html>
+      const cy = e.touches ? e.touches[0].client
