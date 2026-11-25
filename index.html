@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-HK"> 
+<html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>築匠設計 ARTISAN STUDIO — QC 總報告</title>
+  <title>築匠設計 ARTISAN STUDIO — QC 報告</title>
   <link rel="icon" href="data:," />
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -12,7 +12,7 @@
       background: #F1F5F9; color: #0F172A; font-size: 14px; line-height: 1.5; margin: 0;
     }
     a { color: inherit; }
-    .container { max-width: 1024px; margin: 0 auto; padding: 0 12px; }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 12px 32px; }
     .topbar { background: #FFF; border-bottom: 1px solid #E2E8F0; position: sticky; top: 0; z-index: 30; padding: 8px 0; }
     .row-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
     .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -32,25 +32,23 @@
     .btn-link.blue { color: #1D4ED8; }
     .btn-link.danger:hover { color: #DC2626; }
 
-    /* 唯一淺橙色：輸入框 */
     .input-ui { border: 1px solid #FDBA74; border-radius: 6px; padding: 6px 10px; font-size: 14px; background: #FFF7ED; color: #0F172A; width: 100%; font-family: inherit; }
     .input-ui:focus { outline: none; border-color: #0F172A; background: #FFEDD5; }
     .select-ui { border: 1px solid #CBD5E1; border-radius: 6px; padding: 6px 8px; font-size: 12px; background: #FFF; color: #0F172A; }
 
     .filter-bar { background: #FFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px; margin: 12px 0; display: flex; flex-wrap: wrap; gap: 8px; }
     .filter-bar .search-wrap { flex: 1 1 220px; }
-    .site-card { background: #FFF; border: 1px solid #CBD5E1; border-left: 4px solid #0F172A; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
-    .site-header { background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 8px 14px; }
-    .site-body { padding: 12px 14px; }
+    .site-card { background: #FFF; border: 1px solid #CBD5E1; border-left: 4px solid #0F172A; border-radius: 8px; margin: 14px 0; overflow: hidden; }
+    .site-header { background: #F8FAFC; border-bottom: 1px solid #E2E8F0; padding: 10px 16px; }
+    .site-body { padding: 16px; }
 
-    /* 左日期、右內容梯級排版 */
     .entry-row { display: flex; gap: 14px; }
-    .entry-row + .entry-row { margin-top: 12px; padding-top: 12px; border-top: 1px solid #E2E8F0; }
+    .entry-row + .entry-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid #E2E8F0; }
     .step-left { width: 112px; flex-shrink: 0; padding-top: 2px; }
     .step-right { flex: 1; min-width: 0; border-left: 1px solid #E2E8F0; padding-left: 14px; }
     .entry-main { display: flex; gap: 12px; justify-content: space-between; margin-top: 4px; }
     .entry-content { flex: 1; min-width: 0; }
-    .docs-col { width: 200px; flex-shrink: 0; border-left: 1px solid #E2E8F0; padding-left: 12px; }
+    .docs-col { width: 210px; flex-shrink: 0; border-left: 1px solid #E2E8F0; padding-left: 12px; }
 
     @media (max-width: 640px) {
       .entry-row { flex-direction: column; gap: 4px; }
@@ -69,7 +67,7 @@
     .sync-err { background: #FEF2F2; color: #B91C1C; border-color: #FECACA; }
 
     .thumbs { display: flex; gap: 6px; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
-    .thumb-box { width: 56px; height: 56px; border-radius: 4px; border: 1px solid #CBD5E1; overflow: hidden; flex-shrink: 0; cursor: pointer; background: #F1F5F9; }
+    .thumb-box { width: 56px; height: 56px; border-radius: 4px; border: 1px solid #CBD5E1; overflow: hidden; flex-shrink: 0; cursor: pointer; background: #F1F5F9; display: block; }
     .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
     .fu-box { margin-top: 8px; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px 10px; font-size: 12px; }
@@ -88,37 +86,47 @@
     .canvas-wrapper { width: 100%; background: #E2E8F0; border: 1px solid #CBD5E1; border-radius: 6px; overflow: hidden; touch-action: none; display: flex; justify-content: center; }
     canvas { max-width: 100%; max-height: 52vh; display: block; cursor: crosshair; }
     .color-dot { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #64748B; cursor: pointer; padding: 0; }
+    .standalone-photo { border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; background: #FFF; margin-top: 12px; break-inside: avoid; page-break-inside: avoid; }
+    .standalone-photo img { width: 100%; max-height: 75vh; object-fit: contain; background: #F8FAFC; display: block; }
     .hidden { display: none !important; }
     #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #0F172A; color: #FFF; padding: 8px 14px; border-radius: 6px; font-size: 12px; }
+
+    @media print {
+      body { background: #FFF; }
+      .no-print, .topbar, .filter-bar { display: none !important; }
+      .container { max-width: 100%; padding: 0; }
+      .site-card { border: 1px solid #94A3B8; margin: 0; }
+      .standalone-photo img { max-height: 460px; }
+    }
   </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="container row-between">
+  <header class="topbar no-print">
+    <div class="container row-between" style="padding-bottom:0;">
       <div class="row">
         <span class="t-site">築匠設計 ARTISAN STUDIO</span>
         <span style="color:#CBD5E1">|</span>
-        <span class="t-meta muted">QC 總報告</span>
-        <span id="syncBadge" class="badge" style="background:#F1F5F9;border-color:#E2E8F0;">載入快取...</span>
+        <span class="t-meta muted" id="headerSubTitle">QC 總報告</span>
+        <span id="syncBadge" class="badge" style="background:#F1F5F9;border-color:#E2E8F0;">連線中</span>
       </div>
-      <div class="row">
+      <!-- 內部總表按鈕 -->
+      <div class="row" id="adminHeaderBtns">
         <a href="album.html" target="_blank" class="btn-secondary">截圖工作台 ↗</a>
         <button type="button" onclick="copyPublicLink()" class="btn-secondary">總公開Link</button>
-        <button type="button" onclick="openEditor()" id="newReportBtn" class="btn-primary">+ 新增報告</button>
+        <button type="button" onclick="openEditor()" class="btn-primary">+ 新增報告</button>
+      </div>
+      <!-- 獨立分頁 / 公開分享專用按鈕（乾淨無後台入口） -->
+      <div class="row hidden" id="standaloneHeaderBtns">
+        <button type="button" onclick="copyCurrentPageSummary()" class="btn-link">複製重點</button>
+        <button type="button" onclick="copyCurrentPageLink()" class="btn-link blue">複製此頁Link</button>
+        <button type="button" onclick="window.print()" class="btn-secondary">列印 / 另存 PDF</button>
       </div>
     </div>
   </header>
 
-  <div id="publicBanner" class="hidden" style="background:#1E293B;color:#F8FAFC;padding:6px 0;">
-    <div class="container row-between t-meta">
-      <span id="bannerText">唯讀檢視模式</span>
-      <button type="button" onclick="exitPublicMode()" class="btn-link" style="color:#FFF;">切換編輯模式</button>
-    </div>
-  </div>
-
   <main class="container">
-    <div class="filter-bar">
+    <div id="filterBar" class="filter-bar no-print">
       <div class="search-wrap">
         <input type="text" id="searchInput" oninput="renderReportList()" placeholder="搜尋屋苑、負責人、約期或關鍵字..." class="input-ui" />
       </div>
@@ -135,12 +143,12 @@
     </div>
 
     <div id="reportListContainer">
-      <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:8px;padding:24px;text-align:center;" class="muted">載入中...</div>
+      <div style="background:#FFF;border:1px solid #E2E8F0;border-radius:8px;padding:24px;margin-top:14px;text-align:center;" class="muted">載入中...</div>
     </div>
   </main>
 
-  <!-- 彈窗 1：新增 / 編輯報告 -->
-  <div id="editorModal" class="modal-backdrop hidden">
+  <!-- 彈窗 1：新增 / 編輯報告（僅內部總表使用） -->
+  <div id="editorModal" class="modal-backdrop hidden no-print">
     <div class="modal-box">
       <div class="modal-head">
         <span class="t-site" id="editorModalTitle">新增報告</span>
@@ -226,7 +234,7 @@
   </div>
 
   <!-- 彈窗 2：約期 / 留言 -->
-  <div id="followupModal" class="modal-backdrop hidden">
+  <div id="followupModal" class="modal-backdrop hidden no-print">
     <div class="modal-box modal-sm">
       <div class="modal-head">
         <span class="t-site" id="followupModalTitle">新增留言</span>
@@ -260,33 +268,18 @@
     </div>
   </div>
 
-  <!-- 彈窗 3：單份檢視 -->
-  <div id="viewModal" class="modal-backdrop hidden">
-    <div class="modal-box">
-      <div class="modal-head">
-        <span class="t-site" id="viewModalHeader">報告詳情</span>
-        <div class="row">
-          <button type="button" onclick="copySingleReportSummary()" class="btn-link">複製重點</button>
-          <button type="button" onclick="copySingleReportLink()" class="btn-link blue">複製Link</button>
-          <button type="button" onclick="closeViewModal()" class="btn-link">關閉 ✕</button>
-        </div>
-      </div>
-      <div id="viewModalBody" class="modal-body" style="display:flex;flex-direction:column;gap:12px;"></div>
-    </div>
-  </div>
-
-  <!-- 彈窗 4：地址自選分享（整個地址 / 單一日期 / 獨立檔案） -->
-  <div id="shareModal" class="modal-backdrop hidden">
+  <!-- 彈窗 3：地址自選分享（開啟或複製獨立分頁） -->
+  <div id="shareModal" class="modal-backdrop hidden no-print">
     <div class="modal-box modal-sm">
       <div class="modal-head">
-        <span class="t-site" id="shareModalTitle">分享單位內容</span>
+        <span class="t-site" id="shareModalTitle">分享獨立分頁</span>
         <button type="button" onclick="closeShareModal()" class="btn-link">關閉 ✕</button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;" id="shareModalBody"></div>
     </div>
   </div>
 
-  <div id="toast" class="hidden"></div>
+  <div id="toast" class="hidden no-print"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -306,12 +299,19 @@
     db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
     const COLLECTION_NAME = 'artisan_qc_reports';
+    const ALBUMS_COL = 'artisan_qc_albums';
     const STATUS_ORDER = ['需跟進', '已約期', '待確認', '已完成'];
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
+    const SINGLE_SITE = urlParams.get('site') || '';
+    const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
+
     let reports = [];
+    let singleReportData = null;
     let expandedSites = new Set();
-    let inlineEditId = null, editingReportId = null, viewingReportId = null, followupTargetId = null;
-    let followupModalMode = 'comment', initialRouteHandled = false;
+    let inlineEditId = null, editingReportId = null, followupTargetId = null;
+    let followupModalMode = 'comment';
     let draftDocs = [], draftPhotos = [], activePhotoIndex = -1;
     let currentTool = 'freehand', currentColor = 'rgba(220,38,38,0.9)';
     let isDrawing = false, startX = 0, startY = 0, currentStroke = [], baseImageObj = null;
@@ -319,20 +319,176 @@
     const canvas = document.getElementById('annotCanvas');
     const ctx = canvas.getContext('2d');
 
+    function bootApp() {
+      // 模式 A：單份報告獨立分頁（物理隔離，完全不載入其他單位）
+      if (SINGLE_REPORT_ID) {
+        enterStandaloneUI('單日現場報告');
+        db.collection(COLLECTION_NAME).doc(SINGLE_REPORT_ID).onSnapshot(doc => {
+          if (!doc.exists) {
+            document.getElementById('reportListContainer').innerHTML = `<div style="background:#FFF;border:1px solid #E2E8F0;border-radius:8px;padding:24px;margin-top:14px;text-align:center;" class="muted">找不到此報告或報告已被刪除</div>`;
+            return;
+          }
+          singleReportData = { id: doc.id, ...doc.data() };
+          reports = [singleReportData];
+          renderSingleReportStandalone(singleReportData);
+        });
+        return;
+      }
+
+      // 模式 B：單一地址獨立分頁（物理隔離，只向資料庫查詢該地址）
+      if (SINGLE_SITE) {
+        enterStandaloneUI('單位現場記錄');
+        db.collection(COLLECTION_NAME).where('site', '==', SINGLE_SITE).onSnapshot(snap => {
+          reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderReportList();
+        });
+        return;
+      }
+
+      // 模式 C：總表模式（公開唯讀總表 或 內部管理總表）
+      if (IS_PUBLIC) {
+        document.getElementById('adminHeaderBtns').classList.add('hidden');
+        document.getElementById('standaloneHeaderBtns').classList.remove('hidden');
+        document.getElementById('syncBadge').classList.add('hidden');
+      }
+
+      db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot(snap => {
+        setSyncStatus(snap.metadata.fromCache ? '快取秒開' : '已同步', true);
+        reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateSiteFilterOptions();
+        renderReportList();
+      }, () => setSyncStatus('離線', false));
+    }
+
+    function enterStandaloneUI(subLabel) {
+      document.getElementById('adminHeaderBtns').classList.add('hidden');
+      document.getElementById('standaloneHeaderBtns').classList.remove('hidden');
+      document.getElementById('syncBadge').classList.add('hidden');
+      document.getElementById('filterBar').classList.add('hidden');
+      document.getElementById('headerSubTitle').textContent = subLabel;
+    }
+
     function setSyncStatus(text, ok = true) {
       const el = document.getElementById('syncBadge');
       el.textContent = text;
       el.className = 'badge ' + (ok ? 'sync-ok' : 'sync-err');
     }
 
-    function startRealtimeSync() {
-      db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot((snap) => {
-        setSyncStatus(snap.metadata.fromCache ? '快取秒開' : '已同步', true);
-        reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateSiteFilterOptions();
-        renderReportList();
-        if (!initialRouteHandled) { initialRouteHandled = true; checkUrlParams(); }
-      }, () => setSyncStatus('離線', false));
+    // 渲染乾淨單份獨立專頁（無彈窗、無黑底、自動載入掛載的截圖檔圖片）
+    async function renderSingleReportStandalone(r) {
+      document.title = `${r.site} — ${r.title}`;
+      const docs = getDocsList(r);
+      const container = document.getElementById('reportListContainer');
+
+      container.innerHTML = `
+        <div class="site-card">
+          <div class="site-header row-between">
+            <div class="row">
+              <span class="t-site">${escapeHtml(r.site)}</span>
+              ${r.assignee ? `<span class="badge" style="background:#E2E8F0;color:#1E293B;">${escapeHtml(r.assignee)}</span>` : ''}
+            </div>
+            <div class="row">
+              <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange || '')}</span>
+              <span class="badge ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span>
+            </div>
+          </div>
+          <div class="site-body">
+            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${escapeHtml(r.title)}</div>
+            ${r.summary ? `<div style="color:#334155;white-space:pre-line;margin-bottom:12px;">${escapeHtml(r.summary)}</div>` : ''}
+
+            ${docs.length ? `
+              <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px 12px;margin-bottom:12px;">
+                <div class="t-meta muted" style="font-weight:600;margin-bottom:6px;">關聯文件 / 截圖檔（點擊開啟原檔）：</div>
+                <div class="row">
+                  ${docs.map(d => `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-secondary" style="color:#1D4ED8;border-color:#BFDBFE;">📄 ${escapeHtml(d.name)} ↗</a>`).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            ${renderFollowupBlock(r)}
+
+            <div id="standalonePhotosWrap">
+              ${(r.photos || []).map((p, i) => `
+                <div class="standalone-photo">
+                  <img src="${p.base64Annotated || p.base64Raw}" />
+                  ${p.note ? `<div style="padding:8px 12px;border-top:1px solid #E2E8F0;" class="t-meta"><b>#${i+1}</b> ${escapeHtml(p.note)}</div>` : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div id="embeddedAlbumsWrap"></div>
+          </div>
+        </div>`;
+
+      // 若有關聯 album.html?view=public&albumId=...，自動將截圖檔所有頁面直接展開於下方方便一頁睇晒
+      const albumDocs = docs.filter(d => d.url && d.url.includes('albumId='));
+      const embedWrap = document.getElementById('embeddedAlbumsWrap');
+      for (const ad of albumDocs) {
+        const m = ad.url.match(/albumId=([^&]+)/);
+        if (!m) continue;
+        const albumId = m[1];
+        try {
+          let pages = [];
+          const albDoc = await db.collection(ALBUMS_COL).doc(albumId).get();
+          if (albDoc.exists) {
+            const pSnap = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').orderBy('order', 'asc').get();
+            pages = pSnap.docs.map(x => x.data());
+          } else {
+            const fbDoc = await db.collection(COLLECTION_NAME).doc(albumId).get();
+            if (fbDoc.exists && Array.isArray(fbDoc.data().pageDocIds)) {
+              const pDocs = await Promise.all(fbDoc.data().pageDocIds.map(pid => db.collection(COLLECTION_NAME).doc(pid).get()));
+              pages = pDocs.filter(x => x.exists).map(x => x.data());
+            }
+          }
+          if (pages.length && embedWrap) {
+            const sec = document.createElement('div');
+            sec.style.marginTop = '20px';
+            sec.innerHTML = `
+              <div style="font-weight:700;padding-bottom:6px;border-bottom:2px solid #0F172A;margin-bottom:10px;" class="row-between">
+                <span>${escapeHtml(ad.name)}</span>
+                <a href="${escapeHtml(ad.url)}" target="_blank" class="btn-link blue no-print">於新分頁單獨開啟 ↗</a>
+              </div>
+              ${pages.map((p, idx) => `
+                <div class="standalone-photo">
+                  <img loading="lazy" src="${p.rendered || p.raw}" />
+                  <div style="padding:8px 12px;border-top:1px solid #E2E8F0;" class="t-meta"><b>#${idx + 1}</b> ${escapeHtml(p.note || '')}</div>
+                </div>
+              `).join('')}`;
+            embedWrap.appendChild(sec);
+          }
+        } catch (e) { console.warn('載入嵌入相簿略過:', e); }
+      }
+    }
+
+    // 點擊「檢視」直接開乾淨獨立新分頁
+    function getSingleReportUrl(id) {
+      const u = new URL('index.html', window.location.href);
+      u.search = `?view=public&reportId=${encodeURIComponent(id)}`;
+      return u.toString();
+    }
+
+    function getSingleSiteUrl(siteName) {
+      const u = new URL('index.html', window.location.href);
+      u.search = `?view=public&site=${encodeURIComponent(siteName)}`;
+      return u.toString();
+    }
+
+    function copyCurrentPageLink() {
+      copyText(window.location.href, '已複製此獨立分頁 Link');
+    }
+
+    function copyCurrentPageSummary() {
+      if (SINGLE_REPORT_ID && singleReportData) {
+        const r = singleReportData;
+        const lines = [`【築匠設計 QC 重點】${r.site}${r.assignee ? ' (' + r.assignee + ')' : ''}`, `日期：${r.date} [${r.status}] ${r.title}`];
+        if (r.summary) lines.push(r.summary);
+        lines.push(`獨立分頁：${window.location.href}`);
+        copyText(lines.join('\n'), '已複製重點');
+      } else if (SINGLE_SITE) {
+        copySiteClipboardSummary(SINGLE_SITE);
+      } else {
+        copyPublicLink();
+      }
     }
 
     window.addEventListener('paste', (e) => {
@@ -351,93 +507,58 @@
     }
 
     function openAlbumFromEditor() {
-      const site = document.getElementById('fieldSite').value.trim();
-      const date = document.getElementById('fieldDate').value;
-      openAlbumWorkspace(site, date, editingReportId || '');
-    }
-
-    function checkUrlParams() {
-      const params = new URLSearchParams(window.location.search);
-      const isPublic = params.get('view') === 'public';
-      const reportId = params.get('reportId');
-      const siteParam = params.get('site');
-      const dateParam = params.get('date');
-
-      if (siteParam) {
-        const sel = document.getElementById('siteFilter');
-        if ([...sel.options].some(o => o.value === siteParam)) sel.value = siteParam;
-      }
-      if (dateParam) document.getElementById('searchInput').value = dateParam;
-
-      if (isPublic || reportId) {
-        document.getElementById('publicBanner').classList.remove('hidden');
-        document.getElementById('newReportBtn').classList.add('hidden');
-        document.getElementById('bannerText').textContent = siteParam ? `唯讀檢視：${siteParam}${dateParam ? ' (' + dateParam + ')' : ''}` : '唯讀檢視模式';
-      }
-      renderReportList();
-      if (reportId && reports.find(r => r.id === reportId)) openViewModal(reportId);
-    }
-
-    function exitPublicMode() {
-      const url = new URL(window.location.href);
-      url.search = '';
-      window.history.replaceState({}, '', url);
-      document.getElementById('publicBanner').classList.add('hidden');
-      document.getElementById('newReportBtn').classList.remove('hidden');
-      document.getElementById('searchInput').value = '';
-      renderReportList();
+      openAlbumWorkspace(document.getElementById('fieldSite').value.trim(), document.getElementById('fieldDate').value, editingReportId || '');
     }
 
     function copyPublicLink() {
-      const url = new URL(window.location.href); url.search = '?view=public';
+      const url = new URL('index.html', window.location.href); url.search = '?view=public';
       copyText(url.toString(), '已複製總公開 Link');
     }
 
-    function copySingleReportLink() {
-      if (!viewingReportId) return;
-      const url = new URL(window.location.href); url.search = `?view=public&reportId=${viewingReportId}`;
-      copyText(url.toString(), '已複製單日報告 Link');
-    }
-
-    // 自選分享彈窗：整個單位 / 指定日期 / 獨立檔案
     function openShareModal(siteName) {
       const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-      const base = new URL(window.location.href);
-      base.search = `?view=public&site=${encodeURIComponent(siteName)}`;
+      const siteUrl = getSingleSiteUrl(siteName);
 
       const allDocs = [];
       items.forEach(r => getDocsList(r).forEach(d => { if (d.url) allDocs.push({ date: r.date, name: d.name, url: d.url }); }));
 
-      document.getElementById('shareModalTitle').textContent = `分享：${siteName}`;
+      document.getElementById('shareModalTitle').textContent = `獨立分頁分享：${siteName}`;
       document.getElementById('shareModalBody').innerHTML = `
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px;">
-          <div style="font-weight:700;margin-bottom:6px;">1. 分享整個地址（共 ${items.length} 條日期紀錄）</div>
+          <div style="font-weight:700;margin-bottom:6px;">1. 整個地址獨立分頁（只顯示此單位 ${items.length} 條紀錄）</div>
           <div class="row">
-            <button type="button" onclick="copyText('${escapeAttr(base.toString())}', '已複製整個地址 Link')" class="btn-primary">複製地址 Link</button>
+            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-primary">開啟獨立分頁 ↗</a>
+            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製地址獨立分頁 Link')" class="btn-secondary">複製 Link</button>
             <button type="button" onclick="copySiteClipboardSummary(decodeURIComponent('${encodeURIComponent(siteName)}'))" class="btn-secondary">複製文字重點</button>
           </div>
         </div>
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px;">
-          <div style="font-weight:700;margin-bottom:6px;">2. 只分享單一日期紀錄</div>
-          <div style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto;">
+          <div style="font-weight:700;margin-bottom:6px;">2. 單一日期獨立分頁</div>
+          <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
             ${items.map(r => {
-              const rUrl = new URL(window.location.href); rUrl.search = `?view=public&reportId=${r.id}`;
+              const rUrl = getSingleReportUrl(r.id);
               return `<div class="row-between" style="background:#FFF;padding:5px 8px;border:1px solid #E2E8F0;border-radius:4px;">
                 <span class="t-meta"><b class="t-mono">${escapeHtml(r.date)}</b> ${escapeHtml(r.title)}</span>
-                <button type="button" onclick="copyText('${escapeAttr(rUrl.toString())}', '已複製 ${escapeAttr(r.date)} Link')" class="btn-link blue">複製Link</button>
+                <div class="row">
+                  <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link">開啟 ↗</a>
+                  <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製 ${escapeAttr(r.date)} 獨立 Link')" class="btn-link blue">複製Link</button>
+                </div>
               </div>`;
             }).join('')}
           </div>
         </div>
         <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px;">
-          <div style="font-weight:700;margin-bottom:6px;">3. 只分享獨立檔案 / 截圖相簿</div>
+          <div style="font-weight:700;margin-bottom:6px;">3. 獨立檔案 / 截圖相簿分頁</div>
           ${allDocs.length === 0 ? `<div class="t-meta muted">此地址暫無獨立附件檔案</div>` : `
-            <div style="display:flex;flex-direction:column;gap:6px;max-height:150px;overflow-y:auto;">
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:160px;overflow-y:auto;">
               ${allDocs.map(d => {
                 const fullUrl = d.url.startsWith('http') ? d.url : new URL(d.url, window.location.href).toString();
                 return `<div class="row-between" style="background:#FFF;padding:5px 8px;border:1px solid #E2E8F0;border-radius:4px;">
                   <span class="t-meta"><span class="muted t-mono">${escapeHtml(d.date)}</span> ${escapeHtml(d.name)}</span>
-                  <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製檔案 Link')" class="btn-link blue">複製檔案Link</button>
+                  <div class="row">
+                    <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link">開啟 ↗</a>
+                    <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製檔案 Link')" class="btn-link blue">複製Link</button>
+                  </div>
                 </div>`;
               }).join('')}
             </div>`}
@@ -449,7 +570,7 @@
     function copySiteClipboardSummary(siteName) {
       const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       if (!items.length) return;
-      const shareUrl = new URL(window.location.href); shareUrl.search = `?view=public&site=${encodeURIComponent(siteName)}`;
+      const shareUrl = getSingleSiteUrl(siteName);
       const lines = [`【築匠設計 QC 重點】${siteName}${items[0].assignee ? ' (' + items[0].assignee + ')' : ''}`];
       items.forEach(r => {
         lines.push(`▸ ${r.date}${r.timeRange ? ' ' + r.timeRange : ''} [${r.status}] ${r.title}`);
@@ -458,17 +579,8 @@
           if (d.url && !d.url.startsWith('data:')) lines.push(`  檔案：${d.name} -> ${d.url.startsWith('http') ? d.url : new URL(d.url, window.location.href).toString()}`);
         });
       });
-      lines.push(`總覽連結：${shareUrl.toString()}`);
+      lines.push(`專屬獨立分頁：${shareUrl}`);
       copyText(lines.join('\n'), '已複製重點記錄');
-    }
-
-    function copySingleReportSummary() {
-      const r = reports.find(rep => rep.id === viewingReportId); if (!r) return;
-      const shareUrl = new URL(window.location.href); shareUrl.search = `?view=public&reportId=${r.id}`;
-      const lines = [`【築匠設計 QC 重點】${r.site}`, `日期：${r.date} [${r.status}] ${r.title}`];
-      if (r.summary) lines.push(r.summary);
-      lines.push(`連結：${shareUrl.toString()}`);
-      copyText(lines.join('\n'), '已複製重點');
     }
 
     function copyText(text, msg) {
@@ -547,22 +659,24 @@
       const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
       const head = (r.followup && r.followup.trim()) ? escapeHtml(r.followup) : (logs.length ? `共 ${logs.length} 條紀錄` : `<span class="muted">暫無跟進</span>`);
       return `<div class="fu-box">
-        <div class="row"><button type="button" onclick="openFollowupModal('${r.id}','comment')" class="btn-link">+ 留言</button><span style="color:#CBD5E1">|</span><span><b>後續：</b>${head}</span></div>
+        <div class="row"><button type="button" onclick="openFollowupModal('${r.id}','comment')" class="btn-link no-print">+ 留言</button><span class="no-print" style="color:#CBD5E1">|</span><span><b>後續：</b>${head}</span></div>
         ${logs.map(l => `<div class="fu-log"><span><b>${escapeHtml(l.author)}</b> ${l.appointDate ? `<span class="badge st-appoint">約期 ${escapeHtml(l.appointDate)} ${escapeHtml(l.appointTime||'')}</span> ` : ''}${escapeHtml(l.message)}</span><span class="muted t-mono">${escapeHtml(l.createdAtStr||'')}</span></div>`).join('')}
       </div>`;
     }
 
     function renderReportList() {
       const container = document.getElementById('reportListContainer');
-      const kw = document.getElementById('searchInput').value.trim().toLowerCase();
-      const siteVal = document.getElementById('siteFilter').value;
+      const kw = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
+      const siteVal = SINGLE_SITE || document.getElementById('siteFilter').value;
       const statusVal = document.getElementById('statusFilter').value;
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+
+      if (SINGLE_SITE) document.title = `${SINGLE_SITE} — 現場記錄`;
 
       const filtered = reports.filter(r => {
+        if (!r.site && !r.title) return false;
         if (siteVal !== 'ALL' && r.site !== siteVal) return false;
-        if (statusVal !== 'ALL' && r.status !== statusVal) return false;
-        if (kw) {
+        if (!SINGLE_SITE && statusVal !== 'ALL' && r.status !== statusVal) return false;
+        if (!SINGLE_SITE && kw) {
           const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message+' '+l.appointDate).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
@@ -570,7 +684,7 @@
       });
 
       if (!filtered.length) {
-        container.innerHTML = `<div style="background:#FFF;border:1px solid #E2E8F0;border-radius:8px;padding:24px;text-align:center;" class="muted">暫無紀錄</div>`;
+        container.innerHTML = `<div style="background:#FFF;border:1px solid #E2E8F0;border-radius:8px;padding:24px;margin-top:14px;text-align:center;" class="muted">暫無紀錄</div>`;
         return;
       }
 
@@ -584,12 +698,14 @@
 
       container.innerHTML = groups.map(g => {
         const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
-        const isExp = expandedSites.has(g.site);
+        const isExp = SINGLE_SITE ? true : expandedSites.has(g.site);
         const vis = isExp ? g.items : g.items.slice(0, 3);
 
         const rowsHtml = vis.map((r, idx) => {
           const pCount = (r.photos || []).length, docs = getDocsList(r), stCls = getStatusClass(r.status);
-          if (!isPublic && inlineEditId === r.id) {
+          const singleUrl = getSingleReportUrl(r.id);
+
+          if (!IS_PUBLIC && inlineEditId === r.id) {
             const pt = parseTimeRange(r.timeRange);
             return `<div class="entry-row">
               <div class="step-left"><input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="margin-bottom:4px;" />
@@ -608,7 +724,7 @@
             ${docs.map(d => d.url ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>` : `<span class="t-meta">${escapeHtml(d.name)}</span>`).join('')}
           </div>` : '';
 
-          const thumbsHtml = pCount ? `<div class="thumbs">${r.photos.map(p => `<div onclick="openViewModal('${r.id}')" class="thumb-box"><img loading="lazy" decoding="async" src="${p.base64Annotated||p.base64Raw}" /></div>`).join('')}</div>` : '';
+          const thumbsHtml = pCount ? `<div class="thumbs">${r.photos.map(p => `<a href="${escapeHtml(singleUrl)}" target="_blank" class="thumb-box"><img loading="lazy" decoding="async" src="${p.base64Annotated||p.base64Raw}" /></a>`).join('')}</div>` : '';
 
           return `<div class="entry-row">
             <div class="step-left">
@@ -617,12 +733,16 @@
             </div>
             <div class="step-right">
               <div class="row-between">
-                ${!isPublic ? `<button type="button" onclick="cycleStatus('${r.id}')" class="badge ${stCls}" style="cursor:pointer;">${escapeHtml(r.status)} ↻</button>` : `<span class="badge ${stCls}">${escapeHtml(r.status)}</span>`}
-                <div class="row">
+                ${!IS_PUBLIC ? `<button type="button" onclick="cycleStatus('${r.id}')" class="badge ${stCls}" style="cursor:pointer;">${escapeHtml(r.status)} ↻</button>` : `<span class="badge ${stCls}">${escapeHtml(r.status)}</span>`}
+                <div class="row no-print">
                   ${idx === 0 ? `<button type="button" onclick="openFollowupModal('${r.id}','appoint')" class="btn-link blue">+ 約期</button>` : ''}
-                  ${!isPublic ? `<button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'),'${escapeAttr(r.date)}','${r.id}')" class="btn-link blue">+ 截圖檔</button>` : ''}
-                  <button type="button" onclick="openViewModal('${r.id}')" class="btn-link">檢視(${pCount})</button>
-                  ${!isPublic ? `<button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link">快改</button><button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button><button type="button" onclick="deleteReport('${r.id}')" class="btn-link danger muted">刪</button>` : ''}
+                  ${!IS_PUBLIC ? `<button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'),'${escapeAttr(r.date)}','${r.id}')" class="btn-link blue">+ 截圖檔</button>` : ''}
+                  <a href="${escapeHtml(singleUrl)}" target="_blank" class="btn-link">獨立分頁(${pCount}) ↗</a>
+                  ${!IS_PUBLIC ? `
+                    <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link">快改</button>
+                    <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
+                    <button type="button" onclick="deleteReport('${r.id}')" class="btn-link danger muted">刪</button>
+                  ` : ''}
                 </div>
               </div>
               <div class="entry-main">
@@ -643,18 +763,21 @@
             <div class="row">
               <span class="t-site">${escapeHtml(g.site)}</span>
               ${g.assignee ? `<span class="badge" style="background:#E2E8F0;color:#1E293B;">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!isPublic ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link muted" style="text-decoration:none;">✎</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link muted no-print" style="text-decoration:none;">✎</button>` : ''}
             </div>
-            <div class="row">
-              ${!isPublic ? `<button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-primary">+ 新增日期</button>` : ''}
-              <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-link blue">截圖工作台 ↗</button>
-              <button type="button" onclick="copySiteClipboardSummary(decodeURIComponent('${encSite}'))" class="btn-link">複製重點</button>
-              <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="btn-link">分享</button>
-            </div>
+            ${!IS_PUBLIC ? `
+              <div class="row no-print">
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-primary">+ 新增日期</button>
+                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-link blue">截圖工作台 ↗</button>
+                <a href="${escapeHtml(getSingleSiteUrl(g.site))}" target="_blank" class="btn-link">地址分頁 ↗</a>
+                <button type="button" onclick="copySiteClipboardSummary(decodeURIComponent('${encSite}'))" class="btn-link">複製重點</button>
+                <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="btn-link">分享</button>
+              </div>
+            ` : ''}
           </div>
           <div class="site-body">
             ${rowsHtml}
-            ${g.items.length > 3 ? `<div style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #F1F5F9;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收合舊紀錄 ▴' : `展開其餘 ${g.items.length - 3} 條紀錄 ▾`}</button></div>` : ''}
+            ${(!SINGLE_SITE && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #F1F5F9;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收合舊紀錄 ▴' : `展開其餘 ${g.items.length - 3} 條紀錄 ▾`}</button></div>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -850,23 +973,10 @@
 
     async function deleteReport(id) { if (confirm('確定刪除此紀錄？')) { await db.collection(COLLECTION_NAME).doc(id).delete(); showToast('已刪除'); } }
 
-    function openViewModal(id) {
-      const r = reports.find(x => x.id === id); if (!r) return; viewingReportId = id;
-      const docs = getDocsList(r);
-      document.getElementById('viewModalHeader').textContent = `${r.site} — ${r.title}`;
-      document.getElementById('viewModalBody').innerHTML = `
-        <div><span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange||'')}</span> <span class="badge ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span></div>
-        ${r.summary ? `<div style="white-space:pre-line;">${escapeHtml(r.summary)}</div>` : ''}
-        ${docs.length ? `<div class="row">${docs.map(d => `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue">📄 ${escapeHtml(d.name)} ↗</a>`).join('')}</div>` : ''}
-        ${renderFollowupBlock(r)}
-        ${(r.photos||[]).map((p,i) => `<div style="border:1px solid #E2E8F0;border-radius:6px;overflow:hidden;"><img src="${p.base64Annotated||p.base64Raw}" style="width:100%;max-height:60vh;object-fit:contain;background:#F8FAFC;display:block;" /><div style="padding:8px;" class="t-meta"><b>#${i+1}</b> ${escapeHtml(p.note||'')}</div></div>`).join('')}`;
-      document.getElementById('viewModal').classList.remove('hidden');
-    }
-    function closeViewModal() { document.getElementById('viewModal').classList.add('hidden'); }
     function escapeHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
 
-    startRealtimeSync();
+    bootApp();
   </script>
 </body>
 </html>
