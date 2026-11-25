@@ -3,315 +3,179 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>築匠設計 ARTISAN STUDIO — QC 報告</title>
+  <title>築匠設計 — 截圖工作台</title>
   <link rel="icon" href="data:," />
   <style>
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif;
-      background: #E2E8F0; color: #0F172A; font-size: 14px; line-height: 1.55; margin: 0;
-    }
-    a { color: inherit; }
-    .container { max-width: 980px; margin: 0 auto; padding: 0 12px 36px; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif; background: #F1F5F9; color: #0F172A; font-size: 13px; margin: 0; }
 
-    /* 黑底頂欄 + 公司系橙色點綴 */
-    .topbar { background: #0F172A; color: #F8FAFC; border-bottom: 3px solid #EA580C; position: sticky; top: 0; z-index: 30; padding: 8px 0; }
-    .row-between { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .t-site { font-size: 15px; font-weight: 700; line-height: 1.35; }
-    .t-meta { font-size: 13px; line-height: 1.45; }
-    .t-mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .muted { color: #64748B; }
-    .topbar .muted { color: #CBD5E1; }
+    /* 淺色燈系頂欄 + 公司系橙色點綴 */
+    .topbar { background: #FFFBEB; color: #0F172A; border-bottom: 3px solid #EA580C; padding: 6px 12px; position: sticky; top: 0; z-index: 30; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+    .row { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+    .tool-sep { width: 1px; height: 16px; background: #CBD5E1; margin: 0 2px; }
 
-    .btn-primary { background: #0F172A; color: #FFF; border: 1px solid #334155; border-radius: 5px; font-size: 13px; font-weight: 600; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-    .btn-orange { background: #EA580C; color: #FFF; border: 1px solid #EA580C; border-radius: 5px; font-size: 13px; font-weight: 600; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .btn-orange { background: #EA580C; color: #FFF; border: 1px solid #EA580C; border-radius: 4px; font-size: 13px; font-weight: 600; padding: 4px 10px; cursor: pointer; }
     .btn-orange:hover { background: #C2410C; border-color: #C2410C; }
-    .btn-wa { background: #059669; color: #FFF; border: none; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 5px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 5px; font-size: 13px; font-weight: 500; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
-    .topbar .btn-secondary { background: transparent; color: #F8FAFC; border-color: #475569; }
-    .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 5px; font-size: 13px; padding: 4px 8px; cursor: pointer; }
+    .btn-orange:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-wa { background: #059669; color: #FFF; border: none; border-radius: 4px; font-size: 13px; font-weight: 600; padding: 4px 9px; cursor: pointer; }
+    .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 4px; font-size: 13px; padding: 4px 8px; cursor: pointer; text-decoration: none; }
+    .btn-mode { background: #FFF7ED; color: #EA580C; border: 1px solid #FDBA74; border-radius: 4px; font-size: 13px; font-weight: 600; padding: 4px 9px; cursor: pointer; }
+    .btn-mode.shoot-mode { background: #EA580C; color: #FFF; border-color: #EA580C; }
+    .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FCA5A5; border-radius: 4px; font-size: 13px; padding: 4px 8px; cursor: pointer; }
     .btn-active { background: #EA580C !important; color: #FFF !important; border-color: #EA580C !important; }
-    .btn-link { background: none; border: none; padding: 1px 4px; font-size: 13px; color: #475569; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-    .btn-link:hover { color: #0F172A; }
-    .btn-link.blue { color: #1D4ED8; }
-    .btn-link.orange { color: #EA580C; font-weight: 600; }
-    .btn-link.danger:hover { color: #DC2626; }
+    .btn-link { background: none; border: none; font-size: 13px; text-decoration: underline; cursor: pointer; color: #1D4ED8; padding: 2px 4px; }
 
-    .input-ui { border: 1px solid #CBD5E1; border-radius: 5px; padding: 6px 9px; font-size: 13px; background: #FFF; color: #0F172A; width: 100%; font-family: inherit; }
+    .input-ui { border: 1px solid #CBD5E1; border-radius: 4px; padding: 5px 8px; font-size: 13px; background: #FFF; color: #0F172A; font-family: inherit; width: 100%; }
     .input-ui:focus { outline: none; border-color: #EA580C; }
-    .select-ui { border: 1px solid #CBD5E1; border-radius: 5px; padding: 6px 8px; font-size: 13px; background: #FFF; color: #0F172A; }
+    .select-ui { border: 1px solid #CBD5E1; border-radius: 4px; padding: 4px 7px; font-size: 13px; background: #FFF; color: #0F172A; }
 
-    /* 灰底搜尋列（獨立一行，不與頂欄或按鈕重疊） */
-    .filter-zone { background: #E2E8F0; padding: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-    .filter-zone .search-wrap { flex: 1 1 240px; min-width: 180px; }
+    .meta-bar { background: #F8FAFC; padding: 6px 12px; display: grid; grid-template-columns: 2fr 2fr 140px; gap: 6px; border-bottom: 1px solid #CBD5E1; }
+    .workspace { display: flex; min-height: calc(100vh - 76px); }
+    .sidebar { width: 148px; background: #F8FAFC; border-right: 1px solid #CBD5E1; overflow-y: auto; padding: 6px; flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; }
+    .stage { flex: 1; min-width: 0; background: #FFF; padding: 8px 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .strip-line { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; padding-bottom: 6px; border-bottom: 1px solid #E2E8F0; }
 
-    /* 白底單位報告區（橙色左邊線點綴，減少框框） */
-    .site-card { background: #FFFFFF; border-left: 4px solid #EA580C; margin: 14px 0; }
-    .site-header { background: #F8FAFC; padding: 10px 16px; border-bottom: 1px solid #E2E8F0; }
-    .site-body { padding: 14px 16px; }
-
-    .entry-row { display: flex; gap: 14px; }
-    .entry-row + .entry-row { margin-top: 14px; padding-top: 14px; border-top: 1px solid #E2E8F0; }
-    .step-left { width: 112px; flex-shrink: 0; padding-top: 2px; }
-    .step-right { flex: 1; min-width: 0; border-left: 1px solid #E2E8F0; padding-left: 14px; }
-    .entry-main { display: flex; gap: 14px; justify-content: space-between; margin-top: 4px; }
-    .entry-content { flex: 1; min-width: 0; }
-    .docs-col { width: 230px; flex-shrink: 0; border-left: 1px solid #E2E8F0; padding-left: 12px; }
-    .doc-item-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 4px; }
-
-    .inline-edit-form { display: flex; flex-direction: column; gap: 8px; }
-    .inline-edit-top { display: grid; grid-template-columns: 155px 1fr 1fr; gap: 8px; align-items: center; }
-    @media (max-width: 640px) {
-      .entry-row { flex-direction: column; gap: 6px; }
-      .step-left { width: auto; display: flex; align-items: baseline; gap: 8px; }
-      .step-right { border-left: none; padding-left: 0; }
-      .entry-main { flex-direction: column; }
-      .docs-col { width: 100%; border-left: none; padding-left: 0; border-top: 1px solid #E2E8F0; padding-top: 8px; }
-      .inline-edit-top { grid-template-columns: 1fr; }
+    @media (max-width: 720px) {
+      .meta-bar { grid-template-columns: 1fr; }
+      .workspace { flex-direction: column; }
+      .sidebar { width: 100%; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid #CBD5E1; }
+      .page-thumb { width: 102px; flex-shrink: 0; }
     }
 
-    .st-label { font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
-    .st-todo { color: #EA580C; }
-    .st-appoint { color: #1D4ED8; }
-    .st-wait { color: #B45309; }
-    .st-done { color: #047857; }
-    .sync-ok { color: #86EFAC; font-size: 12px; }
-    .sync-err { color: #FCA5A5; font-size: 12px; }
+    .page-thumb { border: 2px solid #CBD5E1; overflow: hidden; cursor: pointer; background: #FFF; }
+    .page-thumb.active { border-color: #EA580C; }
+    .page-thumb img { width: 100%; height: 72px; object-fit: cover; display: block; }
+    .ord-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: #475569; padding: 0 2px; }
+    .ord-btn:hover { color: #EA580C; }
 
-    .thumbs { display: flex; gap: 6px; overflow-x: auto; margin-top: 8px; padding-bottom: 2px; }
-    .thumb-box { width: 56px; height: 56px; overflow: hidden; flex-shrink: 0; background: #F1F5F9; display: block; border: 1px solid #CBD5E1; }
-    .thumb-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-    .fu-area { margin-top: 10px; padding: 6px 10px; background: #F8FAFC; border-left: 2px solid #EA580C; font-size: 13px; }
-    .fu-log { margin-top: 5px; padding-top: 5px; border-top: 1px dashed #E2E8F0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; font-size: 13px; }
-
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,0.55); z-index: 50; overflow-y: auto; padding: 16px 10px; display: flex; align-items: flex-start; justify-content: center; }
-    .modal-box { background: #FFF; border: 1px solid #CBD5E1; width: 100%; max-width: 820px; overflow: hidden; }
-    .modal-sm { max-width: 540px; }
-    .modal-head { background: #0F172A; color: #FFF; border-bottom: 2px solid #EA580C; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
-    .modal-head .btn-link { color: #E2E8F0; }
-    .modal-body { padding: 14px; }
-    .modal-foot { background: #F8FAFC; border-top: 1px solid #E2E8F0; padding: 10px 14px; display: flex; justify-content: flex-end; gap: 8px; }
-    .editor-band { background: #F8FAFC; padding: 10px 12px; border-bottom: 1px solid #E2E8F0; }
-    .editor-band:last-child { border-bottom: none; }
-    .editor-band-title { font-size: 13px; font-weight: 700; color: #EA580C; margin-bottom: 8px; }
-    .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 8px; }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .field-label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 3px; }
-
-    .canvas-wrapper { width: 100%; background: #E2E8F0; overflow: auto; max-height: 54vh; padding: 8px; touch-action: none; display: grid; place-items: center; }
-    canvas { max-width: 100%; max-height: 50vh; display: block; cursor: grab; background: #FFF; }
+    .canvas-scroll {
+      width: 100%;
+      height: 68vh;
+      background: #E2E8F0;
+      overflow: auto;
+      display: grid;
+      place-items: center;
+      padding: 10px;
+      touch-action: none;
+    }
+    .canvas-stage-inner { position: relative; display: inline-block; line-height: 0; }
+    canvas { display: block; cursor: grab; background: #FFF; }
     canvas:active { cursor: grabbing; }
+    canvas.draw-cursor { cursor: crosshair; }
+
     .color-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #FFF; box-shadow: 0 0 0 1px #64748B; cursor: pointer; padding: 0; }
     .color-dot.active-color { box-shadow: 0 0 0 2px #EA580C; }
-
-    .standalone-photo { border-top: 1px solid #E2E8F0; background: #FFF; margin-top: 14px; break-inside: avoid; page-break-inside: avoid; }
-    .standalone-photo img { width: 100%; max-height: 75vh; object-fit: contain; background: #F8FAFC; display: block; }
+    .zoom-pill { font-size: 13px; font-weight: 600; min-width: 44px; text-align: center; }
     .hidden { display: none !important; }
-    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #0F172A; border-bottom: 2px solid #EA580C; color: #FFF; padding: 8px 14px; border-radius: 5px; font-size: 13px; max-width: 90vw; text-align: center; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 90; background: #FFFBEB; color: #0F172A; border: 1px solid #FDBA74; border-bottom: 3px solid #EA580C; padding: 8px 14px; border-radius: 5px; font-size: 13px; font-weight: 600; max-width: 90vw; text-align: center; }
 
+    #printReportView { display: none; padding: 20px 14px 40px; max-width: 920px; margin: 0 auto; }
+    .print-page { border-bottom: 1px solid #E2E8F0; margin-bottom: 18px; overflow: hidden; break-inside: avoid; page-break-inside: avoid; background: #FFF; }
+    .print-page img { width: 100%; max-height: 75vh; object-fit: contain; background: #F8FAFC; display: block; }
     @media print {
       body { background: #FFF; }
-      .no-print, .topbar, .filter-zone { display: none !important; }
-      .container { max-width: 100%; padding: 0; }
-      .site-card { margin: 0; }
-      .standalone-photo img { max-height: 460px; }
+      .no-print { display: none !important; }
+      #printReportView { display: block !important; padding: 0; max-width: 100%; }
+      .print-page img { max-height: 460px; }
     }
   </style>
 </head>
 <body>
 
   <header class="topbar no-print">
-    <div class="container row-between" style="padding-bottom:0;">
-      <div class="row">
-        <span class="t-site">築匠設計 ARTISAN STUDIO</span>
-        <span style="color:#475569">|</span>
-        <span class="t-meta muted" id="headerSubTitle">QC 總報告</span>
-        <span id="syncBadge" class="sync-ok">連線中</span>
-      </div>
-      <div class="row" id="adminHeaderBtns">
-        <a href="album.html" target="_blank" class="btn-secondary">截圖工作台 ↗</a>
-        <button type="button" onclick="openEditor()" class="btn-orange">+ 新增報告</button>
-      </div>
-      <div class="row hidden" id="standaloneHeaderBtns">
-        <button type="button" onclick="window.print()" class="btn-secondary">列印 / 儲存 PDF</button>
-      </div>
+    <div class="row">
+      <a href="index.html" id="backToMainBtn" class="btn-secondary">退回</a>
+      <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:220px;">
+        <option value="">載入</option>
+      </select>
+      <button type="button" id="deleteAlbumBtn" onclick="deleteCurrentAlbumWithConfirm()" class="btn-danger-outline hidden">刪檔</button>
+      <span id="statusTag" style="font-size:12px;color:#475569;"></span>
+    </div>
+    <div class="row" id="adminAlbumBtns">
+      <button type="button" onclick="copyAlbumWhatsApp('client')" class="btn-wa">💬 Share</button>
+      <button type="button" onclick="copyAlbumWhatsApp('factory')" class="btn-secondary">師傅/廠</button>
+      <button type="button" onclick="copyPureAlbumLink()" class="btn-link">純網址</button>
+      <button type="button" onclick="exportPdf()" class="btn-secondary">出PDF</button>
+      <button type="button" id="saveAlbumBtn" onclick="saveAlbumToCloud()" class="btn-orange">儲存</button>
+    </div>
+    <div class="row hidden" id="publicAlbumBtns">
+      <button type="button" onclick="exportPdf()" class="btn-secondary">出PDF</button>
     </div>
   </header>
 
-  <main class="container">
-    <div id="filterBar" class="filter-zone no-print">
-      <div class="search-wrap">
-        <input type="text" id="searchInput" oninput="renderReportList()" class="input-ui" />
-      </div>
-      <select id="siteFilter" onchange="renderReportList()" class="select-ui">
-        <option value="ALL">全部單位</option>
-      </select>
-      <select id="statusFilter" onchange="renderReportList()" class="select-ui">
-        <option value="ALL">全部狀態</option>
-        <option value="需跟進">需跟進</option>
-        <option value="已約期">已約期</option>
-        <option value="待確認">待確認</option>
-        <option value="已完成">已完成</option>
-      </select>
+  <div id="editShell" class="no-print">
+    <div class="meta-bar">
+      <input type="text" id="albumSite" list="siteSuggestions" class="input-ui" />
+      <datalist id="siteSuggestions"></datalist>
+      <input type="text" id="albumTitle" class="input-ui" />
+      <input type="date" id="albumDate" class="input-ui" />
     </div>
 
-    <div id="reportListContainer">
-      <div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">載入中...</div>
-    </div>
-  </main>
+    <div class="workspace">
+      <aside class="sidebar" id="thumbSidebar"></aside>
 
-  <!-- 彈窗 1：新增 / 編輯報告 -->
-  <div id="editorModal" class="modal-backdrop hidden no-print">
-    <div class="modal-box">
-      <div class="modal-head">
-        <span class="t-site" id="editorModalTitle">新增報告</span>
-        <button type="button" onclick="closeEditor()" class="btn-link">關閉 ✕</button>
-      </div>
-      <div class="modal-body" style="padding:0;">
-        <div class="editor-band">
-          <div class="editor-band-title">1. 單位與時間</div>
-          <div class="grid-3">
-            <div><label class="field-label">屋苑 / 單位 *</label><input type="text" id="fieldSite" class="input-ui" /></div>
-            <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
-            <div>
-              <label class="field-label">狀態</label>
-              <select id="fieldStatus" class="select-ui" style="width:100%;">
-                <option value="需跟進">需跟進</option><option value="已約期">已約期</option><option value="待確認">待確認</option><option value="已完成">已完成</option>
-              </select>
-            </div>
+      <section class="stage">
+        <div class="strip-line">
+          <div class="row">
+            <button type="button" id="modeShootBtn" onclick="setCaptureMode('shoot')" class="btn-mode">📸 連續</button>
+            <button type="button" id="modeStickerBtn" onclick="setCaptureMode('sticker')" class="btn-mode">📌 貼小圖</button>
           </div>
-          <div class="grid-3" style="margin-top:8px;">
-            <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
-            <div>
-              <label class="field-label">時段（開始 / 結束）</label>
-              <div class="grid-2"><input type="time" id="fieldTimeStart" class="input-ui" /><input type="time" id="fieldTimeEnd" class="input-ui" /></div>
-            </div>
-            <div><label class="field-label">項目重點標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
+          <div class="row">
+            <label class="btn-secondary" style="cursor:pointer;"><span>🖼 揀相</span><input type="file" accept="image/*" multiple class="hidden" onchange="handleAlbumFiles(event)" /></label>
+            <button type="button" onclick="addBlankPage()" class="btn-secondary">+ 空白</button>
           </div>
         </div>
 
-        <div class="editor-band" style="background:#FFF;">
-          <div class="editor-band-title">2. 工程內容與文件</div>
-          <div style="margin-bottom:8px;"><label class="field-label">檢查要點 / 事項內容</label><textarea id="fieldSummary" rows="3" class="input-ui"></textarea></div>
-          <div style="margin-bottom:8px;"><label class="field-label">後續摘要</label><input type="text" id="fieldFollowup" class="input-ui" /></div>
-          <div style="padding-top:6px;border-top:1px solid #E2E8F0;">
-            <div class="row-between" style="margin-bottom:6px;">
-              <span class="t-meta" style="font-weight:600;">關聯文件 / 截圖檔</span>
-              <div class="row">
-                <button type="button" onclick="openAlbumFromEditor()" class="btn-orange">+ 開截圖工作台</button>
-                <label class="btn-secondary" style="cursor:pointer;"><span>+ 小PDF</span><input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" /></label>
-                <button type="button" onclick="addDocRow()" class="btn-secondary">+ 加網址連結</button>
-              </div>
-            </div>
-            <div id="docRowsContainer" style="display:flex;flex-direction:column;gap:6px;"></div>
-          </div>
-        </div>
-
-        <div class="editor-band">
-          <div class="row-between" style="margin-bottom:8px;">
-            <div>
-              <div class="editor-band-title" style="margin-bottom:2px;">3. 現場相片與標記</div>
-              <span id="photoCountHint" class="t-meta muted"></span>
-            </div>
+        <div id="canvasArea" class="hidden" style="display:flex;flex-direction:column;gap:6px;">
+          <div class="strip-line">
             <div class="row">
-              <label class="btn-orange" style="cursor:pointer;"><span>📷 連續拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <label class="btn-secondary" style="cursor:pointer;"><span>🖼 批量上傳相片</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <button type="button" onclick="createBlankSketch()" class="btn-secondary">+ 草圖板</button>
+              <button type="button" onclick="setTool('move')" id="t-move" class="btn-secondary btn-active">✋ 移動</button>
+              <button type="button" onclick="setTool('pan')" id="t-pan" class="btn-secondary">🔍 拖動</button>
+              <div class="tool-sep"></div>
+              <button type="button" onclick="setTool('freehand')" id="t-freehand" class="btn-secondary">✎ 手繪</button>
+              <button type="button" onclick="setTool('circle')" id="t-circle" class="btn-secondary">◯ 線圈</button>
+              <button type="button" onclick="setTool('arrow')" id="t-arrow" class="btn-secondary">↗ 箭咀</button>
+              <button type="button" onclick="setTool('text')" id="t-text" class="btn-secondary">T 打字</button>
+              <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui">
+                <option value="0.016">字體：細</option>
+                <option value="0.024" selected>字體：中</option>
+                <option value="0.034">字體：大</option>
+                <option value="0.046">字體：特大</option>
+              </select>
+              <button type="button" onclick="setColor('rgba(234,88,12,0.95)', this)" class="color-dot active-color" style="background:#EA580C;"></button>
+              <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot" style="background:#DC2626;"></button>
+              <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
+              <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
+            </div>
+
+            <div class="row">
+              <button type="button" onclick="stepZoom(-0.25)" class="btn-secondary">－</button>
+              <span id="zoomPercentLabel" class="zoom-pill">100%</span>
+              <button type="button" onclick="stepZoom(0.25)" class="btn-secondary">＋</button>
+              <button type="button" onclick="setZoomLevel(1)" class="btn-secondary">適應</button>
+              <div class="tool-sep"></div>
+              <button type="button" id="delSelBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
+              <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
+              <button type="button" onclick="clearShapes()" class="btn-secondary">全清</button>
+              <button type="button" onclick="deleteCurrentPageWithConfirm()" class="btn-danger-outline">刪此頁</button>
             </div>
           </div>
 
-          <div id="annotationWorkspace" class="hidden" style="background:#FFF;padding:8px;border-top:1px solid #CBD5E1;margin-bottom:8px;">
-            <div class="row-between" style="margin-bottom:6px;">
-              <div class="row">
-                <button type="button" onclick="setTool('move')" id="tool-move" class="btn-secondary btn-active">✋ 移動</button>
-                <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="btn-secondary">✎ 手繪</button>
-                <button type="button" onclick="setTool('circle')" id="tool-circle" class="btn-secondary">◯ 線圈</button>
-                <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="btn-secondary">↗ 箭咀</button>
-                <button type="button" onclick="setTool('text')" id="tool-text" class="btn-secondary">T 打字</button>
-                <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui">
-                  <option value="0.018">字體：細</option>
-                  <option value="0.026" selected>字體：中</option>
-                  <option value="0.036">字體：大</option>
-                  <option value="0.048">字體：特大</option>
-                </select>
-              </div>
-              <div class="row">
-                <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot active-color" style="background:#DC2626;"></button>
-                <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
-                <button type="button" onclick="setColor('rgba(234,179,8,0.95)', this)" class="color-dot" style="background:#EAB308;"></button>
-                <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
-                <button type="button" id="delSelectedShapeBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
-                <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
-                <button type="button" onclick="clearShapes()" class="btn-secondary">全清</button>
-              </div>
+          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" class="input-ui hidden" />
+
+          <div class="canvas-scroll" id="canvasScrollBox">
+            <div class="canvas-stage-inner">
+              <canvas id="workCanvas"></canvas>
             </div>
-
-            <div id="textInputBar" class="hidden" style="margin-bottom:6px;">
-              <input type="text" id="canvasTextInput" oninput="onTextInputLiveEdit()" class="input-ui t-meta" />
-            </div>
-
-            <div class="canvas-wrapper"><canvas id="annotCanvas"></canvas></div>
-            <input type="text" id="currentPhotoNote" oninput="syncCurrentPhotoNote()" class="input-ui t-meta" style="margin-top:6px;" />
           </div>
 
-          <div id="photoThumbList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;"></div>
+          <input type="text" id="pageNoteInput" oninput="syncPageNote()" class="input-ui" />
         </div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" onclick="closeEditor()" class="btn-secondary">取消</button>
-        <button type="button" id="saveReportBtn" onclick="saveReport()" class="btn-orange">儲存同步</button>
-      </div>
+      </section>
     </div>
   </div>
 
-  <!-- 彈窗 2：約期 / 留言 -->
-  <div id="followupModal" class="modal-backdrop hidden no-print">
-    <div class="modal-box modal-sm">
-      <div class="modal-head">
-        <span class="t-site" id="followupModalTitle">新增留言</span>
-        <button type="button" onclick="closeFollowupModal()" class="btn-link">關閉 ✕</button>
-      </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
-        <div id="followupTargetTitle" class="t-meta" style="font-weight:600;background:#F8FAFC;padding:6px 8px;"></div>
-        <div id="followupHistoryList" style="max-height:160px;overflow-y:auto;background:#F8FAFC;padding:6px;"></div>
-        <div class="grid-2">
-          <div><label class="field-label">名字 *</label><input type="text" id="fuAuthor" class="input-ui t-meta" /></div>
-          <div>
-            <label class="field-label">更新狀態</label>
-            <select id="fuNewStatus" class="select-ui" style="width:100%;">
-              <option value="KEEP">保持原狀態</option><option value="已約期">已約期</option><option value="需跟進">需跟進</option><option value="待確認">待確認</option><option value="已完成">已完成</option>
-            </select>
-          </div>
-        </div>
-        <div id="appointFieldsWrap" class="grid-2 hidden">
-          <div><label class="field-label">預約日期 *</label><input type="date" id="fuDate" class="input-ui t-meta" /></div>
-          <div>
-            <label class="field-label">時段（開始 / 結束）</label>
-            <div class="grid-2"><input type="time" id="fuTimeStart" class="input-ui t-meta" /><input type="time" id="fuTimeEnd" class="input-ui t-meta" /></div>
-          </div>
-        </div>
-        <div><label class="field-label" id="fuMsgLabel">留言內容 *</label><textarea id="fuMessage" rows="2" class="input-ui"></textarea></div>
-      </div>
-      <div class="modal-foot">
-        <button type="button" onclick="closeFollowupModal()" class="btn-secondary">取消</button>
-        <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="btn-orange">發送</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 彈窗 3：WhatsApp 禮貌訊息分享 -->
-  <div id="shareModal" class="modal-backdrop hidden no-print">
-    <div class="modal-box modal-sm">
-      <div class="modal-head">
-        <span class="t-site" id="shareModalTitle">WhatsApp 禮貌分享</span>
-        <button type="button" onclick="closeShareModal()" class="btn-link">關閉 ✕</button>
-      </div>
-      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;" id="shareModalBody"></div>
-    </div>
-  </div>
-
+  <div id="printReportView"></div>
   <div id="toast" class="hidden no-print"></div>
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -326,795 +190,416 @@
       messagingSenderId: "17077391191",
       appId: "1:17077391191:web:cb936dd1bfe98b2f3d7812"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
 
-    const COLLECTION_NAME = 'artisan_qc_reports';
-    const PHOTOS_COL = 'artisan_qc_photos';
+    const REPORTS_COL = 'artisan_qc_reports';
     const ALBUMS_COL = 'artisan_qc_albums';
-    const STATUS_ORDER = ['需跟進', '已約期', '待確認', '已完成'];
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
-    const SINGLE_SITE = urlParams.get('site') || '';
-    const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
-
-    let reports = [];
-    let singleReportData = null;
-    let expandedSites = new Set();
-    let inlineEditId = null, editingReportId = null, followupTargetId = null;
-    let followupModalMode = 'comment';
-
-    let draftDocs = [], draftPhotos = [], activePhotoIndex = -1, originalPhotoIds = [];
+    let currentAlbumId = null, linkedReportId = null;
+    let pages = [], activeIdx = -1;
+    let captureMode = 'shoot';
     // 預設工具為 move（✋ 移動），避免拉動畫面時隨便畫線
-    let currentTool = 'move', currentColor = 'rgba(234,88,12,0.95)';
-    let currentFontScale = 0.026;
-    let selectedShapeIdx = -1;
-    let isDrawing = false, isDraggingShape = false, startX = 0, startY = 0, lastDragX = 0, lastDragY = 0;
-    let currentStroke = [], baseImageObj = null;
+    let tool = 'move', color = 'rgba(234,88,12,0.95)', fontScale = 0.024;
+    let zoomLevel = 1, fitScale = 1, baseCanvasW = 1000, baseCanvasH = 700;
+    let selectedIdx = -1, drawing = false, draggingShape = false, panningView = false;
+    let sx = 0, sy = 0, lx = 0, ly = 0, panStartClientX = 0, panStartClientY = 0, panStartScrollL = 0, panStartScrollT = 0;
+    let stroke = [], baseImg = null;
 
-    const canvas = document.getElementById('annotCanvas');
+    const canvas = document.getElementById('workCanvas');
     const ctx = canvas.getContext('2d');
+    const scrollBox = document.getElementById('canvasScrollBox');
 
-    function isTypingInputTarget(el) {
+    function isInputFocused(el) {
       if (!el) return false;
       const tag = el.tagName;
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
     }
 
-    function bootApp() {
-      if (SINGLE_REPORT_ID) {
-        enterCleanPublicUI('現場記錄報告');
-        db.collection(COLLECTION_NAME).doc(SINGLE_REPORT_ID).onSnapshot(doc => {
-          if (!doc.exists) {
-            document.getElementById('reportListContainer').innerHTML = `<div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">找不到此報告或報告已被刪除</div>`;
-            return;
-          }
-          singleReportData = { id: doc.id, ...doc.data() };
-          reports = [singleReportData];
-          renderSingleReportStandalone(singleReportData);
-        });
-        return;
-      }
-
-      if (SINGLE_SITE) {
-        enterCleanPublicUI('單位現場記錄');
-        db.collection(COLLECTION_NAME).where('site', '==', SINGLE_SITE).onSnapshot(snap => {
-          reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-          renderReportList();
-        });
-        return;
-      }
-
-      if (IS_PUBLIC) {
-        enterCleanPublicUI('現場記錄總覽');
-        document.getElementById('filterBar').classList.remove('hidden');
-      }
-
-      db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot(snap => {
-        setSyncStatus(snap.metadata.fromCache ? '快取秒開' : '已同步', true);
-        reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        updateSiteFilterOptions();
-        renderReportList();
-      }, () => setSyncStatus('離線', false));
+    function applyCaptureModeUI() {
+      const shootBtn = document.getElementById('modeShootBtn');
+      const stickerBtn = document.getElementById('modeStickerBtn');
+      shootBtn.classList.toggle('shoot-mode', captureMode === 'shoot');
+      stickerBtn.classList.toggle('shoot-mode', captureMode === 'sticker');
+      document.getElementById('deleteAlbumBtn').classList.toggle('hidden', !currentAlbumId);
     }
 
-    function enterCleanPublicUI(subLabel) {
-      document.getElementById('adminHeaderBtns').classList.add('hidden');
-      document.getElementById('standaloneHeaderBtns').classList.remove('hidden');
-      document.getElementById('syncBadge').classList.add('hidden');
-      document.getElementById('filterBar').classList.add('hidden');
-      document.getElementById('headerSubTitle').textContent = subLabel;
+    function setCaptureMode(m) {
+      captureMode = m;
+      applyCaptureModeUI();
+      showToast(m === 'shoot' ? '📸 連續' : '📌 貼小圖');
     }
 
-    function setSyncStatus(text, ok = true) {
-      const el = document.getElementById('syncBadge');
-      el.textContent = text;
-      el.className = ok ? 'sync-ok' : 'sync-err';
-    }
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const site = params.get('site') || '';
+      const date = params.get('date') || new Date().toISOString().split('T')[0];
+      linkedReportId = params.get('reportId') || null;
+      currentAlbumId = params.get('albumId') || null;
+      const isPublic = params.get('view') === 'public';
 
-    function getAlbumEditUrl(docUrl) {
-      if (!docUrl || !docUrl.includes('albumId=')) return '';
-      const m = docUrl.match(/albumId=([^&]+)/);
-      if (!m) return '';
-      const u = new URL('album.html', window.location.href);
-      u.search = `?albumId=${encodeURIComponent(m[1])}`;
-      return u.toString();
-    }
-
-    async function fetchFullPhotosForReport(r) {
-      if (Array.isArray(r.photoMeta) && r.photoMeta.length > 0) {
-        const docs = await Promise.all(r.photoMeta.map(m => db.collection(PHOTOS_COL).doc(m.id).get().catch(() => null)));
-        return r.photoMeta.map((m, idx) => {
-          const d = docs[idx] && docs[idx].exists ? docs[idx].data() : null;
-          return {
-            id: m.id,
-            base64Raw: d ? (d.base64Raw || '') : '',
-            base64Annotated: d ? (d.base64Annotated || d.base64Raw || m.thumb) : m.thumb,
-            shapes: d ? (d.shapes || []) : [],
-            note: d ? (d.note ?? m.note ?? '') : (m.note || '')
-          };
-        });
-      }
-      return Array.isArray(r.photos) ? r.photos : [];
-    }
-
-    function getReportThumbs(r) {
-      if (Array.isArray(r.photoMeta) && r.photoMeta.length > 0) {
-        return r.photoMeta.map(m => ({ id: m.id, src: m.thumb, note: m.note || '' }));
-      }
-      if (Array.isArray(r.photos) && r.photos.length > 0) {
-        return r.photos.map(p => ({ id: p.id, src: p.base64Annotated || p.base64Raw, note: p.note || '' }));
-      }
-      return [];
-    }
-
-    async function renderSingleReportStandalone(r) {
-      document.title = `${r.site} — ${r.title}`;
-      const docs = getDocsList(r);
-      const container = document.getElementById('reportListContainer');
-
-      container.innerHTML = `
-        <div class="site-card">
-          <div class="site-header row-between">
-            <div class="row">
-              <span class="t-site">${escapeHtml(r.site)}</span>
-              ${r.assignee ? `<span class="muted t-meta">${escapeHtml(r.assignee)}</span>` : ''}
-            </div>
-            <div class="row">
-              <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange || '')}</span>
-              <span class="st-label ${getStatusClass(r.status)}">${escapeHtml(r.status)}</span>
-            </div>
-          </div>
-          <div class="site-body">
-            <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${escapeHtml(r.title)}</div>
-            ${r.summary ? `<div style="color:#1E293B;white-space:pre-line;margin-bottom:12px;">${escapeHtml(r.summary)}</div>` : ''}
-
-            ${docs.filter(d => !d.url.includes('albumId=')).length ? `
-              <div style="margin-bottom:12px;">
-                <div class="t-meta muted" style="font-weight:600;margin-bottom:4px;">相關附件：</div>
-                <div class="row">
-                  ${docs.filter(d => !d.url.includes('albumId=')).map(d => `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue">📄 ${escapeHtml(d.name)} ↗</a>`).join('')}
-                </div>
-              </div>
-            ` : ''}
-
-            ${renderFollowupBlock(r, true)}
-            <div id="standalonePhotosWrap"></div>
-            <div id="embeddedAlbumsWrap"></div>
-          </div>
-        </div>`;
-
-      const fullPhotos = await fetchFullPhotosForReport(r);
-      const pWrap = document.getElementById('standalonePhotosWrap');
-      if (pWrap && fullPhotos.length) {
-        pWrap.innerHTML = fullPhotos.map((p, i) => `
-          <div class="standalone-photo">
-            <img src="${p.base64Annotated || p.base64Raw}" />
-            ${p.note ? `<div style="padding:8px 12px;" class="t-meta"><b>#${i + 1}</b> ${escapeHtml(p.note)}</div>` : ''}
-          </div>`).join('');
-      }
-
-      const albumDocs = docs.filter(d => d.url && d.url.includes('albumId='));
-      const embedWrap = document.getElementById('embeddedAlbumsWrap');
-      for (const ad of albumDocs) {
-        const m = ad.url.match(/albumId=([^&]+)/);
-        if (!m) continue;
-        const albumId = m[1];
-        try {
-          let pages = [];
-          const albDoc = await db.collection(ALBUMS_COL).doc(albumId).get();
-          if (albDoc.exists) {
-            const pSnap = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').orderBy('order', 'asc').get();
-            pages = pSnap.docs.map(x => x.data());
-          }
-          if (pages.length && embedWrap) {
-            const sec = document.createElement('div');
-            sec.style.marginTop = '22px';
-            sec.innerHTML = `
-              <div style="font-weight:700;padding-bottom:6px;border-bottom:2px solid #EA580C;margin-bottom:10px;">${escapeHtml(ad.name)}</div>
-              ${pages.map((p, idx) => `
-                <div class="standalone-photo">
-                  <img loading="lazy" src="${p.rendered || p.raw}" />
-                  ${p.note ? `<div style="padding:8px 12px;" class="t-meta"><b>#${idx + 1}</b> ${escapeHtml(p.note)}</div>` : ''}
-                </div>
-              `).join('')}`;
-            embedWrap.appendChild(sec);
-          }
-        } catch (e) { console.warn(e); }
-      }
-    }
-
-    function getSingleReportUrl(id) {
-      const u = new URL('index.html', window.location.href);
-      u.search = `?view=public&reportId=${encodeURIComponent(id)}`;
-      return u.toString();
-    }
-
-    function getSingleSiteUrl(siteName) {
-      const u = new URL('index.html', window.location.href);
-      u.search = `?view=public&site=${encodeURIComponent(siteName)}`;
-      return u.toString();
-    }
-
-    function buildWhatsAppMessage({ audience, site, date, title, url }) {
-      if (audience === 'client') {
-        return [
-          `你好！以下為 *${site}* 的最新現場記錄／圖紙資料，請查閱：`,
-          date ? `📅 日期：${date}` : '',
-          title ? `📌 項目：${title}` : '',
-          `🔗 報告連結：${url}`,
-          ``,
-          `如有任何疑問或需調整之處，歡迎隨時聯絡我們跟進，謝謝！`,
-          `— 築匠設計 ARTISAN STUDIO`
-        ].filter(Boolean).join('\n');
+      if (isPublic) {
+        document.getElementById('backToMainBtn').classList.add('hidden');
+        document.getElementById('historyAlbumSelect').classList.add('hidden');
+        document.getElementById('deleteAlbumBtn').classList.add('hidden');
+        document.getElementById('statusTag').classList.add('hidden');
+        document.getElementById('adminAlbumBtns').classList.add('hidden');
+        document.getElementById('publicAlbumBtns').classList.remove('hidden');
+        document.getElementById('editShell').classList.add('hidden');
       } else {
-        return [
-          `麻煩跟進以下單位最新現場記錄及標記圖紙：`,
-          `🏠 單位：*${site}*`,
-          date ? `📅 日期：${date}` : '',
-          title ? `📌 重點：${title}` : '',
-          `🔗 詳情及標記圖：${url}`,
-          ``,
-          `請查閱並回覆確認，唔該晒！`
-        ].filter(Boolean).join('\n');
+        db.collection(REPORTS_COL).limit(50).get().then(snap => {
+          const sites = [...new Set(snap.docs.map(d => d.data().site).filter(Boolean))];
+          document.getElementById('siteSuggestions').innerHTML = sites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
+        });
+        await refreshAlbumListDropdown();
+      }
+
+      document.getElementById('albumSite').value = site;
+      document.getElementById('albumDate').value = date;
+      if (site && !currentAlbumId) document.getElementById('albumTitle').value = `${date.slice(2).replace(/-/g,'')} 截圖標記紀錄`;
+
+      if (currentAlbumId) {
+        captureMode = 'sticker';
+        await loadExistingAlbum(currentAlbumId, isPublic);
+      } else {
+        captureMode = 'shoot';
+        renderSidebar();
+      }
+      applyCaptureModeUI();
+    }
+
+    window.addEventListener('resize', () => {
+      if (activeIdx >= 0 && !document.getElementById('canvasArea').classList.contains('hidden')) {
+        computeFitAndApplyZoom(zoomLevel);
+      }
+    });
+
+    function computeFitAndApplyZoom(newZoom) {
+      zoomLevel = Math.max(0.5, Math.min(4, newZoom));
+      const boxW = Math.max(260, scrollBox.clientWidth - 24);
+      const boxH = Math.max(220, scrollBox.clientHeight - 24);
+      fitScale = Math.min(boxW / baseCanvasW, boxH / baseCanvasH, 1);
+      const displayScale = fitScale * zoomLevel;
+      canvas.style.width = `${Math.round(baseCanvasW * displayScale)}px`;
+      canvas.style.height = `${Math.round(baseCanvasH * displayScale)}px`;
+      document.getElementById('zoomPercentLabel').textContent = `${Math.round(zoomLevel * 100)}%`;
+    }
+
+    function setZoomLevel(z) { computeFitAndApplyZoom(z); }
+    function stepZoom(delta) { computeFitAndApplyZoom(zoomLevel + delta); }
+
+    scrollBox.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        stepZoom(e.deltaY < 0 ? 0.2 : -0.2);
+      }
+    }, { passive: false });
+
+    async function refreshAlbumListDropdown() {
+      try {
+        const snap = await db.collection(ALBUMS_COL).orderBy('updatedAt', 'desc').limit(80).get();
+        const sel = document.getElementById('historyAlbumSelect');
+        const opts = ['<option value="">載入</option>'];
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const label = `${data.site || ''} — ${data.title || ''} (${data.pageCount || 0}頁)`;
+          opts.push(`<option value="${escapeHtml(d.id)}" ${d.id === currentAlbumId ? 'selected' : ''}>${escapeHtml(label)}</option>`);
+        });
+        sel.innerHTML = opts.join('');
+      } catch (e) { console.warn(e); }
+    }
+
+    async function onSelectHistoryAlbum(albId) {
+      if (!albId) return;
+      if (pages.length > 0 && albId !== currentAlbumId) {
+        if (!confirm('確定切換至另一份截圖檔？')) {
+          document.getElementById('historyAlbumSelect').value = currentAlbumId || '';
+          return;
+        }
+      }
+      currentAlbumId = albId;
+      captureMode = 'sticker';
+      applyCaptureModeUI();
+      const newUrl = new URL(window.location.href);
+      newUrl.search = `?albumId=${encodeURIComponent(albId)}`;
+      window.history.replaceState({}, '', newUrl);
+      await loadExistingAlbum(albId, false);
+    }
+
+    async function deleteCurrentAlbumWithConfirm() {
+      if (!currentAlbumId) return;
+      if (!confirm('確定要刪除整份截圖檔嗎？')) return;
+      const albId = currentAlbumId;
+      try {
+        const pSnap = await db.collection(ALBUMS_COL).doc(albId).collection('pages').get();
+        const batch = db.batch();
+        pSnap.docs.forEach(d => batch.delete(d.ref));
+        batch.delete(db.collection(ALBUMS_COL).doc(albId));
+        await batch.commit();
+
+        if (linkedReportId) {
+          const repDoc = await db.collection(REPORTS_COL).doc(linkedReportId).get();
+          if (repDoc.exists) {
+            const rData = repDoc.data();
+            const newDocs = (rData.docs || []).filter(d => !d.url || !d.url.includes(albId));
+            await repDoc.ref.update({ docs: newDocs, updatedAt: Date.now() });
+          }
+        }
+
+        currentAlbumId = null; linkedReportId = null; pages = []; activeIdx = -1; selectedIdx = -1;
+        document.getElementById('albumTitle').value = '';
+        document.getElementById('statusTag').textContent = '';
+        window.history.replaceState({}, '', new URL('album.html', window.location.href));
+        applyCaptureModeUI();
+        await refreshAlbumListDropdown();
+        renderSidebar();
+        showToast('已刪除截圖檔');
+      } catch (e) {
+        showToast('刪除失敗：' + e.message);
       }
     }
 
-    function copyWaMsg(audience, encSite, encDate, encTitle, encUrl) {
-      const msg = buildWhatsAppMessage({
-        audience,
-        site: decodeURIComponent(encSite),
-        date: decodeURIComponent(encDate),
-        title: decodeURIComponent(encTitle),
-        url: decodeURIComponent(encUrl)
-      });
-      copyText(msg, audience === 'client' ? '已複製 WhatsApp 客人禮貌訊息！' : '已複製 WhatsApp 師傅/廠跟進訊息！');
+    async function loadExistingAlbum(albumId, isPublic) {
+      document.getElementById('statusTag').textContent = '載入中...';
+      const doc = await db.collection(ALBUMS_COL).doc(albumId).get();
+      if (!doc.exists) return showToast('找不到此截圖檔案');
+      const data = doc.data();
+      document.getElementById('albumSite').value = data.site || '';
+      document.getElementById('albumTitle').value = data.title || '';
+      document.getElementById('albumDate').value = data.date || '';
+      linkedReportId = data.linkedReportId || linkedReportId;
+
+      const pSnap = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').orderBy('order', 'asc').get();
+      pages = pSnap.docs.map(d => d.data());
+      document.getElementById('statusTag').textContent = `${pages.length} 頁`;
+      applyCaptureModeUI();
+
+      if (isPublic) {
+        document.title = `${data.site || ''} — ${data.title || ''}`;
+        buildPrintView();
+        document.getElementById('printReportView').style.display = 'block';
+      } else {
+        document.getElementById('historyAlbumSelect').value = albumId;
+        renderSidebar();
+        if (pages.length) selectPage(0);
+      }
     }
-
-    function openShareModal(siteName) {
-      const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-      const siteUrl = getSingleSiteUrl(siteName);
-      const latestDate = items[0]?.date || '';
-      const encSite = encodeURIComponent(siteName);
-
-      const allDocs = [];
-      items.forEach(r => getDocsList(r).forEach(d => { if (d.url && !d.url.startsWith('data:')) allDocs.push({ date: r.date, name: d.name, url: d.url }); }));
-
-      document.getElementById('shareModalTitle').textContent = `WhatsApp 分享：${siteName}`;
-      document.getElementById('shareModalBody').innerHTML = `
-        <div style="padding-bottom:10px;border-bottom:1px solid #E2E8F0;">
-          <div style="font-weight:700;margin-bottom:6px;">1. 分享整個單位記錄（共 ${items.length} 條日期）</div>
-          <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent('現場進度及記錄總覽')}','${encodeURIComponent(siteUrl)}')" class="btn-wa">💬 WhatsApp 客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent('現場進度及跟進事項')}','${encodeURIComponent(siteUrl)}')" class="btn-orange">🛠 WhatsApp 師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製純網址')" class="btn-secondary">純網址</button>
-            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
-          </div>
-        </div>
-
-        <div style="padding-bottom:10px;border-bottom:1px solid #E2E8F0;">
-          <div style="font-weight:700;margin-bottom:6px;">2. 分享單一日期報告</div>
-          <div style="display:flex;flex-direction:column;gap:6px;max-height:175px;overflow-y:auto;">
-            ${items.map(r => {
-              const rUrl = getSingleReportUrl(r.id);
-              const eDate = encodeURIComponent(r.date || '');
-              const eTitle = encodeURIComponent(r.title || '');
-              const eUrl = encodeURIComponent(rUrl);
-              return `<div style="padding:4px 0;border-bottom:1px dashed #E2E8F0;">
-                <div class="t-meta" style="margin-bottom:4px;"><b class="t-mono">${escapeHtml(r.date)}</b> — ${escapeHtml(r.title)}</div>
-                <div class="row">
-                  <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-wa" style="padding:3px 8px;">💬 客人</button>
-                  <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-orange" style="padding:3px 8px;">🛠 師傅/廠</button>
-                  <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製純網址')" class="btn-link">純網址</button>
-                  <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
-                </div>
-              </div>`;
-            }).join('')}
-          </div>
-        </div>
-
-        <div>
-          <div style="font-weight:700;margin-bottom:6px;">3. 分享獨立檔案 / 截圖標記相簿</div>
-          ${allDocs.length === 0 ? `<div class="t-meta muted">此單位暫無獨立附件檔案</div>` : `
-            <div style="display:flex;flex-direction:column;gap:6px;max-height:175px;overflow-y:auto;">
-              ${allDocs.map(d => {
-                const fullUrl = d.url.startsWith('http') ? d.url : new URL(d.url, window.location.href).toString();
-                const cleanName = d.name.replace(/^📷\s*/, '');
-                const eDate = encodeURIComponent(d.date || '');
-                const eName = encodeURIComponent(cleanName);
-                const eUrl = encodeURIComponent(fullUrl);
-                return `<div style="padding:4px 0;border-bottom:1px dashed #E2E8F0;">
-                  <div class="t-meta" style="margin-bottom:4px;"><span class="muted t-mono">${escapeHtml(d.date)}</span> <b>${escapeHtml(d.name)}</b></div>
-                  <div class="row">
-                    <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-wa" style="padding:3px 8px;">💬 客人</button>
-                    <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-orange" style="padding:3px 8px;">🛠 師傅/廠</button>
-                    <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製純網址')" class="btn-link">純網址</button>
-                    <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
-                  </div>
-                </div>`;
-              }).join('')}
-            </div>`}
-        </div>`;
-      document.getElementById('shareModal').classList.remove('hidden');
-    }
-    function closeShareModal() { document.getElementById('shareModal').classList.add('hidden'); }
 
     window.addEventListener('paste', (e) => {
-      if (document.getElementById('editorModal').classList.contains('hidden')) return;
-      if (isTypingInputTarget(document.activeElement) || isTypingInputTarget(e.target)) return;
-      for (const item of (e.clipboardData || window.clipboardData).items) {
-        if (item.type.indexOf('image') !== -1) {
+      if (document.getElementById('editShell').classList.contains('hidden')) return;
+      if (isInputFocused(document.activeElement) || isInputFocused(e.target)) return;
+      const items = (e.clipboardData || window.clipboardData)?.items || [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
           e.preventDefault();
-          processImageFile(item.getAsFile());
+          handleIncomingImageFile(item.getAsFile());
           return;
         }
       }
     });
 
-    function openAlbumWorkspace(siteName = '', dateStr = '', reportId = '') {
-      const url = new URL('album.html', window.location.href);
-      if (siteName) url.searchParams.set('site', siteName);
-      if (dateStr) url.searchParams.set('date', dateStr);
-      if (reportId) url.searchParams.set('reportId', reportId);
-      window.open(url.toString(), '_blank');
-    }
-
-    function openAlbumFromEditor() {
-      openAlbumWorkspace(document.getElementById('fieldSite').value.trim(), document.getElementById('fieldDate').value, editingReportId || '');
-    }
-
-    function copyText(text, msg) {
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showToast(msg));
-      else { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(msg); }
-    }
-
-    function showToast(msg) {
-      const el = document.getElementById('toast'); el.textContent = msg; el.classList.remove('hidden');
-      clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2300);
-    }
-
-    function updateSiteFilterOptions() {
-      const select = document.getElementById('siteFilter'), cur = select.value;
-      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
-      select.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-      if (sites.includes(cur)) select.value = cur;
-    }
-
-    function getStatusClass(st) {
-      if (st === '需跟進') return 'st-todo';
-      if (st === '已約期') return 'st-appoint';
-      if (st === '待確認') return 'st-wait';
-      return 'st-done';
-    }
-
-    function getDocsList(r) {
-      if (Array.isArray(r.docs) && r.docs.length > 0) return r.docs;
-      if (r.docName) return [{ name: r.docName, url: r.docUrl || '' }];
-      return [];
-    }
-
-    function parseTimeRange(str) {
-      const m = (str || '').match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
-      return m ? { start: m[1].padStart(5, '0'), end: m[2].padStart(5, '0') } : { start: '', end: '' };
-    }
-
-    function formatTimeRange(s, e) { return (s && e) ? `${s} - ${e}` : (s || e || ''); }
-
-    async function cycleStatus(id) {
-      const rep = reports.find(r => r.id === id); if (!rep) return;
-      const next = STATUS_ORDER[(STATUS_ORDER.indexOf(rep.status) + 1) % STATUS_ORDER.length];
-      await db.collection(COLLECTION_NAME).doc(id).update({ status: next, updatedAt: Date.now() });
-      showToast(`狀態：${next}`);
-    }
-
-    async function quickEditSiteHeader(oldSite, oldAssignee) {
-      const newSite = prompt('修改單位名稱：', oldSite);
-      if (!newSite || !newSite.trim()) return;
-      const newAssignee = prompt('修改 @負責人：', oldAssignee || '');
-      if (newAssignee === null) return;
-      const batch = db.batch();
-      reports.filter(r => r.site === oldSite).forEach(r => batch.update(db.collection(COLLECTION_NAME).doc(r.id), { site: newSite.trim(), assignee: newAssignee.trim(), updatedAt: Date.now() }));
-      await batch.commit(); showToast('已更新');
-    }
-
-    function startInlineEdit(id) { inlineEditId = id; renderReportList(); }
-    function cancelInlineEdit() { inlineEditId = null; renderReportList(); }
-    async function saveInlineEdit(id) {
-      const title = document.getElementById(`ie-title-${id}`).value.trim();
-      if (!title) return showToast('標題不能為空');
-      await db.collection(COLLECTION_NAME).doc(id).update({
-        date: document.getElementById(`ie-date-${id}`).value,
-        timeRange: formatTimeRange(document.getElementById(`ie-ts-${id}`).value, document.getElementById(`ie-te-${id}`).value),
-        title,
-        summary: document.getElementById(`ie-sum-${id}`).value.trim(),
-        followup: document.getElementById(`ie-fu-${id}`).value.trim(),
-        updatedAt: Date.now()
-      });
-      inlineEditId = null; showToast('已儲存');
-    }
-
-    function toggleExpandSite(s) { expandedSites.has(s) ? expandedSites.delete(s) : expandedSites.add(s); renderReportList(); }
-
-    function renderFollowupBlock(r, cleanReadOnly = false) {
-      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
-      const hasFollowupText = Boolean(r.followup && r.followup.trim());
-      if (cleanReadOnly && !hasFollowupText && logs.length === 0) return '';
-
-      const head = hasFollowupText ? escapeHtml(r.followup) : (logs.length ? `共 ${logs.length} 條跟進紀錄` : `<span class="muted">暫無跟進</span>`);
-      const commentBtnHtml = cleanReadOnly ? '' : `<button type="button" onclick="openFollowupModal('${r.id}','comment')" class="btn-link orange no-print">+ 留言</button><span class="no-print" style="color:#CBD5E1">|</span>`;
-
-      return `<div class="fu-area">
-        <div class="row">${commentBtnHtml}<span><b>跟進：</b>${head}</span></div>
-        ${logs.map(l => `<div class="fu-log"><span><b>${escapeHtml(l.author)}</b> ${l.appointDate ? `<span class="st-appoint">[約期 ${escapeHtml(l.appointDate)} ${escapeHtml(l.appointTime||'')}</span>] ` : ''}${escapeHtml(l.message)}</span><span class="muted t-mono">${escapeHtml(l.createdAtStr||'')}</span></div>`).join('')}
-      </div>`;
-    }
-
-    function renderReportList() {
-      const container = document.getElementById('reportListContainer');
-      const kw = (document.getElementById('searchInput')?.value || '').trim().toLowerCase();
-      const siteVal = SINGLE_SITE || document.getElementById('siteFilter').value;
-      const statusVal = document.getElementById('statusFilter').value;
-
-      if (SINGLE_SITE) document.title = `${SINGLE_SITE} — 現場記錄`;
-
-      const filtered = reports.filter(r => {
-        if (!r.site && !r.title) return false;
-        if (siteVal !== 'ALL' && r.site !== siteVal) return false;
-        if (!SINGLE_SITE && statusVal !== 'ALL' && r.status !== statusVal) return false;
-        if (!SINGLE_SITE && kw) {
-          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message+' '+l.appointDate).join(' ')}`.toLowerCase();
-          if (!hay.includes(kw)) return false;
-        }
-        return true;
-      });
-
-      if (!filtered.length) {
-        container.innerHTML = `<div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">暫無紀錄</div>`;
-        return;
-      }
-
-      const groups = [], map = {};
-      filtered.forEach(r => {
-        const k = r.site || '未分類單位';
-        if (!map[k]) { map[k] = { site: k, assignee: r.assignee || '', items: [] }; groups.push(map[k]); }
-        map[k].items.push(r);
-      });
-      groups.forEach(g => g.items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0)));
-
-      container.innerHTML = groups.map(g => {
-        const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
-        const isExp = SINGLE_SITE ? true : expandedSites.has(g.site);
-        const vis = isExp ? g.items : g.items.slice(0, 3);
-
-        const rowsHtml = vis.map((r, idx) => {
-          const thumbs = getReportThumbs(r);
-          const pCount = thumbs.length;
-          const docs = getDocsList(r), stCls = getStatusClass(r.status);
-          const singleUrl = getSingleReportUrl(r.id);
-
-          if (!IS_PUBLIC && inlineEditId === r.id) {
-            const pt = parseTimeRange(r.timeRange);
-            return `<div class="entry-row">
-              <div class="step-left"><input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" /></div>
-              <div class="step-right inline-edit-form">
-                <div class="inline-edit-top">
-                  <div class="grid-2"><input type="time" id="ie-ts-${r.id}" value="${pt.start}" class="input-ui t-meta" /><input type="time" id="ie-te-${r.id}" value="${pt.end}" class="input-ui t-meta" /></div>
-                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui" style="font-weight:700;" />
-                  <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" />
-                </div>
-                <textarea id="ie-sum-${r.id}" rows="2" class="input-ui">${escapeHtml(r.summary||'')}</textarea>
-                <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="btn-link">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-link orange">✓ 儲存</button></div>
-              </div>
-            </div>`;
-          }
-
-          const docsHtml = docs.length ? `<div class="docs-col"><div class="t-meta muted" style="font-weight:600;margin-bottom:4px;">相關文件 / 截圖檔</div>
-            ${docs.map(d => {
-              if (!d.url) return `<div class="t-meta">${escapeHtml(d.name)}</div>`;
-              const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
-              return `<div class="doc-item-row">
-                <a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>
-                ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange no-print">改圖</a>` : ''}
-              </div>`;
-            }).join('')}
-          </div>` : '';
-
-          const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
-
-          return `<div class="entry-row">
-            <div class="step-left">
-              <div class="t-mono" style="font-weight:700;">${escapeHtml(r.date)}</div>
-              ${r.timeRange ? `<div class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</div>` : ''}
-            </div>
-            <div class="step-right">
-              <div class="row-between">
-                ${!IS_PUBLIC ? `<button type="button" onclick="cycleStatus('${r.id}')" class="btn-link st-label ${stCls}" style="text-decoration:none;">${escapeHtml(r.status)} ↻</button>` : `<span class="st-label ${stCls}">${escapeHtml(r.status)}</span>`}
-                ${!IS_PUBLIC ? `
-                  <div class="row no-print">
-                    ${idx === 0 ? `<button type="button" onclick="openFollowupModal('${r.id}','appoint')" class="btn-link orange">+ 約期</button>` : ''}
-                    <a href="${escapeHtml(singleUrl)}" target="_blank" class="btn-link">預覽(${pCount}) ↗</a>
-                    <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link">快改</button>
-                    <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
-                    <button type="button" onclick="deleteReport('${r.id}')" class="btn-link danger muted">刪</button>
-                  </div>
-                ` : (pCount > 0 ? `<a href="${escapeHtml(singleUrl)}" class="btn-link blue no-print">查看高清大圖 (${pCount}張) →</a>` : '')}
-              </div>
-              <div class="entry-main">
-                <div class="entry-content">
-                  <div style="font-size:15px;font-weight:700;">${escapeHtml(r.title)}</div>
-                  ${r.summary ? `<div style="color:#1E293B;white-space:pre-line;margin-top:2px;">${escapeHtml(r.summary)}</div>` : ''}
-                  ${thumbsHtml}
-                  ${renderFollowupBlock(r, IS_PUBLIC)}
-                </div>
-                ${docsHtml}
-              </div>
-            </div>
-          </div>`;
-        }).join('');
-
-        return `<div class="site-card">
-          <div class="site-header row-between">
-            <div class="row">
-              <span class="t-site">${escapeHtml(g.site)}</span>
-              ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!IS_PUBLIC ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print">改名</button>` : ''}
-            </div>
-            ${!IS_PUBLIC ? `
-              <div class="row no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-orange">+ 加工作日期</button>
-                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-link blue">截圖工作台 ↗</button>
-                <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="btn-wa">💬 WhatsApp 分享</button>
-              </div>
-            ` : ''}
-          </div>
-          <div class="site-body">
-            ${rowsHtml}
-            ${(!SINGLE_SITE && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收合舊紀錄 ▴' : `展開其餘 ${g.items.length - 3} 條紀錄 ▾`}</button></div>` : ''}
-          </div>
-        </div>`;
-      }).join('');
-    }
-
-    function openFollowupModal(id, mode = 'comment') {
-      const r = reports.find(x => x.id === id); if (!r) return;
-      followupTargetId = id; followupModalMode = mode;
-      const isAp = mode === 'appoint';
-      document.getElementById('followupModalTitle').textContent = isAp ? '預約跟進時間' : '新增留言';
-      document.getElementById('fuMsgLabel').textContent = isAp ? '約期說明 *' : '留言內容 *';
-      document.getElementById('appointFieldsWrap').classList.toggle('hidden', !isAp);
-      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
-      document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
-      document.getElementById('fuDate').value = ''; document.getElementById('fuTimeStart').value = ''; document.getElementById('fuTimeEnd').value = '';
-      document.getElementById('fuNewStatus').value = isAp ? '已約期' : 'KEEP';
-      document.getElementById('fuMessage').value = '';
-      const logs = r.followupLogs || [];
-      document.getElementById('followupHistoryList').innerHTML = logs.length ? logs.map(l => `<div class="fu-log"><span><b>${escapeHtml(l.author)}</b> ${l.appointDate ? `[約期 ${escapeHtml(l.appointDate)}] ` : ''}${escapeHtml(l.message)}</span><span class="muted t-mono">${escapeHtml(l.createdAtStr||'')}</span></div>`).join('') : '<div class="t-meta muted" style="text-align:center;">暫無紀錄</div>';
-      document.getElementById('followupModal').classList.remove('hidden');
-    }
-    function closeFollowupModal() { document.getElementById('followupModal').classList.add('hidden'); }
-
-    async function submitFollowupLog() {
-      const author = document.getElementById('fuAuthor').value.trim(), message = document.getElementById('fuMessage').value.trim();
-      const newSt = document.getElementById('fuNewStatus').value;
-      let appointDate = '', appointTime = '';
-      if (followupModalMode === 'appoint') {
-        appointDate = document.getElementById('fuDate').value;
-        appointTime = formatTimeRange(document.getElementById('fuTimeStart').value, document.getElementById('fuTimeEnd').value);
-        if (!appointDate) return showToast('請揀選預約日期');
-      }
-      if (!author || !message) return showToast('請填寫名字及內容');
-      localStorage.setItem('artisan_user_name', author);
-      const now = new Date(), timeStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-      const rep = reports.find(r => r.id === followupTargetId);
-      const upd = { followupLogs: [...(rep.followupLogs||[]), { id: 'log-'+Date.now(), author, appointDate, appointTime, message, createdAtStr: timeStr }], updatedAt: Date.now() };
-      if (newSt !== 'KEEP') upd.status = newSt;
-      await db.collection(COLLECTION_NAME).doc(followupTargetId).update(upd);
-      closeFollowupModal(); showToast('已同步');
-    }
-
-    function renderDocRows() {
-      const c = document.getElementById('docRowsContainer');
-      if (!draftDocs.length) { c.innerHTML = ''; return; }
-      c.innerHTML = draftDocs.map((d, i) => {
-        const editUrl = getAlbumEditUrl(d.url);
-        return `<div style="display:grid;grid-template-columns:5fr 5fr auto 24px;gap:6px;align-items:center;">
-          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" />
-          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" />
-          ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : `<span></span>`}
-          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
-        </div>`;
-      }).join('');
-    }
-    function addDocRow(name = '', url = '') { draftDocs.push({ name, url }); renderDocRows(); }
-    function removeDocRow(i) { draftDocs.splice(i, 1); renderDocRows(); }
-    function handlePdfUpload(e) {
-      Array.from(e.target.files || []).forEach(f => {
-        if (f.size > 650 * 1024) return showToast('超過 650KB 請貼連結或用截圖工作台');
-        const rd = new FileReader(); rd.onload = ev => { addDocRow(f.name, ev.target.result); showToast('已載入'); }; rd.readAsDataURL(f);
-      });
+    function handleAlbumFiles(e) {
+      Array.from(e.target.files || []).forEach(f => handleIncomingImageFile(f));
       e.target.value = '';
     }
 
-    function openEditorForSite(site, ass) { openEditor(null); document.getElementById('fieldSite').value = site; document.getElementById('fieldAssignee').value = ass || ''; }
-
-    async function openEditor(id = null) {
-      editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
-      currentTool = 'move';
-      document.getElementById('annotationWorkspace').classList.add('hidden');
-      document.getElementById('editorModal').classList.remove('hidden');
-
-      if (id) {
-        const r = reports.find(x => x.id === id); if (!r) return;
-        document.getElementById('editorModalTitle').textContent = '編輯報告';
-        document.getElementById('fieldSite').value = r.site || ''; document.getElementById('fieldAssignee').value = r.assignee || '';
-        document.getElementById('fieldDate').value = r.date || '';
-        const pt = parseTimeRange(r.timeRange); document.getElementById('fieldTimeStart').value = pt.start; document.getElementById('fieldTimeEnd').value = pt.end;
-        document.getElementById('fieldStatus').value = r.status || '需跟進'; document.getElementById('fieldTitle').value = r.title || '';
-        document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
-        draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
-        renderDocRows();
-
-        const loadedPhotos = await fetchFullPhotosForReport(r);
-        draftPhotos = JSON.parse(JSON.stringify(loadedPhotos));
-        originalPhotoIds = draftPhotos.map(p => p.id);
-      } else {
-        document.getElementById('editorModalTitle').textContent = '新增報告';
-        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
-        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0]; document.getElementById('fieldStatus').value = '需跟進';
-        renderDocRows();
-      }
-      renderPhotoThumbList();
-      if (draftPhotos.length) selectPhotoForAnnotation(0);
-    }
-    function closeEditor() { document.getElementById('editorModal').classList.add('hidden'); }
-
-    function handlePhotoUpload(e) {
-      const files = Array.from(e.target.files || []);
-      files.forEach(processImageFile);
-      e.target.value = '';
+    function handleIncomingImageFile(file) {
+      if (!file) return;
+      const asSticker = (captureMode === 'sticker' && activeIdx >= 0);
+      addImageBlob(file, asSticker);
     }
 
-    function processImageFile(file) {
+    function addImageBlob(file, asStickerOnCurrentPage = false) {
       if (!file) return;
       const rd = new FileReader();
       rd.onload = ev => {
         const img = new Image();
         img.onload = () => {
-          let w = img.width, h = img.height, m = 1150;
-          if (w > m || h > m) { if (w > h) { h = Math.round(h * m / w); w = m; } else { w = Math.round(w * m / h); h = m; } }
-          const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
-          const b64 = c.toDataURL('image/jpeg', 0.78);
-          draftPhotos.push({ id: 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), base64Raw: b64, base64Annotated: b64, shapes: [], note: '' });
-          renderPhotoThumbList();
-          selectPhotoForAnnotation(draftPhotos.length - 1);
-          showToast(`已加入第 ${draftPhotos.length} 張相片`);
+          let w = img.width, h = img.height, max = asStickerOnCurrentPage ? 650 : 1280;
+          if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+          const off = document.createElement('canvas'); off.width = w; off.height = h;
+          off.getContext('2d').drawImage(img, 0, 0, w, h);
+          const b64 = off.toDataURL('image/jpeg', 0.82);
+
+          if (asStickerOnCurrentPage && activeIdx >= 0) {
+            const targetW = Math.min(w, Math.round(canvas.width * 0.36));
+            const targetH = Math.round(h * (targetW / w));
+            const px = Math.round((canvas.width - targetW) / 2);
+            const py = Math.round((canvas.height - targetH) / 2);
+            pages[activeIdx].shapes = pages[activeIdx].shapes || [];
+            pages[activeIdx].shapes.push({ type: 'image', imgSrc: b64, x1: px, y1: py, x2: px + targetW, y2: py + targetH });
+            setTool('move');
+            selectedIdx = pages[activeIdx].shapes.length - 1;
+            syncSelUI();
+            redraw(true);
+            showToast('已貼做小圖');
+            return;
+          }
+
+          pages.push({ id: 'pg-' + Date.now() + '-' + Math.random().toString(36).slice(2,5), raw: b64, rendered: b64, shapes: [], note: '' });
+          renderSidebar();
+          selectPage(pages.length - 1);
+          showToast(`第 ${pages.length} 頁`);
         };
         img.src = ev.target.result;
       };
       rd.readAsDataURL(file);
     }
 
-    function createBlankSketch() {
-      const c = document.createElement('canvas'); c.width = 900; c.height = 620;
-      const cx = c.getContext('2d'); cx.fillStyle = '#FFF'; cx.fillRect(0,0,900,620);
-      const b64 = c.toDataURL('image/jpeg', 0.85);
-      draftPhotos.push({ id: 'sk_' + Date.now(), base64Raw: b64, base64Annotated: b64, shapes: [], note: '' });
-      renderPhotoThumbList(); selectPhotoForAnnotation(draftPhotos.length - 1);
+    function addBlankPage() {
+      const off = document.createElement('canvas'); off.width = 1000; off.height = 700;
+      const ox = off.getContext('2d'); ox.fillStyle = '#FFF'; ox.fillRect(0,0,1000,700);
+      const b64 = off.toDataURL('image/jpeg', 0.85);
+      pages.push({ id: 'pg-' + Date.now(), raw: b64, rendered: b64, shapes: [], note: '' });
+      renderSidebar(); selectPage(pages.length - 1);
     }
 
-    function makeSmallThumb(dataUrl) {
-      return new Promise(resolve => {
-        const img = new Image();
-        img.onload = () => {
-          let w = img.width, h = img.height, m = 180;
-          if (w > m || h > m) { if (w > h) { h = Math.round(h * m / w); w = m; } else { w = Math.round(w * m / h); h = m; } }
-          const c = document.createElement('canvas'); c.width = w; c.height = h;
-          c.getContext('2d').drawImage(img, 0, 0, w, h);
-          resolve(c.toDataURL('image/jpeg', 0.6));
-        };
-        img.onerror = () => resolve('');
-        img.src = dataUrl;
-      });
+    function movePage(e, idx, delta) {
+      e.stopPropagation();
+      const target = idx + delta;
+      if (target < 0 || target >= pages.length) return;
+      const item = pages.splice(idx, 1)[0];
+      pages.splice(target, 0, item);
+      if (activeIdx === idx) activeIdx = target;
+      else if (activeIdx > idx && activeIdx <= target) activeIdx--;
+      else if (activeIdx < idx && activeIdx >= target) activeIdx++;
+      renderSidebar();
+      if (activeIdx >= 0) selectPage(activeIdx);
     }
 
-    function renderPhotoThumbList() {
-      document.getElementById('photoCountHint').textContent = `共 ${draftPhotos.length} 張`;
-      document.getElementById('photoThumbList').innerHTML = draftPhotos.map((p, i) => `
-        <div onclick="selectPhotoForAnnotation(${i})" style="border:2px solid ${i===activePhotoIndex?'#EA580C':'#CBD5E1'};overflow:hidden;cursor:pointer;background:#FFF;">
-          <img src="${p.base64Annotated||p.base64Raw}" style="width:100%;height:76px;object-fit:cover;display:block;" />
-          <div class="row-between t-meta" style="padding:2px 6px;"><span>#${i+1}</span><button type="button" onclick="removeDraftPhoto(event,${i})" class="btn-link danger">✕</button></div>
+    function renderSidebar() {
+      const sb = document.getElementById('thumbSidebar');
+      if (!pages.length) {
+        sb.innerHTML = `<div style="color:#64748B;text-align:center;padding:16px 4px;">Ctrl+V</div>`;
+        document.getElementById('canvasArea').classList.add('hidden');
+        return;
+      }
+      sb.innerHTML = pages.map((p, i) => `
+        <div onclick="selectPage(${i})" class="page-thumb ${i===activeIdx?'active':''}">
+          <img src="${p.rendered || p.raw}" />
+          <div class="row" style="justify-content:space-between;padding:2px 5px;background:#FFF;">
+            <b>#${i+1}</b>
+            <div class="row" style="gap:1px;">
+              <button type="button" onclick="movePage(event,${i},-1)" class="ord-btn">↑</button>
+              <button type="button" onclick="movePage(event,${i},1)" class="ord-btn">↓</button>
+              <button type="button" onclick="deletePage(event,${i})" class="btn-link" style="color:#DC2626;padding:0 2px;">刪</button>
+            </div>
+          </div>
         </div>`).join('');
     }
 
-    function removeDraftPhoto(e, i) {
+    function removePageAtIndex(i) {
+      pages.splice(i, 1); selectedIdx = -1;
+      activeIdx = pages.length ? Math.max(0, i - 1) : -1;
+      renderSidebar();
+      if (activeIdx >= 0) selectPage(activeIdx);
+      showToast('已刪頁');
+    }
+
+    function deletePage(e, i) {
       e.stopPropagation();
-      if (!confirm(`確定要刪除第 #${i + 1} 張相片嗎？`)) return;
-      draftPhotos.splice(i, 1); selectedShapeIdx = -1;
-      activePhotoIndex = draftPhotos.length ? Math.min(i, draftPhotos.length - 1) : -1;
-      renderPhotoThumbList();
-      if (activePhotoIndex >= 0) selectPhotoForAnnotation(activePhotoIndex);
-      else document.getElementById('annotationWorkspace').classList.add('hidden');
+      if (!confirm(`確定要刪除第 #${i + 1} 頁嗎？`)) return;
+      removePageAtIndex(i);
     }
 
-    function selectPhotoForAnnotation(i) {
-      activePhotoIndex = i; selectedShapeIdx = -1; updateSelectionUI();
-      const p = draftPhotos[i]; if (!p) return;
-      if (!p.base64Raw) p.base64Raw = p.base64Annotated;
-      document.getElementById('annotationWorkspace').classList.remove('hidden');
-      document.getElementById('currentPhotoNote').value = p.note || '';
-      renderPhotoThumbList();
-      baseImageObj = new Image();
-      baseImageObj.onload = () => { canvas.width = baseImageObj.width; canvas.height = baseImageObj.height; redrawCanvas(false); };
-      baseImageObj.src = p.base64Raw;
+    function deleteCurrentPageWithConfirm() {
+      if (activeIdx < 0) return;
+      if (!confirm(`確定要刪除目前第 #${activeIdx + 1} 頁嗎？`)) return;
+      removePageAtIndex(activeIdx);
     }
 
-    function syncCurrentPhotoNote() { if (activePhotoIndex >= 0) draftPhotos[activePhotoIndex].note = document.getElementById('currentPhotoNote').value; }
+    function selectPage(i) {
+      activeIdx = i; selectedIdx = -1; syncSelUI();
+      const p = pages[i]; if (!p) return;
+      if (!p.raw) p.raw = p.rendered;
+      document.getElementById('canvasArea').classList.remove('hidden');
+      document.getElementById('pageNoteInput').value = p.note || '';
+      renderSidebar();
+
+      (p.shapes || []).forEach(s => {
+        if (s.type === 'image' && s.imgSrc && !s._imgObj) {
+          const im = new Image();
+          im.onload = () => { s._imgObj = im; redraw(false); };
+          im.src = s.imgSrc;
+        }
+      });
+
+      baseImg = new Image();
+      baseImg.onload = () => {
+        baseCanvasW = baseImg.width;
+        baseCanvasH = baseImg.height;
+        canvas.width = baseCanvasW;
+        canvas.height = baseCanvasH;
+        computeFitAndApplyZoom(1);
+        redraw(false);
+      };
+      baseImg.src = p.raw;
+    }
+
+    function syncPageNote() { if (activeIdx >= 0) pages[activeIdx].note = document.getElementById('pageNoteInput').value; }
 
     function setTool(t) {
-      currentTool = t;
-      ['move','freehand','circle','arrow','text'].forEach(k => document.getElementById('tool-'+k).classList.toggle('btn-active', k===t));
-      canvas.style.cursor = t === 'move' ? 'grab' : 'crosshair';
-      if (t !== 'move') { selectedShapeIdx = -1; redrawCanvas(false); }
-      updateSelectionUI();
+      tool = t;
+      ['move','pan','freehand','circle','arrow','text'].forEach(k => document.getElementById('t-'+k).classList.toggle('btn-active', k===t));
+      canvas.classList.toggle('draw-cursor', ['freehand','circle','arrow','text'].includes(t));
+      if (t !== 'move') { selectedIdx = -1; redraw(false); }
+      syncSelUI();
+      if (t === 'text') document.getElementById('textLabelInput').focus();
     }
 
-    function updateSelectionUI() {
-      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
-      const sel = selectedShapeIdx >= 0 ? shapes[selectedShapeIdx] : null;
-      document.getElementById('delSelectedShapeBtn').classList.toggle('hidden', !sel);
-      const showTextBar = currentTool === 'text' || (sel && sel.type === 'text');
-      document.getElementById('textInputBar').classList.toggle('hidden', !showTextBar);
+    function syncSelUI() {
+      const shapes = activeIdx >= 0 ? (pages[activeIdx]?.shapes || []) : [];
+      const sel = selectedIdx >= 0 ? shapes[selectedIdx] : null;
+      document.getElementById('delSelBtn').classList.toggle('hidden', !sel);
+      const showInput = tool === 'text' || (sel && sel.type === 'text');
+      document.getElementById('textLabelInput').classList.toggle('hidden', !showInput);
       if (sel && sel.type === 'text') {
-        document.getElementById('canvasTextInput').value = sel.text || '';
+        document.getElementById('textLabelInput').value = sel.text || '';
         if (sel.scale) document.getElementById('fontSizeSelect').value = String(sel.scale);
       }
     }
 
     function onFontSizeChange() {
-      currentFontScale = parseFloat(document.getElementById('fontSizeSelect').value) || 0.026;
-      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
-      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]?.type === 'text') {
-        shapes[selectedShapeIdx].scale = currentFontScale;
-        redrawCanvas(true);
+      fontScale = parseFloat(document.getElementById('fontSizeSelect').value) || 0.024;
+      const shapes = activeIdx >= 0 ? (pages[activeIdx]?.shapes || []) : [];
+      if (selectedIdx >= 0 && shapes[selectedIdx]?.type === 'text') {
+        shapes[selectedIdx].scale = fontScale;
+        redraw(true);
       }
     }
 
-    function onTextInputLiveEdit() {
-      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
-      if (currentTool === 'move' && selectedShapeIdx >= 0 && shapes[selectedShapeIdx]?.type === 'text') {
-        shapes[selectedShapeIdx].text = document.getElementById('canvasTextInput').value;
-        redrawCanvas(true);
+    function onTextLiveEdit() {
+      const shapes = activeIdx >= 0 ? (pages[activeIdx]?.shapes || []) : [];
+      if (tool === 'move' && selectedIdx >= 0 && shapes[selectedIdx]?.type === 'text') {
+        shapes[selectedIdx].text = document.getElementById('textLabelInput').value;
+        redraw(true);
       }
     }
 
     function setColor(c, btnEl) {
-      currentColor = c;
-      document.querySelectorAll('#annotationWorkspace .color-dot').forEach(b => b.classList.remove('active-color'));
+      color = c;
+      document.querySelectorAll('.color-dot').forEach(b => b.classList.remove('active-color'));
       if (btnEl) btnEl.classList.add('active-color');
-      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
-      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]) {
-        shapes[selectedShapeIdx].color = c;
-        redrawCanvas(true);
+      const shapes = activeIdx >= 0 ? (pages[activeIdx]?.shapes || []) : [];
+      if (selectedIdx >= 0 && shapes[selectedIdx] && shapes[selectedIdx].type !== 'image') {
+        shapes[selectedIdx].color = c;
+        redraw(true);
       }
     }
 
     function deleteSelectedShape() {
-      if (activePhotoIndex < 0 || selectedShapeIdx < 0) return;
-      draftPhotos[activePhotoIndex].shapes.splice(selectedShapeIdx, 1);
-      selectedShapeIdx = -1;
-      updateSelectionUI();
-      redrawCanvas(true);
+      if (activeIdx < 0 || selectedIdx < 0) return;
+      pages[activeIdx].shapes.splice(selectedIdx, 1);
+      selectedIdx = -1; syncSelUI(); redraw(true);
     }
 
-    function undoShape() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes.pop(); selectedShapeIdx = -1; updateSelectionUI(); redrawCanvas(true); } }
-    function clearShapes() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes = []; selectedShapeIdx = -1; updateSelectionUI(); redrawCanvas(true); } }
+    function undoShape() { if (activeIdx >= 0) { pages[activeIdx].shapes.pop(); selectedIdx = -1; syncSelUI(); redraw(true); } }
+    function clearShapes() { if (activeIdx >= 0) { pages[activeIdx].shapes = []; selectedIdx = -1; syncSelUI(); redraw(true); } }
 
-    function getShapeBounds(c, s) {
+    function bounds(c, s) {
       if (s.type === 'text') {
-        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.026)));
+        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.024)));
         c.save(); c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text || '').width; c.restore();
         return { x1: s.x - 10, y1: s.y - fs - 4, x2: s.x + w + 10, y2: s.y + 10 };
       }
@@ -1122,100 +607,126 @@
         const xs = s.points.map(p => p.x), ys = s.points.map(p => p.y);
         return { x1: Math.min(...xs) - 10, y1: Math.min(...ys) - 10, x2: Math.max(...xs) + 10, y2: Math.max(...ys) + 10 };
       }
-      return { x1: Math.min(s.x1, s.x2) - 10, y1: Math.min(s.y1, s.y2) - 10, x2: Math.max(s.x1, s.x2) + 10, y2: Math.max(s.y1, s.y2) + 10 };
+      return { x1: Math.min(s.x1, s.x2) - 8, y1: Math.min(s.y1, s.y2) - 8, x2: Math.max(s.x1, s.x2) + 8, y2: Math.max(s.y1, s.y2) + 8 };
     }
 
-    function hitTestShape(shapes, x, y) {
+    function hitTest(shapes, x, y) {
       for (let i = shapes.length - 1; i >= 0; i--) {
-        const b = getShapeBounds(ctx, shapes[i]);
+        const b = bounds(ctx, shapes[i]);
         if (x >= b.x1 && x <= b.x2 && y >= b.y1 && y <= b.y2) return i;
       }
       return -1;
     }
 
-    function moveShapeBy(s, dx, dy) {
+    function shiftShape(s, dx, dy) {
       if (s.type === 'text') { s.x += dx; s.y += dy; }
       else if (s.type === 'freehand' && s.points) { s.points.forEach(p => { p.x += dx; p.y += dy; }); }
       else { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }
     }
 
-    function getCoords(e) { const r = canvas.getBoundingClientRect(), cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) }; }
-    canvas.addEventListener('mousedown', pDown); canvas.addEventListener('mousemove', pMove); canvas.addEventListener('mouseup', pUp);
-    canvas.addEventListener('touchstart', pDown, { passive: false }); canvas.addEventListener('touchmove', pMove, { passive: false }); canvas.addEventListener('touchend', pUp);
+    function coords(e) {
+      const r = canvas.getBoundingClientRect(), cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) };
+    }
 
-    function pDown(e) {
-      if (activePhotoIndex < 0) return; e.preventDefault();
-      const pos = getCoords(e);
-      const shapes = draftPhotos[activePhotoIndex].shapes || [];
+    canvas.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    canvas.addEventListener('touchstart', down, { passive: false });
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', up);
 
-      if (currentTool === 'move') {
-        const hit = hitTestShape(shapes, pos.x, pos.y);
-        selectedShapeIdx = hit;
-        updateSelectionUI();
-        redrawCanvas(false);
-        if (hit >= 0) { isDraggingShape = true; lastDragX = pos.x; lastDragY = pos.y; }
+    function down(e) {
+      if (activeIdx < 0) return; e.preventDefault();
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const cy = e.touches ? e.touches[0].clientY : e.clientY;
+
+      if (tool === 'pan') {
+        panningView = true;
+        panStartClientX = cx; panStartClientY = cy;
+        panStartScrollL = scrollBox.scrollLeft; panStartScrollT = scrollBox.scrollTop;
         return;
       }
 
-      if (currentTool === 'text') {
-        const hit = hitTestShape(shapes, pos.x, pos.y);
+      const pos = coords(e);
+      const shapes = pages[activeIdx].shapes || [];
+
+      if (tool === 'move') {
+        const hit = hitTest(shapes, pos.x, pos.y);
+        selectedIdx = hit; syncSelUI(); redraw(false);
+        if (hit >= 0) { draggingShape = true; lx = pos.x; ly = pos.y; }
+        else {
+          panningView = true;
+          panStartClientX = cx; panStartClientY = cy;
+          panStartScrollL = scrollBox.scrollLeft; panStartScrollT = scrollBox.scrollTop;
+        }
+        return;
+      }
+
+      if (tool === 'text') {
+        const hit = hitTest(shapes, pos.x, pos.y);
         if (hit >= 0 && shapes[hit].type === 'text') {
-          setTool('move'); selectedShapeIdx = hit; updateSelectionUI(); redrawCanvas(false);
-          isDraggingShape = true; lastDragX = pos.x; lastDragY = pos.y;
+          setTool('move'); selectedIdx = hit; syncSelUI(); redraw(false);
+          draggingShape = true; lx = pos.x; ly = pos.y;
           return;
         }
-        const txt = document.getElementById('canvasTextInput').value.trim();
+        const txt = document.getElementById('textLabelInput').value.trim();
         if (!txt) return showToast('請先輸入文字再點畫布');
-        shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color: currentColor, scale: currentFontScale });
-        document.getElementById('canvasTextInput').value = '';
+        shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color, scale: fontScale });
+        document.getElementById('textLabelInput').value = '';
         setTool('move');
-        selectedShapeIdx = shapes.length - 1;
-        updateSelectionUI();
-        redrawCanvas(true);
+        selectedIdx = shapes.length - 1;
+        syncSelUI(); redraw(true);
         return;
       }
 
-      isDrawing = true; startX = pos.x; startY = pos.y;
-      if (currentTool === 'freehand') currentStroke = [pos];
+      drawing = true; sx = pos.x; sy = pos.y;
+      if (tool === 'freehand') stroke = [pos];
     }
 
-    function pMove(e) {
-      if (activePhotoIndex < 0) return;
-      if (isDraggingShape && selectedShapeIdx >= 0) {
+    function move(e) {
+      if (panningView) {
         e.preventDefault();
-        const pos = getCoords(e);
-        moveShapeBy(draftPhotos[activePhotoIndex].shapes[selectedShapeIdx], pos.x - lastDragX, pos.y - lastDragY);
-        lastDragX = pos.x; lastDragY = pos.y;
-        redrawCanvas(false);
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        scrollBox.scrollLeft = panStartScrollL - (cx - panStartClientX);
+        scrollBox.scrollTop = panStartScrollT - (cy - panStartClientY);
         return;
       }
-      if (!isDrawing) return; e.preventDefault();
-      const pos = getCoords(e); redrawCanvas(false);
-      if (currentTool === 'freehand') { currentStroke.push(pos); drawShape(ctx, { type: 'freehand', points: currentStroke, color: currentColor }); }
-      else drawShape(ctx, { type: currentTool, x1: startX, y1: startY, x2: pos.x, y2: pos.y, color: currentColor });
+      if (activeIdx < 0) return;
+      if (draggingShape && selectedIdx >= 0) {
+        e.preventDefault();
+        const pos = coords(e);
+        shiftShape(pages[activeIdx].shapes[selectedIdx], pos.x - lx, pos.y - ly);
+        lx = pos.x; ly = pos.y;
+        redraw(false);
+        return;
+      }
+      if (!drawing) return; e.preventDefault();
+      const pos = coords(e); redraw(false);
+      if (tool === 'freehand') { stroke.push(pos); draw(ctx, { type: 'freehand', points: stroke, color }); }
+      else draw(ctx, { type: tool, x1: sx, y1: sy, x2: pos.x, y2: pos.y, color });
     }
 
-    function pUp(e) {
-      if (isDraggingShape) { isDraggingShape = false; redrawCanvas(true); return; }
-      if (!isDrawing || activePhotoIndex < 0) return; isDrawing = false;
-      if (currentTool === 'freehand') { if (currentStroke.length > 1) draftPhotos[activePhotoIndex].shapes.push({ type: 'freehand', points: currentStroke, color: currentColor }); currentStroke = []; redrawCanvas(true); return; }
+    function up(e) {
+      if (panningView) { panningView = false; return; }
+      if (draggingShape) { draggingShape = false; redraw(true); return; }
+      if (!drawing || activeIdx < 0) return; drawing = false;
+      if (tool === 'freehand') { if (stroke.length > 1) pages[activeIdx].shapes.push({ type: 'freehand', points: stroke, color }); stroke = []; redraw(true); return; }
       const r = canvas.getBoundingClientRect(), cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX, cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
       const ex = (cx - r.left) * (canvas.width / r.width), ey = (cy - r.top) * (canvas.height / r.height);
-      if (Math.hypot(ex - startX, ey - startY) > 6) draftPhotos[activePhotoIndex].shapes.push({ type: currentTool, x1: startX, y1: startY, x2: ex, y2: ey, color: currentColor });
-      redrawCanvas(true);
+      if (Math.hypot(ex - sx, ey - sy) > 6) pages[activeIdx].shapes.push({ type: tool, x1: sx, y1: sy, x2: ex, y2: ey, color });
+      redraw(true);
     }
 
-    function redrawCanvas(save = false) {
-      if (!baseImageObj || activePhotoIndex < 0) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(baseImageObj, 0, 0);
-      const shapes = draftPhotos[activePhotoIndex].shapes || [];
-      shapes.forEach(s => drawShape(ctx, s));
-      if (save) {
-        draftPhotos[activePhotoIndex].base64Annotated = canvas.toDataURL('image/jpeg', 0.8);
-        renderPhotoThumbList();
-      }
-      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]) {
-        const b = getShapeBounds(ctx, shapes[selectedShapeIdx]);
+    function redraw(saveSnap = false) {
+      if (!baseImg || activeIdx < 0) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(baseImg,0,0);
+      const shapes = pages[activeIdx].shapes || [];
+      shapes.forEach(s => draw(ctx, s));
+      if (saveSnap) { pages[activeIdx].rendered = canvas.toDataURL('image/jpeg', 0.8); renderSidebar(); }
+      if (selectedIdx >= 0 && shapes[selectedIdx]) {
+        const b = bounds(ctx, shapes[selectedIdx]);
         ctx.save();
         ctx.strokeStyle = '#EA580C';
         ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.003));
@@ -1225,13 +736,27 @@
       }
     }
 
-    function drawShape(c, s) {
-      c.save(); const lw = Math.max(4, Math.round(canvas.width * 0.005)); c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+    function draw(c, s) {
+      c.save();
+      if (s.type === 'image' && s.imgSrc) {
+        if (s._imgObj && s._imgObj.complete) {
+          c.drawImage(s._imgObj, s.x1, s.y1, s.x2 - s.x1, s.y2 - s.y1);
+        } else {
+          const im = new Image();
+          im.onload = () => { s._imgObj = im; redraw(false); };
+          im.src = s.imgSrc;
+        }
+        c.strokeStyle = '#475569'; c.lineWidth = 2;
+        c.strokeRect(s.x1, s.y1, s.x2 - s.x1, s.y2 - s.y1);
+        c.restore();
+        return;
+      }
+      const lw = Math.max(4, Math.round(canvas.width * 0.0045)); c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
       if (s.type === 'freehand' && s.points?.length > 1) { c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y); s.points.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.stroke(); }
       else if (s.type === 'circle') { c.beginPath(); c.ellipse((s.x1+s.x2)/2, (s.y1+s.y2)/2, Math.max(Math.abs(s.x2-s.x1)/2,4), Math.max(Math.abs(s.y2-s.y1)/2,4), 0, 0, Math.PI*2); c.stroke(); }
       else if (s.type === 'arrow') { const hl = lw*4, a = Math.atan2(s.y2-s.y1, s.x2-s.x1); c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke(); c.beginPath(); c.moveTo(s.x2,s.y2); c.lineTo(s.x2-hl*Math.cos(a-Math.PI/6), s.y2-hl*Math.sin(a-Math.PI/6)); c.lineTo(s.x2-hl*Math.cos(a+Math.PI/6), s.y2-hl*Math.sin(a+Math.PI/6)); c.closePath(); c.fill(); }
       else if (s.type === 'text') {
-        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.026)));
+        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.024)));
         c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text).width;
         c.fillStyle = 'rgba(15,23,42,0.85)'; c.fillRect(s.x-8, s.y-fs, w+16, fs+10);
         c.fillStyle = s.color && s.color.includes('234,179,8') ? '#FEF08A' : '#FFF';
@@ -1241,74 +766,142 @@
       c.restore();
     }
 
-    async function saveReport() {
-      const site = document.getElementById('fieldSite').value.trim(), title = document.getElementById('fieldTitle').value.trim();
+    async function saveAlbumToCloud() {
+      const site = document.getElementById('albumSite').value.trim();
+      const title = document.getElementById('albumTitle').value.trim();
+      const date = document.getElementById('albumDate').value || new Date().toISOString().split('T')[0];
       if (!site || !title) return showToast('請填寫單位及標題');
-      const btn = document.getElementById('saveReportBtn'); btn.disabled = true; btn.textContent = '同步中...';
+      if (!pages.length) return showToast('請先加入截圖');
 
-      const docId = editingReportId || ('rep-' + Date.now()), ex = reports.find(r => r.id === docId);
-      const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件檔案', url: d.url.trim() }));
-
+      const btn = document.getElementById('saveAlbumBtn'); btn.disabled = true; btn.textContent = '儲存中...';
       try {
-        const photoMeta = [];
-        for (let i = 0; i < draftPhotos.length; i++) {
-          const p = draftPhotos[i];
-          const pid = p.id || (`ph_${docId}_${i}_${Date.now()}`);
-          p.id = pid;
-          const rendered = p.base64Annotated || p.base64Raw;
-          const smallThumb = await makeSmallThumb(rendered);
+        const albumId = currentAlbumId || ('alb-' + Date.now());
+        await db.collection(ALBUMS_COL).doc(albumId).set({ site, title, date, pageCount: pages.length, linkedReportId: linkedReportId || '', updatedAt: Date.now() });
 
-          await db.collection(PHOTOS_COL).doc(pid).set({
-            reportId: docId,
-            order: i,
-            base64Raw: (p.shapes && p.shapes.length > 0) ? p.base64Raw : '',
-            base64Annotated: rendered,
-            shapes: p.shapes || [],
-            note: p.note || '',
-            updatedAt: Date.now()
+        const oldPages = await db.collection(ALBUMS_COL).doc(albumId).collection('pages').get();
+        const delBatch = db.batch(); oldPages.docs.forEach(d => delBatch.delete(d.ref)); await delBatch.commit();
+
+        for (let i = 0; i < pages.length; i++) {
+          const p = pages[i];
+          const cleanShapes = (p.shapes || []).map(s => {
+            const copy = { ...s };
+            delete copy._imgObj;
+            return copy;
           });
-          photoMeta.push({ id: pid, thumb: smallThumb, note: p.note || '' });
+          await db.collection(ALBUMS_COL).doc(albumId).collection('pages').doc(`p_${String(i).padStart(3,'0')}`).set({
+            id: p.id, order: i, raw: p.raw || p.rendered, rendered: p.rendered || p.raw, shapes: cleanShapes, note: p.note || ''
+          });
+        }
+        currentAlbumId = albumId;
+        applyCaptureModeUI();
+        const newUrl = new URL(window.location.href); newUrl.search = `?albumId=${albumId}`;
+        window.history.replaceState({}, '', newUrl);
+        await refreshAlbumListDropdown();
+
+        const albumSharePath = `album.html?view=public&albumId=${albumId}`;
+        const docLabel = `📷 ${title} (${pages.length}頁)`;
+        let targetRepDoc = null;
+        if (linkedReportId) {
+          const d = await db.collection(REPORTS_COL).doc(linkedReportId).get();
+          if (d.exists) targetRepDoc = d;
+        }
+        if (!targetRepDoc) {
+          const q = await db.collection(REPORTS_COL).where('site', '==', site).get();
+          const match = q.docs.find(d => d.data().date === date) || q.docs[0];
+          if (match) targetRepDoc = match;
         }
 
-        const curIds = photoMeta.map(m => m.id);
-        for (const oldId of originalPhotoIds) {
-          if (!curIds.includes(oldId)) await db.collection(PHOTOS_COL).doc(oldId).delete().catch(() => {});
+        if (targetRepDoc) {
+          const rData = targetRepDoc.data();
+          const docs = Array.isArray(rData.docs) ? [...rData.docs] : (rData.docName ? [{ name: rData.docName, url: rData.docUrl || '' }] : []);
+          const exIdx = docs.findIndex(d => d.url && d.url.includes(albumId));
+          if (exIdx >= 0) docs[exIdx].name = docLabel; else docs.push({ name: docLabel, url: albumSharePath });
+          await targetRepDoc.ref.update({ docs, updatedAt: Date.now() });
+        } else {
+          const newRepId = 'rep-' + Date.now();
+          linkedReportId = newRepId;
+          await db.collection(REPORTS_COL).doc(newRepId).set({
+            site, assignee: '', date, timeRange: '', status: '需跟進', title,
+            docs: [{ name: docLabel, url: albumSharePath }], docName: docLabel, docUrl: albumSharePath,
+            summary: `共 ${pages.length} 頁`, followup: '', followupLogs: [], photoMeta: [], photos: [],
+            createdAt: Date.now(), updatedAt: Date.now()
+          });
         }
-
-        await db.collection(COLLECTION_NAME).doc(docId).set({
-          site, assignee: document.getElementById('fieldAssignee').value.trim(),
-          date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
-          timeRange: formatTimeRange(document.getElementById('fieldTimeStart').value, document.getElementById('fieldTimeEnd').value),
-          status: document.getElementById('fieldStatus').value, title,
-          docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
-          summary: document.getElementById('fieldSummary').value.trim(),
-          followup: document.getElementById('fieldFollowup').value.trim(),
-          followupLogs: ex ? (ex.followupLogs || []) : [],
-          photoMeta,
-          photos: [],
-          createdAt: ex ? ex.createdAt : Date.now(), updatedAt: Date.now()
-        });
-        closeEditor(); showToast(`已儲存報告及 ${photoMeta.length} 張相片`);
-      } catch (e) {
-        console.error(e);
-        showToast('儲存失敗：' + e.message);
-      } finally { btn.disabled = false; btn.textContent = '儲存同步'; }
+        document.getElementById('statusTag').textContent = '✓ 已儲存';
+        showToast('已儲存並覆蓋更新');
+      } catch (err) {
+        console.error(err);
+        showToast('儲存失敗：' + err.message);
+      } finally { btn.disabled = false; btn.textContent = '儲存'; }
     }
 
-    async function deleteReport(id) {
-      if (!confirm('確定刪除此紀錄？')) return;
-      const r = reports.find(x => x.id === id);
-      if (r && Array.isArray(r.photoMeta)) {
-        r.photoMeta.forEach(m => db.collection(PHOTOS_COL).doc(m.id).delete().catch(() => {}));
-      }
-      await db.collection(COLLECTION_NAME).doc(id).delete();
-      showToast('已刪除');
+    function buildPrintView() {
+      const site = document.getElementById('albumSite').value || '';
+      const title = document.getElementById('albumTitle').value || '';
+      const date = document.getElementById('albumDate').value || '';
+      document.getElementById('printReportView').innerHTML = `
+        <div style="background:#FFF;border-left:4px solid #EA580C;padding:12px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;">
+          <div>
+            <div style="font-size:17px;font-weight:700;">${escapeHtml(site)} — ${escapeHtml(title)}</div>
+            <div style="font-size:12px;color:#64748B;">築匠設計 ARTISAN STUDIO</div>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:#334155;">${escapeHtml(date)}（${pages.length} 頁）</div>
+        </div>
+        ${pages.map((p, i) => `<div class="print-page">
+          <img src="${p.rendered || p.raw}" />
+          ${p.note ? `<div style="padding:8px 12px;font-size:13px;"><b>#${i+1}</b> ${escapeHtml(p.note)}</div>` : `<div style="padding:6px 12px;font-size:12px;color:#64748B;">#${i+1}</div>`}
+        </div>`).join('')}`;
     }
 
+    function exportPdf() { buildPrintView(); window.print(); }
+
+    function getPublicAlbumUrl() {
+      if (!currentAlbumId) return '';
+      const u = new URL('album.html', window.location.href);
+      u.search = `?view=public&albumId=${currentAlbumId}`;
+      return u.toString();
+    }
+
+    function copyPureAlbumLink() {
+      const url = getPublicAlbumUrl();
+      if (!url) return showToast('請先儲存');
+      navigator.clipboard.writeText(url).then(() => showToast('已複製純網址'));
+    }
+
+    function copyAlbumWhatsApp(audience) {
+      const url = getPublicAlbumUrl();
+      if (!url) return showToast('請先儲存');
+      const site = document.getElementById('albumSite').value.trim() || '單位工程';
+      const title = document.getElementById('albumTitle').value.trim() || '圖紙及現場標記';
+      const date = document.getElementById('albumDate').value || '';
+
+      const msg = audience === 'client'
+        ? [
+            `你好！以下為 *${site}* 的最新圖紙／現場標記記錄（共 ${pages.length} 頁），請查閱：`,
+            date ? `📅 日期：${date}` : '',
+            `📌 項目：${title}`,
+            `🔗 圖紙連結：${url}`,
+            ``,
+            `如有任何疑問或需調整之處，歡迎隨時聯絡我們跟進，謝謝！`,
+            `— 築匠設計 ARTISAN STUDIO`
+          ].filter(Boolean).join('\n')
+        : [
+            `麻煩跟進以下單位最新標記圖紙（共 ${pages.length} 頁）：`,
+            `🏠 單位：*${site}*`,
+            date ? `📅 日期：${date}` : '',
+            `📌 重點：${title}`,
+            `🔗 標記圖連結：${url}`,
+            ``,
+            `請查閱並回覆確認，唔該晒！`
+          ].filter(Boolean).join('\n');
+
+      navigator.clipboard.writeText(msg).then(() => showToast(audience === 'client' ? '已複製客人訊息' : '已複製師傅/廠訊息'));
+    }
+
+    function showToast(m) { const el = document.getElementById('toast'); el.textContent = m; el.classList.remove('hidden'); clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2200); }
     function escapeHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
 
-    bootApp();
+    init();
   </script>
 </body>
 </html>
