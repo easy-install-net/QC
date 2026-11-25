@@ -120,7 +120,19 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    try {
+      if (firebase.firestore.persistentLocalCache && firebase.firestore.persistentMultipleTabManager) {
+        db.settings({
+          localCache: firebase.firestore.persistentLocalCache({
+            tabManager: firebase.firestore.persistentMultipleTabManager()
+          })
+        });
+      } else {
+        db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+      }
+    } catch (_) {
+      db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    }
 
     const REPORTS_COL = 'artisan_qc_reports';
     const ALBUMS_COL = 'artisan_qc_albums';
