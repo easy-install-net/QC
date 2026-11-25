@@ -30,18 +30,18 @@
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
-      <button type="button" onclick="openEditor()" class="btn-orange">+ 新增單位</button>
-      <select id="siteFilter" onchange="renderCurrentView()" class="select-site-lg">
+      <button type="button" onclick="openEditor()" class="btn-orange">+ 加單位</button>
+      <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
         <option value="ALL">全部單位</option>
       </select>
       <div class="search-eight-wrap">
-        <input type="text" id="searchInput" oninput="renderCurrentView()" class="search-eight-input" />
+        <input type="text" id="searchInput" oninput="renderCurrentView()" class="search-eight-input" placeholder="搜尋..." />
         <span class="search-lens-icon" aria-hidden="true">🔍</span>
       </div>
     </div>
 
     <div id="reportListContainer">
-      <div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">載入中...</div>
+      <div style="background:#FFF;padding:20px;margin-top:10px;text-align:center;" class="muted">載入中...</div>
     </div>
   </main>
 
@@ -55,15 +55,28 @@
         <div class="editor-band">
           <div class="editor-band-title">1. 單位與時間</div>
           <div class="grid-3">
-            <div><label class="field-label">屋苑 / 單位 *</label><input type="text" id="fieldSite" class="input-ui" /></div>
+            <div>
+              <label class="field-label">屋苑 / 單位 *</label>
+              <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput()" onfocus="onFieldSiteInput()" class="input-ui" />
+              <div id="siteSuggestBox" class="site-suggest-box hidden"></div>
+            </div>
             <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
             <div><label class="field-label">項目重點標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
           </div>
           <div class="grid-2" style="margin-top:8px;">
             <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
-              <label class="field-label">時段（開始 / 結束）</label>
+              <div class="row-between" style="margin-bottom:4px;">
+                <label class="field-label" style="margin-bottom:0;">時段（開始 / 結束）</label>
+                <div class="row" style="gap:4px;">
+                  <button type="button" onclick="setEditorPeriod('上')" class="btn-link orange" style="padding:1px 6px;">上</button>
+                  <button type="button" onclick="setEditorPeriod('中')" class="btn-link orange" style="padding:1px 6px;">中</button>
+                  <button type="button" onclick="setEditorPeriod('午')" class="btn-link orange" style="padding:1px 6px;">午</button>
+                  <button type="button" onclick="setEditorPeriod('晚')" class="btn-link orange" style="padding:1px 6px;">晚</button>
+                </div>
+              </div>
               <div class="grid-2"><input type="time" id="fieldTimeStart" class="input-ui" /><input type="time" id="fieldTimeEnd" class="input-ui" /></div>
+              <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
           </div>
         </div>
@@ -142,6 +155,34 @@
     </div>
   </div>
 
+  <div id="siteManageModal" class="modal-backdrop hidden no-print">
+    <div class="modal-box modal-sm">
+      <div class="modal-head">
+        <span class="t-site">單位改名 / 合併地址</span>
+        <button type="button" onclick="closeSiteManageModal()" class="btn-link">關閉 ✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="padding-bottom:10px;border-bottom:1px solid #E2E8F0;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-weight:700;font-size:13px;">1. 修改名稱 / @負責人</div>
+          <div><label class="field-label">單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
+          <div><label class="field-label">@負責人</label><input type="text" id="manageNewAssignee" class="input-ui t-meta" /></div>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="button" onclick="submitRenameSite()" class="btn-orange" style="padding:4px 10px;font-size:13px;">儲存修改</button>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="font-weight:700;font-size:13px;">2. 合併去另一個現有地址（執返打錯字）</div>
+          <div class="t-meta muted" id="mergeHintText"></div>
+          <select id="manageMergeTarget" class="input-ui t-meta"></select>
+          <div style="display:flex;justify-content:flex-end;">
+            <button type="button" onclick="submitMergeSite()" class="btn-secondary" style="padding:4px 10px;font-size:13px;border-color:#EA580C;color:#EA580C;">一鍵合併過去</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="followupModal" class="modal-backdrop hidden no-print">
     <div class="modal-box modal-sm">
       <div class="modal-head">
@@ -193,22 +234,21 @@
     const COLLECTION_NAME = 'artisan_qc_reports';
     const PHOTOS_COL = 'artisan_qc_photos';
     const ALBUMS_COL = 'artisan_qc_albums';
-    const PERIOD_OPTIONS = ['上午', '下午', '全日'];
+    const DAY_PERIODS = ['上', '中', '午', '晚'];
 
     const urlParams = new URLSearchParams(window.location.search);
     const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
     const SINGLE_SITE = urlParams.get('site') || '';
     const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
 
-    // 預設以「時間表（按日期遞增）」做入口，亦可切去「工作紀錄」搜尋加內容
     let activeMainView = urlParams.get('tab') === 'reports' ? 'reports' : 'schedule';
     let reports = [];
     let singleReportData = null;
     let expandedSites = new Set();
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
+    let managingOldSite = '';
 
     let draftDocs = [], draftPhotos = [], activePhotoIndex = -1, originalPhotoIds = [];
-    // 預設工具為 move（✋ 移動），避免拉動畫面時隨便畫線
     let currentTool = 'move', currentColor = 'rgba(234,88,12,0.95)';
     let currentFontScale = 0.026;
     let selectedShapeIdx = -1;
@@ -222,6 +262,111 @@
       if (!el) return false;
       const tag = el.tagName;
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
+    function setEditorPeriod(periodChar) {
+      if (!DAY_PERIODS.includes(periodChar)) return;
+      document.getElementById('fieldPeriodLabel').value = periodChar;
+      document.getElementById('fieldTimeStart').value = '';
+      document.getElementById('fieldTimeEnd').value = '';
+      showToast(`已選時段：${periodChar}`);
+    }
+
+    function buildEditorTimeValue() {
+      const s = document.getElementById('fieldTimeStart').value;
+      const e = document.getElementById('fieldTimeEnd').value;
+      if (s || e) return formatTimeRange(s, e);
+      return document.getElementById('fieldPeriodLabel').value.trim();
+    }
+
+    /* 取得所有不重複現有單位 */
+    function getAllUniqueSites() {
+      return [...new Set(reports.map(r => (r.site || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+    }
+
+    /* 前臺輸入地址時，計算同類型／相似名稱分數並即時提示 */
+    function scoreSiteSimilarity(candidate, query) {
+      const c = candidate.toLowerCase().replace(/\s+/g, '');
+      const q = query.toLowerCase().replace(/\s+/g, '');
+      if (!q) return 1;
+      if (c === q) return 100;
+      if (c.includes(q) || q.includes(c)) return 80;
+      const tokens = query.toLowerCase().split(/[\s,，/／\-_]+/).filter(Boolean);
+      let score = 0;
+      tokens.forEach(t => { if (c.includes(t)) score += 25; });
+      let charHits = 0;
+      for (const ch of new Set(q.split(''))) {
+        if (ch.trim() && c.includes(ch)) charHits++;
+      }
+      const ratio = charHits / Math.max(2, q.length);
+      if (ratio >= 0.45) score += Math.round(ratio * 40);
+      return score;
+    }
+
+    function onFieldSiteInput() {
+      const box = document.getElementById('siteSuggestBox');
+      if (!box) return;
+      const val = (document.getElementById('fieldSite').value || '').trim();
+      const allSites = getAllUniqueSites();
+      if (!allSites.length) { box.classList.add('hidden'); return; }
+
+      let matched = [];
+      if (!val) {
+        matched = allSites.slice(0, 12);
+      } else {
+        matched = allSites
+          .map(s => ({ site: s, score: scoreSiteSimilarity(s, val) }))
+          .filter(x => x.score >= 18)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10)
+          .map(x => x.site);
+      }
+
+      if (!matched.length || (matched.length === 1 && matched[0] === val)) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      box.innerHTML = `
+        <div class="site-suggest-title">${val ? '入過的同類型 / 相似地址（點選直接套用）：' : '現有單位（點選直接套用）：'}</div>
+        <div class="site-suggest-list">
+          ${matched.map(s => `<button type="button" onclick="pickSuggestedSite('${escapeAttr(s)}')" class="site-suggest-item">${escapeHtml(s)}</button>`).join('')}
+        </div>`;
+      box.classList.remove('hidden');
+    }
+
+    function pickSuggestedSite(siteName) {
+      document.getElementById('fieldSite').value = siteName;
+      const found = reports.find(r => r.site === siteName && r.assignee);
+      const assEl = document.getElementById('fieldAssignee');
+      if (found && !assEl.value.trim()) assEl.value = found.assignee;
+      document.getElementById('siteSuggestBox').classList.add('hidden');
+    }
+
+    document.addEventListener('click', (e) => {
+      const box = document.getElementById('siteSuggestBox');
+      const inp = document.getElementById('fieldSite');
+      if (box && !box.classList.contains('hidden') && e.target !== inp && !box.contains(e.target)) {
+        box.classList.add('hidden');
+      }
+    });
+
+    /* 從時間表撳地址進入，自動鎖定只顯示該單一地址 */
+    function jumpToSingleSite(siteName) {
+      if (!siteName) return;
+      const select = document.getElementById('siteFilter');
+      updateSiteFilterOptions();
+      select.value = siteName;
+      const sInp = document.getElementById('searchInput');
+      if (sInp) sInp.value = '';
+      expandedSites.add(siteName);
+      switchMainView('reports');
+    }
+
+    function onSiteFilterChange() {
+      const val = document.getElementById('siteFilter').value;
+      if (val && val !== 'ALL') expandedSites.add(val);
+      renderCurrentView();
     }
 
     function switchMainView(viewName) {
@@ -251,7 +396,7 @@
         enterCleanPublicUI('現場記錄報告');
         db.collection(COLLECTION_NAME).doc(SINGLE_REPORT_ID).onSnapshot(doc => {
           if (!doc.exists) {
-            document.getElementById('reportListContainer').innerHTML = `<div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">找不到此報告或報告已被刪除</div>`;
+            document.getElementById('reportListContainer').innerHTML = `<div style="background:#FFF;padding:20px;margin-top:10px;text-align:center;" class="muted">找不到此報告或報告已被刪除</div>`;
             return;
           }
           singleReportData = { id: doc.id, ...doc.data() };
@@ -347,34 +492,13 @@
       });
     }
 
-    function detectPeriodValue(timeRangeStr) {
-      const raw = (timeRangeStr || '').trim();
-      if (PERIOD_OPTIONS.includes(raw)) return raw;
-      const m = raw.match(/^(\d{1,2}):(\d{2})/);
-      if (m) {
-        const hr = parseInt(m[1], 10);
-        if (hr < 12) return '上午';
-        return '下午';
-      }
-      return '全日';
-    }
-
-    async function updateSchedulePeriod(reportId, newPeriod) {
-      if (!PERIOD_OPTIONS.includes(newPeriod)) return;
-      await db.collection(COLLECTION_NAME).doc(reportId).update({
-        timeRange: newPeriod,
-        updatedAt: Date.now()
-      });
-      showToast(`已改為${newPeriod}`);
-    }
-
-    /* 時間表：按日期每天遞增自動呈現，兩行版面、可揀上午/下午/全日、無狀態、保留詳編 */
+    /* 時間表：撳單位直接跳入單一地址工作紀錄，右側保留詳編加內容 */
     function renderScheduleTimeline() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
 
       if (!filtered.length) {
-        container.innerHTML = `<div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">暫無時間表紀錄</div>`;
+        container.innerHTML = `<div style="background:#FFF;padding:20px;margin-top:10px;text-align:center;" class="muted">暫無時間表紀錄</div>`;
         return;
       }
 
@@ -392,18 +516,15 @@
         const encDate = encodeURIComponent(dKey);
 
         const slotHtml = items.map(r => {
-          const curPeriod = detectPeriodValue(r.timeRange);
-          const rawTime = (r.timeRange || '').trim();
-          const showExactRange = rawTime && !PERIOD_OPTIONS.includes(rawTime);
+          const timeLabel = (r.timeRange || '').trim() || '全日';
+          const sName = r.site || '未分類單位';
+          const encSite = encodeURIComponent(sName);
 
           return `<div class="schedule-slot-row">
             <div class="schedule-slot-main">
               <div class="schedule-slot-top">
-                <span class="t-mono schedule-time-tag">${escapeHtml(showExactRange ? rawTime : curPeriod)}</span>
-                ${!IS_PUBLIC ? `<select aria-label="時段" onchange="updateSchedulePeriod('${r.id}', this.value)" class="schedule-period-select no-print">
-                  ${PERIOD_OPTIONS.map(p => `<option value="${p}" ${curPeriod === p ? 'selected' : ''}>${p}</option>`).join('')}
-                </select>` : ''}
-                <span class="schedule-site-name">${escapeHtml(r.site || '未分類單位')}</span>
+                <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
+                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="只顯示此地址工作紀錄">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
@@ -417,11 +538,11 @@
         return `<div class="schedule-day-card">
           <div class="schedule-day-head row-between">
             <div class="row">
-              <span class="t-site t-mono">${escapeHtml(dKey)}</span>
+              <span class="t-site t-mono" style="font-size:14px;">${escapeHtml(dKey)}</span>
               <span class="t-meta muted">${items.length} 個地盤</span>
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="openEditorForDate(decodeURIComponent('${encDate}'))" class="btn-frameless-orange">+ 加當日工作</button>
+              <button type="button" onclick="openEditorForDate(decodeURIComponent('${encDate}'))" class="btn-frameless-orange" style="font-size:12px;padding:2px 6px;">+ 加當日工作</button>
             </div>` : ''}
           </div>
           <div class="schedule-day-body">
@@ -488,9 +609,9 @@
           }
           if (pages.length && embedWrap) {
             const sec = document.createElement('div');
-            sec.style.marginTop = '22px';
+            sec.style.marginTop = '18px';
             sec.innerHTML = `
-              <div style="font-weight:700;padding-bottom:6px;border-bottom:2px solid #EA580C;margin-bottom:10px;">${escapeHtml(ad.name)}</div>
+              <div style="font-weight:700;padding-bottom:6px;border-bottom:2px solid #EA580C;margin-bottom:8px;">${escapeHtml(ad.name)}</div>
               ${pages.map((p, idx) => `
                 <div class="standalone-photo">
                   <img loading="lazy" src="${p.rendered || p.raw}" />
@@ -654,7 +775,7 @@
 
     function updateSiteFilterOptions() {
       const select = document.getElementById('siteFilter'), cur = select.value;
-      const sites = [...new Set(reports.map(r => r.site).filter(Boolean))];
+      const sites = getAllUniqueSites();
       select.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
       if (sites.includes(cur)) select.value = cur;
     }
@@ -719,14 +840,73 @@
 
     function formatTimeRange(s, e) { return (s && e) ? `${s} - ${e}` : (s || e || ''); }
 
-    async function quickEditSiteHeader(oldSite, oldAssignee) {
-      const newSite = prompt('修改單位名稱：', oldSite);
-      if (!newSite || !newSite.trim()) return;
-      const newAssignee = prompt('修改 @負責人：', oldAssignee || '');
-      if (newAssignee === null) return;
+    /* 單位改名與一鍵合併彈窗 */
+    function openSiteManageModal(oldSite, oldAssignee) {
+      managingOldSite = oldSite;
+      document.getElementById('manageNewSite').value = oldSite || '';
+      document.getElementById('manageNewAssignee').value = oldAssignee || '';
+      const count = reports.filter(r => r.site === oldSite).length;
+      document.getElementById('mergeHintText').textContent = `將「${oldSite}」共 ${count} 條紀錄合併去以下地址：`;
+
+      const otherSites = getAllUniqueSites()
+        .filter(s => s !== oldSite)
+        .sort((a, b) => scoreSiteSimilarity(b, oldSite) - scoreSiteSimilarity(a, oldSite));
+
+      const sel = document.getElementById('manageMergeTarget');
+      if (!otherSites.length) {
+        sel.innerHTML = `<option value="">（暫無其他單位可供合併）</option>`;
+      } else {
+        sel.innerHTML = `<option value="">-- 選擇要合併過去的正確地址 --</option>` +
+          otherSites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      }
+      document.getElementById('siteManageModal').classList.remove('hidden');
+    }
+
+    function closeSiteManageModal() {
+      document.getElementById('siteManageModal').classList.add('hidden');
+    }
+
+    async function submitRenameSite() {
+      const newSite = document.getElementById('manageNewSite').value.trim();
+      const newAss = document.getElementById('manageNewAssignee').value.trim();
+      if (!newSite) return showToast('單位名稱不能為空');
+
       const batch = db.batch();
-      reports.filter(r => r.site === oldSite).forEach(r => batch.update(db.collection(COLLECTION_NAME).doc(r.id), { site: newSite.trim(), assignee: newAssignee.trim(), updatedAt: Date.now() }));
-      await batch.commit(); showToast('已更新');
+      reports.filter(r => r.site === managingOldSite).forEach(r => {
+        batch.update(db.collection(COLLECTION_NAME).doc(r.id), {
+          site: newSite,
+          assignee: newAss,
+          updatedAt: Date.now()
+        });
+      });
+      await batch.commit();
+
+      const sel = document.getElementById('siteFilter');
+      if (sel.value === managingOldSite) sel.value = newSite;
+      closeSiteManageModal();
+      showToast('已更新單位資料');
+    }
+
+    async function submitMergeSite() {
+      const targetSite = document.getElementById('manageMergeTarget').value;
+      if (!targetSite) return showToast('請先選擇要合併過去的目標地址');
+      const itemsToMerge = reports.filter(r => r.site === managingOldSite);
+      if (!confirm(`確定將「${managingOldSite}」（${itemsToMerge.length} 條紀錄）全部合併去「${targetSite}」嗎？`)) return;
+
+      const targetRefItem = reports.find(r => r.site === targetSite && r.assignee);
+      const batch = db.batch();
+      itemsToMerge.forEach(r => {
+        const upd = { site: targetSite, updatedAt: Date.now() };
+        if (!r.assignee && targetRefItem?.assignee) upd.assignee = targetRefItem.assignee;
+        batch.update(db.collection(COLLECTION_NAME).doc(r.id), upd);
+      });
+      await batch.commit();
+
+      const sel = document.getElementById('siteFilter');
+      if (sel.value === managingOldSite) sel.value = targetSite;
+      expandedSites.add(targetSite);
+      closeSiteManageModal();
+      showToast(`已合併至「${targetSite}」`);
     }
 
     function startInlineEdit(id) { inlineEditId = id; renderReportList(); }
@@ -762,11 +942,12 @@
     function renderReportList() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
+      const siteVal = SINGLE_SITE || document.getElementById('siteFilter').value;
 
       if (SINGLE_SITE) document.title = `${SINGLE_SITE} — 現場記錄`;
 
       if (!filtered.length) {
-        container.innerHTML = `<div style="background:#FFF;padding:24px;margin-top:14px;text-align:center;" class="muted">暫無紀錄</div>`;
+        container.innerHTML = `<div style="background:#FFF;padding:20px;margin-top:10px;text-align:center;" class="muted">暫無紀錄</div>`;
         return;
       }
 
@@ -780,7 +961,8 @@
 
       container.innerHTML = groups.map(g => {
         const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
-        const isExp = SINGLE_SITE ? true : expandedSites.has(g.site);
+        const isSingleFiltered = Boolean(SINGLE_SITE || (siteVal && siteVal !== 'ALL'));
+        const isExp = isSingleFiltered ? true : expandedSites.has(g.site);
         const vis = isExp ? g.items : g.items.slice(0, 3);
 
         const rowsHtml = vis.map(r => {
@@ -792,14 +974,14 @@
           if (!IS_PUBLIC && inlineEditId === r.id) {
             const pt = parseTimeRange(r.timeRange);
             return `<div class="entry-row">
-              <div class="step-left"><input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" /></div>
+              <div class="step-left"><input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:3px 5px;" /></div>
               <div class="step-right inline-edit-form">
                 <div class="inline-edit-top">
-                  <div class="grid-2"><input type="time" id="ie-ts-${r.id}" value="${pt.start}" class="input-ui t-meta" /><input type="time" id="ie-te-${r.id}" value="${pt.end}" class="input-ui t-meta" /></div>
-                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui" style="font-weight:700;" />
-                  <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" />
+                  <div class="grid-2" style="gap:4px;"><input type="time" id="ie-ts-${r.id}" value="${pt.start}" class="input-ui t-meta" style="padding:3px 5px;" /><input type="time" id="ie-te-${r.id}" value="${pt.end}" class="input-ui t-meta" style="padding:3px 5px;" /></div>
+                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
+                  <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="後續跟進" />
                 </div>
-                <textarea id="ie-sum-${r.id}" rows="2" class="input-ui">${escapeHtml(r.summary||'')}</textarea>
+                <textarea id="ie-sum-${r.id}" rows="2" class="input-ui t-meta">${escapeHtml(r.summary||'')}</textarea>
                 <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="btn-link">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-link orange">✓ 儲存</button></div>
               </div>
             </div>`;
@@ -827,17 +1009,17 @@
             <div class="step-left">
               <div class="t-mono" style="font-weight:700;">${escapeHtml(r.date)}</div>
               ${r.timeRange ? `<div class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</div>` : ''}
-              ${!IS_PUBLIC ? `<div class="no-print"><button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange" style="padding-left:0;">+ 留言</button></div>` : ''}
+              ${!IS_PUBLIC ? `<div class="no-print"><button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange" style="padding:0;font-size:12px;">+ 留言</button></div>` : ''}
             </div>
             <div class="step-right">
-              <div class="row-between" style="margin-bottom:4px;">
+              <div class="row-between" style="margin-bottom:2px;">
                 <div class="entry-title">${escapeHtml(r.title)}</div>
                 ${!IS_PUBLIC ? `
-                  <div class="row no-print">
-                    <a href="${escapeHtml(singleUrl)}" target="_blank" class="btn-link">預覽(${pCount}) ↗</a>
-                    <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link">快改</button>
-                    <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
-                    <button type="button" onclick="deleteReport('${r.id}')" class="btn-link danger muted">刪</button>
+                  <div class="row no-print" style="gap:6px;">
+                    <a href="${escapeHtml(singleUrl)}" target="_blank" class="btn-link" style="font-size:12px;">預覽(${pCount}) ↗</a>
+                    <button type="button" onclick="startInlineEdit('${r.id}')" class="btn-link" style="font-size:12px;">快改</button>
+                    <button type="button" onclick="openEditor('${r.id}')" class="btn-link orange" style="font-size:12px;">詳編</button>
+                    <button type="button" onclick="deleteReport('${r.id}')" class="btn-link danger muted" style="font-size:12px;">刪</button>
                   </div>
                 ` : (pCount > 0 ? `<a href="${escapeHtml(singleUrl)}" class="btn-link blue no-print">查看高清大圖 (${pCount}張) →</a>` : '')}
               </div>
@@ -851,22 +1033,22 @@
 
         return `<div class="site-card">
           <div class="site-header row-between">
-            <div class="row">
-              <span class="t-site">${escapeHtml(g.site)}</span>
+            <div class="row" style="gap:6px;">
+              <span class="t-site" style="font-size:14px;">${escapeHtml(g.site)}</span>
               ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!IS_PUBLIC ? `<button type="button" onclick="quickEditSiteHeader(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print">✏️ 改名</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link no-print" style="padding:0 2px;text-decoration:none;" title="修改名稱 / 合併地址">✏️</button>` : ''}
             </div>
             ${!IS_PUBLIC ? `
-              <div class="row no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-frameless-orange">+ 加工作日期</button>
-                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-boxed-link">截圖工作台 ↗</button>
+              <div class="row no-print" style="gap:6px;">
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-frameless-orange">+ 加日期</button>
+                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="btn-boxed-link">截圖台 ↗</button>
                 <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="btn-wa">💬 Share</button>
               </div>
             ` : ''}
           </div>
           <div class="site-body">
             ${rowsHtml}
-            ${(!SINGLE_SITE && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:10px;padding-top:8px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收合舊紀錄 ▴' : `展開其餘 ${g.items.length - 3} 條紀錄 ▾`}</button></div>` : ''}
+            ${(!isSingleFiltered && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:8px;padding-top:6px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted" style="font-size:12px;">${isExp ? '收合舊紀錄 ▴' : `展開其餘 ${g.items.length - 3} 條紀錄 ▾`}</button></div>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -921,13 +1103,14 @@
       e.target.value = '';
     }
 
-    function openEditorForSite(site, ass) { openEditor(null); document.getElementById('fieldSite').value = site; document.getElementById('fieldAssignee').value = ass || ''; }
+    function openEditorForSite(site, ass) { openEditor(null); document.getElementById('fieldSite').value = site; document.getElementById('fieldAssignee').value = ass || ''; document.getElementById('siteSuggestBox').classList.add('hidden'); }
     function openEditorForDate(dateStr) { openEditor(null); if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr; }
 
     async function openEditor(id = null) {
       editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
       currentTool = 'move';
       document.getElementById('annotationWorkspace').classList.add('hidden');
+      document.getElementById('siteSuggestBox').classList.add('hidden');
       document.getElementById('editorModal').classList.remove('hidden');
 
       if (id) {
@@ -935,7 +1118,10 @@
         document.getElementById('editorModalTitle').textContent = '編輯報告';
         document.getElementById('fieldSite').value = r.site || ''; document.getElementById('fieldAssignee').value = r.assignee || '';
         document.getElementById('fieldDate').value = r.date || '';
-        const pt = parseTimeRange(r.timeRange); document.getElementById('fieldTimeStart').value = pt.start; document.getElementById('fieldTimeEnd').value = pt.end;
+        const pt = parseTimeRange(r.timeRange);
+        document.getElementById('fieldTimeStart').value = pt.start;
+        document.getElementById('fieldTimeEnd').value = pt.end;
+        document.getElementById('fieldPeriodLabel').value = (!pt.start && !pt.end) ? (r.timeRange || '') : '';
         document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
@@ -946,7 +1132,13 @@
         originalPhotoIds = draftPhotos.map(p => p.id);
       } else {
         document.getElementById('editorModalTitle').textContent = '新增單位';
-        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
+        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
+        const curFilter = document.getElementById('siteFilter').value;
+        if (curFilter && curFilter !== 'ALL') {
+          document.getElementById('fieldSite').value = curFilter;
+          const found = reports.find(r => r.site === curFilter && r.assignee);
+          if (found) document.getElementById('fieldAssignee').value = found.assignee;
+        }
         document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
         renderDocRows();
       }
@@ -1262,7 +1454,7 @@
         await db.collection(COLLECTION_NAME).doc(docId).set({
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
           date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
-          timeRange: formatTimeRange(document.getElementById('fieldTimeStart').value, document.getElementById('fieldTimeEnd').value),
+          timeRange: buildEditorTimeValue(),
           title,
           docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
           summary: document.getElementById('fieldSummary').value.trim(),
