@@ -28,6 +28,8 @@
     .btn-wa:hover { background: #047857; }
     .btn-secondary { background: #FFF; color: #334155; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 10px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
     .btn-secondary:hover { background: #F8FAFC; color: #0F172A; }
+    .btn-edit-tag { background: #FFF7ED; color: #9A3412; border: 1px solid #FDBA74; border-radius: 4px; font-size: 11px; font-weight: 600; padding: 1px 6px; text-decoration: none; flex-shrink: 0; white-space: nowrap; }
+    .btn-edit-tag:hover { background: #FFEDD5; color: #7C2D12; }
     .btn-danger-outline { background: #FFF; color: #DC2626; border: 1px solid #FECACA; border-radius: 6px; font-size: 12px; font-weight: 500; padding: 5px 8px; cursor: pointer; }
     .btn-active { background: #0F172A !important; color: #FFF !important; border-color: #0F172A !important; }
     .btn-link { background: none; border: none; padding: 2px 3px; font-size: 12px; font-weight: 500; color: #334155; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -51,7 +53,8 @@
     .step-right { flex: 1; min-width: 0; border-left: 1px solid #E2E8F0; padding-left: 14px; }
     .entry-main { display: flex; gap: 12px; justify-content: space-between; margin-top: 4px; }
     .entry-content { flex: 1; min-width: 0; }
-    .docs-col { width: 210px; flex-shrink: 0; border-left: 1px solid #E2E8F0; padding-left: 12px; }
+    .docs-col { width: 235px; flex-shrink: 0; border-left: 1px solid #E2E8F0; padding-left: 12px; }
+    .doc-item-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin-bottom: 4px; }
 
     @media (max-width: 640px) {
       .entry-row { flex-direction: column; gap: 4px; }
@@ -151,7 +154,7 @@
     </div>
   </main>
 
-  <!-- 彈窗 1：新增 / 編輯報告（相片獨立存入 artisan_qc_photos，任影多張唔爆容量） -->
+  <!-- 彈窗 1：新增 / 編輯報告 -->
   <div id="editorModal" class="modal-backdrop hidden no-print">
     <div class="modal-box">
       <div class="modal-head">
@@ -391,7 +394,16 @@
       el.className = 'badge ' + (ok ? 'sync-ok' : 'sync-err');
     }
 
-    // 載入報告完整相片（同時相容舊內嵌相片 + 新無限張數 artisan_qc_photos）
+    // 轉換公開截圖檔網址為「工作台編輯網址」
+    function getAlbumEditUrl(docUrl) {
+      if (!docUrl || !docUrl.includes('albumId=')) return '';
+      const m = docUrl.match(/albumId=([^&]+)/);
+      if (!m) return '';
+      const u = new URL('album.html', window.location.href);
+      u.search = `?albumId=${encodeURIComponent(m[1])}`;
+      return u.toString();
+    }
+
     async function fetchFullPhotosForReport(r) {
       if (Array.isArray(r.photoMeta) && r.photoMeta.length > 0) {
         const docs = await Promise.all(r.photoMeta.map(m => db.collection(PHOTOS_COL).doc(m.id).get().catch(() => null)));
@@ -419,7 +431,6 @@
       return [];
     }
 
-    // 公開單份報告獨立專頁（極簡乾淨版，無多餘按鈕）
     async function renderSingleReportStandalone(r) {
       document.title = `${r.site} — ${r.title}`;
       const docs = getDocsList(r);
@@ -456,7 +467,6 @@
           </div>
         </div>`;
 
-      // 載入高清現場相片
       const fullPhotos = await fetchFullPhotosForReport(r);
       const pWrap = document.getElementById('standalonePhotosWrap');
       if (pWrap && fullPhotos.length) {
@@ -467,7 +477,6 @@
           </div>`).join('');
       }
 
-      // 自動將掛載的截圖檔直接展開在同一頁下方（乾淨標題，無額外跳轉掣）
       const albumDocs = docs.filter(d => d.url && d.url.includes('albumId='));
       const embedWrap = document.getElementById('embeddedAlbumsWrap');
       for (const ad of albumDocs) {
@@ -510,7 +519,6 @@
       return u.toString();
     }
 
-    // ================= WhatsApp 禮貌訊息產生器 =================
     function buildWhatsAppMessage({ audience, site, date, title, url }) {
       if (audience === 'client') {
         return [
@@ -594,6 +602,7 @@
             <div style="display:flex;flex-direction:column;gap:6px;max-height:175px;overflow-y:auto;">
               ${allDocs.map(d => {
                 const fullUrl = d.url.startsWith('http') ? d.url : new URL(d.url, window.location.href).toString();
+                const editUrl = getAlbumEditUrl(d.url);
                 const cleanName = d.name.replace(/^📷\s*/, '');
                 const eDate = encodeURIComponent(d.date || '');
                 const eName = encodeURIComponent(cleanName);
@@ -605,6 +614,7 @@
                     <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-primary" style="padding:3px 8px;">🛠 師傅/廠</button>
                     <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製純網址')" class="btn-link">純網址</button>
                     <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
+                    ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-edit-tag">✎ 改圖</a>` : ''}
                   </div>
                 </div>`;
               }).join('')}
@@ -777,8 +787,16 @@
             </div>`;
           }
 
+          // 右側文件 / 截圖檔欄（管理員模式下，截圖檔旁邊自動出現「✎ 改圖」掣）
           const docsHtml = docs.length ? `<div class="docs-col"><div class="t-meta muted" style="font-weight:600;margin-bottom:4px;">相關文件 / 圖紙</div>
-            ${docs.map(d => d.url ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>` : `<span class="t-meta">${escapeHtml(d.name)}</span>`).join('')}
+            ${docs.map(d => {
+              if (!d.url) return `<div class="t-meta">${escapeHtml(d.name)}</div>`;
+              const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
+              return `<div class="doc-item-row">
+                <a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>
+                ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-edit-tag no-print" title="重開此截圖檔繼續標記或加頁">✎ 改圖</a>` : ''}
+              </div>`;
+            }).join('')}
           </div>` : '';
 
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
@@ -875,14 +893,19 @@
       closeFollowupModal(); showToast('已同步');
     }
 
+    // 編輯彈窗內亦支援一鍵「✎ 改圖」
     function renderDocRows() {
       const c = document.getElementById('docRowsContainer');
       if (!draftDocs.length) { c.innerHTML = `<div class="t-meta muted">未附加檔案（可開截圖工作台或貼 Google Drive 連結）</div>`; return; }
-      c.innerHTML = draftDocs.map((d, i) => `<div style="display:grid;grid-template-columns:5fr 6fr 28px;gap:6px;align-items:center;">
-        <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" placeholder="檔案名稱" class="input-ui t-meta" />
-        <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" placeholder="https://..." class="input-ui t-meta" />
-        <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
-      </div>`).join('');
+      c.innerHTML = draftDocs.map((d, i) => {
+        const editUrl = getAlbumEditUrl(d.url);
+        return `<div style="display:grid;grid-template-columns:5fr 5fr auto 28px;gap:6px;align-items:center;">
+          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" placeholder="檔案名稱" class="input-ui t-meta" />
+          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" placeholder="https://..." class="input-ui t-meta" />
+          ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-edit-tag">✎ 改圖</a>` : `<span></span>`}
+          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
+        </div>`;
+      }).join('');
     }
     function addDocRow(name = '', url = '') { draftDocs.push({ name, url }); renderDocRows(); }
     function removeDocRow(i) { draftDocs.splice(i, 1); renderDocRows(); }
@@ -894,7 +917,6 @@
       e.target.value = '';
     }
 
-    // ================= 編輯器與無限張數相片載入 =================
     function openEditorForSite(site, ass) { openEditor(null); document.getElementById('fieldSite').value = site; document.getElementById('fieldAssignee').value = ass || ''; }
 
     async function openEditor(id = null) {
@@ -1008,7 +1030,6 @@
 
     function syncCurrentPhotoNote() { if (activePhotoIndex >= 0) draftPhotos[activePhotoIndex].note = document.getElementById('currentPhotoNote').value; }
 
-    // ================= 畫布工具：移動、改字體大細、單獨刪除 =================
     function setTool(t) {
       currentTool = t;
       ['move','freehand','circle','arrow','text'].forEach(k => document.getElementById('tool-'+k).classList.toggle('btn-active', k===t));
@@ -1124,7 +1145,6 @@
         if (!txt) return showToast('請先在輸入框打字，再點畫布貼上');
         shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color: currentColor, scale: currentFontScale });
         document.getElementById('canvasTextInput').value = '';
-        // 貼字後自動切換至「✋ 移動」並選中剛貼上的字，即刻可拖位！
         currentTool = 'move';
         ['move','freehand','circle','arrow','text'].forEach(k => document.getElementById('tool-'+k).classList.toggle('btn-active', k==='move'));
         canvas.classList.add('move-cursor');
@@ -1174,7 +1194,6 @@
         draftPhotos[activePhotoIndex].base64Annotated = canvas.toDataURL('image/jpeg', 0.8);
         renderPhotoThumbList();
       }
-      // 儲存快照後再畫選取虛線框，確保虛線唔會印落輸出圖片度
       if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]) {
         const b = getShapeBounds(ctx, shapes[selectedShapeIdx]);
         ctx.save();
@@ -1202,7 +1221,6 @@
       c.restore();
     }
 
-    // 儲存報告：每張相片獨立寫入 artisan_qc_photos，徹底突破單份 1MB 限制！
     async function saveReport() {
       const site = document.getElementById('fieldSite').value.trim(), title = document.getElementById('fieldTitle').value.trim();
       if (!site || !title) return showToast('請填寫單位及標題');
@@ -1232,7 +1250,6 @@
           photoMeta.push({ id: pid, thumb: smallThumb, note: p.note || '' });
         }
 
-        // 清理被刪除的舊獨立相片
         const curIds = photoMeta.map(m => m.id);
         for (const oldId of originalPhotoIds) {
           if (!curIds.includes(oldId)) await db.collection(PHOTOS_COL).doc(oldId).delete().catch(() => {});
@@ -1248,7 +1265,7 @@
           followup: document.getElementById('fieldFollowup').value.trim(),
           followupLogs: ex ? (ex.followupLogs || []) : [],
           photoMeta,
-          photos: [], // 清空舊內嵌大圖，改用輕量縮圖索引
+          photos: [],
           createdAt: ex ? ex.createdAt : Date.now(), updatedAt: Date.now()
         });
         closeEditor(); showToast(`已成功儲存報告及 ${photoMeta.length} 張相片！`);
