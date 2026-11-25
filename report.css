@@ -100,19 +100,6 @@
 }
 .doc-edit-row > * { min-width: 0; max-width: 100%; }
 
-/* 同單位其他日期快速加減區 */
-.same-site-box {
-  margin-top: 8px; padding: 7px 9px; background: #FFFBEB;
-  border: 1px solid #FDE68A; border-left: 3px solid #EA580C; border-radius: 4px;
-  display: flex; flex-direction: column; gap: 5px; min-width: 0; max-width: 100%;
-}
-.same-site-item {
-  display: flex; align-items: center; justify-content: space-between; gap: 6px;
-  background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 3px;
-  padding: 4px 6px; font-size: 12px; min-width: 0; max-width: 100%;
-}
-.same-site-item-info { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
 /* 單位報告區（淺色分區 + 橙色左線） */
 .site-card { background: #FFFFFF; border-left: 3px solid #EA580C; margin: 6px 0; }
 .site-header { background: #FFFBEB; padding: 5px 10px; border-bottom: 1px solid #FDE68A; gap: 5px; }
