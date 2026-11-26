@@ -607,6 +607,25 @@
       copyText(getBossBriefUrl(), '已複製老闆唯讀交代網頁連結');
     }
 
+    function renderBossBriefAttachments(r) {
+      const docs = getDocsList(r).filter(d => d.name || d.url);
+      const thumbs = getReportThumbs(r);
+      if (!docs.length && !thumbs.length) return '';
+
+      const docsHtml = docs.length ? `<div class="docs-strip" style="margin-top:4px;">
+        ${docs.map(d => d.url
+          ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件檔案')} ↗</a></div>`
+          : `<div class="doc-item-row"><span class="t-meta">📄 ${escapeHtml(d.name || '附件檔案')}</span></div>`
+        ).join('')}
+      </div>` : '';
+
+      const thumbsHtml = thumbs.length ? `<div class="thumbs">${thumbs.map(t =>
+        `<img loading="lazy" decoding="async" src="${t.src}" alt="${escapeHtml(t.note || '')}" class="thumb-box" style="width:60px;height:60px;" />`
+      ).join('')}</div>` : '';
+
+      return docsHtml + thumbsHtml;
+    }
+
     function renderBossBriefCleanView() {
       const container = document.getElementById('reportListContainer');
       const valid = reports.filter(r => r.site || r.title);
@@ -633,6 +652,7 @@
             <div class="entry-title">${escapeHtml(r.title || '')}</div>
             ${r.summary ? `<div class="brief-detail">${escapeHtml(r.summary)}</div>` : ''}
             ${fuText ? `<div class="brief-fu"><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
+            ${renderBossBriefAttachments(r)}
           </div>`;
         }).join('');
 
@@ -811,6 +831,8 @@
           lines.push(`• ${t}（${formatHours(calc.hours)}）｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
           if (r.summary) lines.push(`  內容：${r.summary.replace(/\n+/g, ' / ')}`);
           if (r.followup) lines.push(`  跟進：${r.followup}`);
+          const docs = getDocsList(r).filter(d => d.name || d.url);
+          if (docs.length) lines.push(`  附件：${docs.map(d => d.name || d.url).join('、')}`);
         });
         lines.push('');
       });
