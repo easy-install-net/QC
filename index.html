@@ -19,7 +19,7 @@
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
       <div class="row" id="headerQuickActions">
-        <a href="repair.html" class="btn-top-white">修繕跟進</a>
+        <button type="button" onclick="openRepairFromHeader()" id="headerRepairBtn" class="btn-top-white">修繕跟進</button>
         <button type="button" onclick="window.print()" class="btn-top-white hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
       </div>
     </div>
@@ -263,7 +263,9 @@
     const urlParams = new URLSearchParams(window.location.search);
     const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
     const SINGLE_SITE = urlParams.get('site') || '';
-    const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
+    const VIEW_MODE = urlParams.get('view') || '';
+    const IS_BOSS_BRIEF = VIEW_MODE === 'brief';
+    const IS_PUBLIC = VIEW_MODE === 'public' || IS_BOSS_BRIEF || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
 
     let activeMainView = ['schedule', 'reports', 'brief'].includes(urlParams.get('tab')) ? urlParams.get('tab') : 'schedule';
     let reports = [];
@@ -518,6 +520,10 @@
     }
 
     function renderCurrentView() {
+      if (IS_BOSS_BRIEF) {
+        renderBossBriefCleanView();
+        return;
+      }
       if (SINGLE_REPORT_ID || SINGLE_SITE) {
         renderReportList();
         return;
@@ -532,6 +538,15 @@
     }
 
     function bootApp() {
+      if (IS_BOSS_BRIEF) {
+        enterBossBriefUI();
+        db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot(snap => {
+          reports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          renderBossBriefCleanView();
+        });
+        return;
+      }
+
       if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
         const subMap = { schedule: '時間表入口', reports: '工作紀錄', brief: '交代行程總表' };
         document.getElementById('headerSubTitle').textContent = subMap[activeMainView] || '時間表入口';
@@ -573,6 +588,63 @@
       }, () => setSyncStatus('離線', false));
     }
 
+    function enterBossBriefUI() {
+      document.title = '築匠設計 ARTISAN STUDIO — 行程交代';
+      document.getElementById('headerSubTitle').textContent = '行程交代';
+      document.getElementById('syncBadge').classList.add('hidden');
+      document.getElementById('headerRepairBtn').classList.add('hidden');
+      document.getElementById('standalonePrintBtn').classList.add('hidden');
+      document.getElementById('filterBar').classList.add('hidden');
+    }
+
+    function getBossBriefUrl() {
+      const u = new URL('index.html', window.location.href);
+      u.search = '?view=brief';
+      return u.toString();
+    }
+
+    function copyBossBriefUrl() {
+      copyText(getBossBriefUrl(), '已複製老闆唯讀交代網頁連結');
+    }
+
+    function renderBossBriefCleanView() {
+      const container = document.getElementById('reportListContainer');
+      const valid = reports.filter(r => r.site || r.title);
+      const dayGroups = getScheduleDayGroups(valid);
+      if (!dayGroups.length) {
+        container.innerHTML = `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無交代行程紀錄</div>`;
+        return;
+      }
+      container.innerHTML = dayGroups.map(g => {
+        const dayLabel = formatMonthDayWeekday(g.date);
+        const rowsHtml = g.items.map(r => {
+          const t = (r.timeRange || '').trim() || '全日';
+          const calc = computeEntryHoursAndPay(t);
+          const sName = r.site || '未分類單位';
+          const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
+          const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
+          return `<div class="brief-row">
+            <div class="brief-meta">
+              <span class="t-mono" style="font-weight:700;color:#EA580C;">${escapeHtml(t)}</span>
+              <span class="t-meta muted t-mono">(${escapeHtml(formatHours(calc.hours))})</span>
+              <span style="font-weight:700;color:#0F172A;">${escapeHtml(sName)}</span>
+              ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+            </div>
+            <div class="entry-title">${escapeHtml(r.title || '')}</div>
+            ${r.summary ? `<div class="brief-detail">${escapeHtml(r.summary)}</div>` : ''}
+            ${fuText ? `<div class="brief-fu"><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
+          </div>`;
+        }).join('');
+
+        return `<div class="schedule-day-card">
+          <div class="schedule-day-head">
+            <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
+          </div>
+          <div class="schedule-day-body">${rowsHtml}</div>
+        </div>`;
+      }).join('');
+    }
+
     function enterCleanPublicUI(subLabel) {
       document.getElementById('standalonePrintBtn').classList.remove('hidden');
       document.getElementById('syncBadge').classList.add('hidden');
@@ -595,11 +667,37 @@
       return u.toString();
     }
 
-    function getRepairPageUrl(siteName = '', dateStr = '') {
+    function hasValidTimeAndSite(r) {
+      const siteOk = Boolean((r?.site || '').trim());
+      const timeOk = Boolean((r?.date || '').trim()) && Boolean((r?.timeRange || '').trim() || '全日');
+      return siteOk && timeOk;
+    }
+
+    function getRepairPageUrl(siteName = '', dateStr = '', timeRangeStr = '', titleStr = '') {
       const u = new URL('repair.html', window.location.href);
       if (siteName) u.searchParams.set('site', siteName);
       if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) u.searchParams.set('date', dateStr);
+      if (timeRangeStr) u.searchParams.set('time', timeRangeStr);
+      if (titleStr) u.searchParams.set('workTitle', titleStr);
       return u.toString();
+    }
+
+    function openRepairForRecord(r) {
+      if (!r || !hasValidTimeAndSite(r)) {
+        return showToast('必須有地址同時間先可以寫修葺跟進');
+      }
+      window.location.href = getRepairPageUrl(r.site, r.date, r.timeRange || '全日', r.title || '');
+    }
+
+    function openRepairFromHeader() {
+      const selSite = document.getElementById('siteFilter')?.value;
+      const cand = (selSite && selSite !== 'ALL')
+        ? reports.find(r => r.site === selSite && hasValidTimeAndSite(r))
+        : reports.find(r => hasValidTimeAndSite(r));
+      if (!cand) {
+        return showToast('請先建立有地址同時間嘅工作紀錄，再寫修葺跟進');
+      }
+      window.location.href = getRepairPageUrl(cand.site, cand.date, cand.timeRange || '全日', cand.title || '');
     }
 
     async function fetchFullPhotosForReport(r) {
@@ -911,6 +1009,7 @@
         <div class="row">
           <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">幾時至幾時</button>
           ${isCustomRange ? `<button type="button" onclick="resetScheduleToRecentTen()" class="btn-link orange">近10日</button>` : ''}
+          <button type="button" onclick="copyBossBriefUrl()" class="btn-wa">老闆唯讀連結</button>
           <button type="button" onclick="openScheduleOutput()" class="btn-orange">交代文字</button>
         </div>
       </div>`;
@@ -955,7 +1054,7 @@
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
               </div>
               ${!IS_PUBLIC ? `<div class="row no-print">
-                <a href="${escapeHtml(getRepairPageUrl(sName, r.date))}" class="btn-link orange">修繕跟進</a>
+                <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="btn-link orange">修繕跟進</button>
                 <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
               </div>` : ''}
             </div>
@@ -1403,6 +1502,7 @@
         const isSingleFiltered = Boolean(SINGLE_SITE || (siteVal && siteVal !== 'ALL'));
         const isExp = isSingleFiltered ? true : expandedSites.has(g.site);
         const vis = isExp ? g.items : g.items.slice(0, 3);
+        const validRepairItem = g.items.find(x => hasValidTimeAndSite(x));
 
         const rowsHtml = vis.map(r => {
           const thumbs = getReportThumbs(r);
@@ -1458,6 +1558,7 @@
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
           const actionGroupHtml = !IS_PUBLIC ? `<div class="record-actions-bar no-print">
+            <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="rec-act-btn accent">修</button>
             <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>
             <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn">快改</button>
             <button type="button" onclick="openEditor('${r.id}')" class="rec-act-btn accent">詳編</button>
@@ -1495,7 +1596,7 @@
               <div class="site-header-actions no-print">
                 <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add" title="加日期">+ 加</button>
                 <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-album" title="截圖台">圖</button>
-                <a href="${escapeHtml(getRepairPageUrl(g.site))}" class="site-mini-btn site-mini-repair" title="問題／售後跟進清單">修</a>
+                <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('必須有地址同時間先可以寫修葺跟進')`}" class="site-mini-btn site-mini-repair" title="問題／售後跟進清單">修</button>
                 <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-share" title="Share">分</button>
               </div>
             ` : ''}
