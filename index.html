@@ -67,20 +67,21 @@
             <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
               <div class="row-between" style="margin-bottom:3px;">
-                <label class="field-label" style="margin-bottom:0;">時段（開始 / 結束）</label>
-                <div class="row" style="gap:3px;">
-                  <button type="button" onclick="setEditorPeriod('上')" class="btn-link orange">上</button>
-                  <button type="button" onclick="setEditorPeriod('中')" class="btn-link orange">中</button>
-                  <button type="button" onclick="setEditorPeriod('午')" class="btn-link orange">午</button>
-                  <button type="button" onclick="setEditorPeriod('晚')" class="btn-link orange">晚</button>
-                  <span class="muted" style="font-size:11px;">|</span>
-                  <button type="button" onclick="applyMinutePreset('00')" class="btn-link orange">:00</button>
-                  <button type="button" onclick="applyMinutePreset('30')" class="btn-link orange">:30</button>
+                <label class="field-label" style="margin-bottom:0;">時段 / 小數工時</label>
+                <div class="row" style="gap:4px;">
+                  <span class="mini-pair">
+                    <button type="button" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'AM')" class="mini-pair-btn">上午</button>
+                    <button type="button" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'PM')" class="mini-pair-btn">下午</button>
+                  </span>
+                  <span class="mini-pair">
+                    <button type="button" onclick="setMinuteForInput(getActiveEditorTimeInput(), '00')" class="mini-pair-btn">:00</button>
+                    <button type="button" onclick="setMinuteForInput(getActiveEditorTimeInput(), '30')" class="mini-pair-btn">:30</button>
+                  </span>
                 </div>
               </div>
               <div class="grid-2">
                 <input type="time" id="fieldTimeStart" onfocus="lastFocusedTimeId=this.id" class="input-ui" />
-                <input type="time" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" class="input-ui" />
+                <input type="text" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" class="input-ui" placeholder="結束時間 或 小數(如 1.5)" />
               </div>
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
@@ -252,9 +253,10 @@
     const COLLECTION_NAME = 'artisan_qc_reports';
     const PHOTOS_COL = 'artisan_qc_photos';
     const ALBUMS_COL = 'artisan_qc_albums';
-    const DAY_PERIODS = ['上', '中', '午', '晚'];
     const WEEKDAYS_HK = ['日', '一', '二', '三', '四', '五', '六'];
     const SCHEDULE_PAGE_SIZE = 10;
+    const HOURLY_RATE = 150;
+    const FULL_DAY_HOURS = 8;
 
     const urlParams = new URLSearchParams(window.location.search);
     const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
@@ -309,45 +311,88 @@
       return `${mo}月${dy}日(${wd})`;
     }
 
-    function setEditorPeriod(periodChar) {
-      if (!DAY_PERIODS.includes(periodChar)) return;
-      document.getElementById('fieldPeriodLabel').value = periodChar;
-      document.getElementById('fieldTimeStart').value = '';
-      document.getElementById('fieldTimeEnd').value = '';
-      showToast(`已選時段：${periodChar}`);
+    function getActiveEditorTimeInput() {
+      const el = document.activeElement;
+      if (el && (el.id === 'fieldTimeStart' || el.id === 'fieldTimeEnd')) {
+        lastFocusedTimeId = el.id;
+        return el;
+      }
+      return document.getElementById(lastFocusedTimeId || 'fieldTimeStart');
     }
 
-    function applyMinutePreset(mm) {
-      if (mm !== '00' && mm !== '30') return;
-      const activeEl = document.activeElement;
-      const targetId = (activeEl && (activeEl.id === 'fieldTimeStart' || activeEl.id === 'fieldTimeEnd'))
-        ? activeEl.id
-        : (lastFocusedTimeId || 'fieldTimeStart');
-      const inputEl = document.getElementById(targetId);
+    function setMeridiemForInput(inputEl, period) {
       if (!inputEl) return;
-
-      document.getElementById('fieldPeriodLabel').value = '';
-      const cur = inputEl.value || '';
-      let hh = '09';
-      if (/^\d{2}:\d{2}$/.test(cur)) {
-        hh = cur.slice(0, 2);
-      } else if (targetId === 'fieldTimeEnd') {
-        const stVal = document.getElementById('fieldTimeStart').value;
-        if (/^\d{2}:\d{2}$/.test(stVal)) {
-          const nextH = (parseInt(stVal.slice(0, 2), 10) + 1) % 24;
-          hh = String(nextH).padStart(2, '0');
+      const cur = (inputEl.value || '').trim();
+      let hh = period === 'AM' ? 9 : 14;
+      let mm = '00';
+      const m = cur.match(/^(\d{1,2}):(\d{2})$/);
+      if (m) {
+        let hNum = parseInt(m[1], 10);
+        mm = m[2];
+        if (period === 'AM') {
+          if (hNum >= 12) hNum -= 12;
+        } else {
+          if (hNum < 12) hNum += 12;
         }
+        hh = hNum;
       }
-      inputEl.value = `${hh}:${mm}`;
+      inputEl.value = `${String(hh).padStart(2, '0')}:${mm}`;
       inputEl.focus();
-      showToast(`已設為 ${hh}:${mm}`);
+      showToast(period === 'AM' ? `已改上午 ${inputEl.value}` : `已改下午 ${inputEl.value}`);
+    }
+
+    function setMinuteForInput(inputEl, mm) {
+      if (!inputEl) return;
+      if (mm !== '00' && mm !== '30') return;
+      const cur = (inputEl.value || '').trim();
+      const m = cur.match(/^(\d{1,2}):(\d{2})$/);
+      if (m) {
+        const hh = String(parseInt(m[1], 10)).padStart(2, '0');
+        inputEl.value = `${hh}:${mm}`;
+      } else {
+        inputEl.value = `09:${mm}`;
+      }
+      inputEl.focus();
+      showToast(`已改 :${mm}`);
+    }
+
+    function formatCurrency(val) {
+      const rounded = Math.round(val * 100) / 100;
+      const formatted = Number.isInteger(rounded) ? rounded.toLocaleString('en-US') : rounded.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+      return `$${formatted}`;
+    }
+
+    function formatHours(hrs) {
+      const rounded = Math.round(hrs * 100) / 100;
+      return Number.isInteger(rounded) ? `${rounded}hr` : `${rounded}hr`;
+    }
+
+    function computeEntryHoursAndPay(timeRangeStr) {
+      const raw = (timeRangeStr || '').trim();
+      if (!raw || raw === '全日') {
+        return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
+      }
+      const numMatch = raw.match(/^\s*(\d+(?:\.\d+)?)\s*(?:hr|h|小時|鐘)?\s*$/i);
+      if (numMatch) {
+        const hrs = Math.max(0, parseFloat(numMatch[1]));
+        return { hours: hrs, pay: hrs * HOURLY_RATE };
+      }
+      const rangeMatch = raw.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+      if (rangeMatch) {
+        const sMins = parseInt(rangeMatch[1], 10) * 60 + parseInt(rangeMatch[2], 10);
+        let eMins = parseInt(rangeMatch[3], 10) * 60 + parseInt(rangeMatch[4], 10);
+        if (eMins < sMins) eMins += 24 * 60;
+        const hrs = Math.max(0, (eMins - sMins) / 60);
+        return { hours: hrs, pay: hrs * HOURLY_RATE };
+      }
+      return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
     }
 
     function buildEditorTimeValue() {
-      const s = document.getElementById('fieldTimeStart').value;
-      const e = document.getElementById('fieldTimeEnd').value;
-      if (s || e) return formatTimeRange(s, e);
-      return document.getElementById('fieldPeriodLabel').value.trim();
+      const s = (document.getElementById('fieldTimeStart').value || '').trim();
+      const e = (document.getElementById('fieldTimeEnd').value || '').trim();
+      if (s && e) return `${s} - ${e}`;
+      return s || e || '';
     }
 
     function getAllUniqueSites() {
@@ -592,7 +637,11 @@
       });
 
       return Object.keys(dayMap)
-        .sort((a, b) => a.localeCompare(b))
+        .sort((a, b) => {
+          if (a === '未定日期') return 1;
+          if (b === '未定日期') return -1;
+          return b.localeCompare(a);
+        })
         .map(dKey => ({
           date: dKey,
           items: dayMap[dKey].sort((a, b) => (a.timeRange || '').localeCompare(b.timeRange || '') || (a.createdAt || 0) - (b.createdAt || 0))
@@ -603,17 +652,31 @@
       const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
         ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
         : '目前顯示區間';
-      const lines = [`築匠設計 ARTISAN STUDIO — 時間表（${rangeLabel}）`, ''];
+      const lines = [`築匠設計 ARTISAN STUDIO — 時間表（${rangeLabel}｜$150/hr，全日=8hr=$1,200）`, ''];
+
+      let grandHours = 0;
+      let grandPay = 0;
+
       dayGroups.forEach(g => {
-        lines.push(`【${formatMonthDayWeekday(g.date)}】`);
-        g.items.forEach(r => {
+        let dayHours = 0;
+        let dayPay = 0;
+        const itemLines = g.items.map(r => {
           const t = (r.timeRange || '').trim() || '全日';
+          const calc = computeEntryHoursAndPay(t);
+          dayHours += calc.hours;
+          dayPay += calc.pay;
           const ass = r.assignee ? ` (${r.assignee})` : '';
-          lines.push(`  • ${t}｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
-          if (r.summary) lines.push(`    - ${r.summary.replace(/\n+/g, ' / ')}`);
+          return `  • ${t} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類單位'}${ass}：${r.title || ''}`;
         });
+        grandHours += dayHours;
+        grandPay += dayPay;
+
+        lines.push(`【${formatMonthDayWeekday(g.date)}】（小計：${formatHours(dayHours)} / ${formatCurrency(dayPay)}）`);
+        lines.push(...itemLines);
         lines.push('');
       });
+
+      lines.push(`總計：${formatHours(grandHours)} ｜ ${formatCurrency(grandPay)}`);
       return lines.join('\n').trim();
     }
 
@@ -719,7 +782,7 @@
 
       const outputBoxHtml = showScheduleOutputBox ? `<div class="schedule-output-box no-print">
         <div class="row-between">
-          <span class="t-meta" style="font-weight:700;">時間表輸出預覽</span>
+          <span class="t-meta" style="font-weight:700;">時間表輸出預覽（$150/hr｜全日=8hr=$1,200）</span>
           <div class="row">
             <button type="button" onclick="copyScheduleOutputText()" class="btn-wa">複製文字</button>
             <button type="button" onclick="downloadScheduleOutputTxt()" class="btn-secondary">下載 .txt</button>
@@ -1055,11 +1118,20 @@
     }
 
     function parseTimeRange(str) {
-      const m = (str || '').match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
-      return m ? { start: m[1].padStart(5, '0'), end: m[2].padStart(5, '0') } : { start: '', end: '' };
+      const raw = (str || '').trim();
+      const rangeM = raw.match(/(\d{1,2}:\d{2})\s*-\s*(.+)$/);
+      if (rangeM) return { start: rangeM[1].padStart(5, '0'), end: rangeM[2].trim() };
+      const singleM = raw.match(/^(\d{1,2}:\d{2})$/);
+      if (singleM) return { start: singleM[1].padStart(5, '0'), end: '' };
+      return { start: '', end: raw };
     }
 
-    function formatTimeRange(s, e) { return (s && e) ? `${s} - ${e}` : (s || e || ''); }
+    function formatTimeRange(s, e) {
+      const st = (s || '').trim();
+      const en = (e || '').trim();
+      if (st && en) return `${st} - ${en}`;
+      return st || en || '';
+    }
 
     function openSiteManageModal(oldSite, oldAssignee) {
       managingOldSite = oldSite;
@@ -1192,11 +1264,24 @@
 
           if (!IS_PUBLIC && inlineEditId === r.id) {
             const pt = parseTimeRange(r.timeRange);
+            const tsId = `ie-ts-${r.id}`;
+            const teId = `ie-te-${r.id}`;
             return `<div class="entry-row">
               <div class="inline-edit-form">
                 <div class="inline-edit-top">
                   <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
-                  <div class="grid-2" style="gap:4px;"><input type="time" id="ie-ts-${r.id}" value="${pt.start}" class="input-ui t-meta" style="padding:2px 4px;" /><input type="time" id="ie-te-${r.id}" value="${pt.end}" class="input-ui t-meta" style="padding:2px 4px;" /></div>
+                  <div class="inline-edit-time-wrap">
+                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
+                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="結束 / 小數" />
+                    <span class="mini-pair">
+                      <button type="button" onclick="setMeridiemForInput(document.getElementById('${tsId}'),'AM')" class="mini-pair-btn">上午</button>
+                      <button type="button" onclick="setMeridiemForInput(document.getElementById('${tsId}'),'PM')" class="mini-pair-btn">下午</button>
+                    </span>
+                    <span class="mini-pair">
+                      <button type="button" onclick="setMinuteForInput(document.getElementById('${tsId}'),'00')" class="mini-pair-btn">:00</button>
+                      <button type="button" onclick="setMinuteForInput(document.getElementById('${tsId}'),'30')" class="mini-pair-btn">:30</button>
+                    </span>
+                  </div>
                   <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
                 </div>
                 <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="後續跟進" />
@@ -1351,7 +1436,7 @@
         const pt = parseTimeRange(r.timeRange);
         document.getElementById('fieldTimeStart').value = pt.start;
         document.getElementById('fieldTimeEnd').value = pt.end;
-        document.getElementById('fieldPeriodLabel').value = (!pt.start && !pt.end) ? (r.timeRange || '') : '';
+        document.getElementById('fieldPeriodLabel').value = '';
         document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
