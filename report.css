@@ -57,11 +57,11 @@
   border-radius: 4px; padding: 8px 10px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px;
 }
 .schedule-output-ta {
-  width: 100%; min-height: 120px; border: 1px solid #CBD5E1; border-radius: 4px;
+  width: 100%; min-height: 132px; border: 1px solid #CBD5E1; border-radius: 4px;
   padding: 6px 8px; font-size: 12px; line-height: 1.45; font-family: inherit; background: #F8FAFC; color: #0F172A;
 }
 
-/* 時間表（按日期每天遞增 + 左右直向分隔線） */
+/* 時間表（最新放上面 + 左右直向分隔線） */
 .schedule-day-card { background: #FFFFFF; border-left: 3px solid #EA580C; margin: 6px 0; }
 .schedule-day-head { background: #FFFBEB; padding: 5px 10px; border-bottom: 1px solid #FDE68A; }
 .schedule-day-body { padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; }
@@ -168,11 +168,15 @@
   min-width: 0; max-width: 100%; width: 100%; overflow: hidden;
 }
 .inline-edit-top {
-  display: grid; grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1.4fr);
+  display: grid; grid-template-columns: 140px minmax(0, 1.35fr) minmax(0, 1.25fr);
   gap: 5px; align-items: center; min-width: 0; max-width: 100%;
+}
+.inline-edit-time-wrap {
+  display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; flex-wrap: wrap;
 }
 .inline-edit-top > *,
 .inline-edit-form .input-ui { min-width: 0; max-width: 100%; width: 100%; }
+.inline-edit-time-wrap > input[type="time"] { flex: 1 1 82px; min-width: 78px; }
 @media (max-width: 640px) {
   .inline-edit-top { grid-template-columns: 1fr; }
 }
