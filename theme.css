@@ -67,6 +67,33 @@ a { color: inherit; }
 .btn-link.orange { color: #EA580C; font-weight: 600; }
 .btn-link.danger:hover { color: #DC2626; }
 
+/* 超小型雙按鈕組 */
+.mini-pair {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #FDBA74;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #FFF7ED;
+  vertical-align: middle;
+}
+.mini-pair-btn {
+  background: transparent;
+  color: #EA580C;
+  border: none;
+  border-right: 1px solid #FDBA74;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.mini-pair-btn:last-child { border-right: none; }
+.mini-pair-btn:hover { background: #FFEDD5; color: #C2410C; }
+
 /* 可輸入欄位：清晰底色區分與聚焦高亮 */
 .input-ui {
   border: 1px solid #94A3B8; border-radius: 4px; padding: 3px 7px;
