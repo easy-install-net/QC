@@ -331,7 +331,7 @@
 
     function isUnlocked() {
       if (IS_PUBLIC) return true;
-      return sessionStorage.getItem(PASSCODE_STORAGE_KEY) === '1';
+      return localStorage.getItem(PASSCODE_STORAGE_KEY) === '1';
     }
 
     function checkPasscodeGate() {
@@ -358,14 +358,14 @@
       if (val !== PASSCODE) {
         return showToast('密碼唔啱，請再試');
       }
-      sessionStorage.setItem(PASSCODE_STORAGE_KEY, '1');
+      localStorage.setItem(PASSCODE_STORAGE_KEY, '1');
       document.getElementById('passcodeInput').value = '';
       checkPasscodeGate();
       showToast('已解鎖');
     }
 
     function lockSystem() {
-      sessionStorage.removeItem(PASSCODE_STORAGE_KEY);
+      localStorage.removeItem(PASSCODE_STORAGE_KEY);
       checkPasscodeGate();
       showToast('已鎖定');
     }
@@ -1174,7 +1174,7 @@
               </div>
               ${!IS_PUBLIC ? `<div class="row no-print">
                 ${isFutureDiaryEntry(r) ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>` : ''}
-                <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="btn-link orange">修繕跟進</button>
+                <button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange">留言</button>
                 <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
               </div>` : ''}
             </div>
