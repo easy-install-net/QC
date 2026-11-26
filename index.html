@@ -18,8 +18,9 @@
         <span class="topbar-sub" id="headerSubTitle">時間表入口</span>
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
-      <div class="row hidden" id="standaloneHeaderBtns">
-        <button type="button" onclick="window.print()" class="btn-top-white">列印 / 儲存 PDF</button>
+      <div class="row" id="headerQuickActions">
+        <a href="repair.html" class="btn-top-white">修繕跟進</a>
+        <button type="button" onclick="window.print()" class="btn-top-white hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
       </div>
     </div>
   </header>
@@ -29,6 +30,7 @@
       <div class="view-switch-bar" role="tablist">
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
+        <button type="button" id="tabBrief" onclick="switchMainView('brief')" class="view-tab-btn">交代行程</button>
       </div>
       <button type="button" onclick="openEditor()" class="btn-orange">+ 加單位</button>
       <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
@@ -70,18 +72,18 @@
                 <label class="field-label" style="margin-bottom:0;">時段 / 小數工時</label>
                 <div class="row" style="gap:4px;">
                   <span class="mini-pair">
-                    <button type="button" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'AM')" class="mini-pair-btn">上午</button>
-                    <button type="button" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'PM')" class="mini-pair-btn">下午</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'AM')" class="mini-pair-btn">上午</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'PM')" class="mini-pair-btn">下午</button>
                   </span>
                   <span class="mini-pair">
-                    <button type="button" onclick="setMinuteForInput(getActiveEditorTimeInput(), '00')" class="mini-pair-btn">:00</button>
-                    <button type="button" onclick="setMinuteForInput(getActiveEditorTimeInput(), '30')" class="mini-pair-btn">:30</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(getActiveEditorTimeInput(), '00')" class="mini-pair-btn">:00</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(getActiveEditorTimeInput(), '30')" class="mini-pair-btn">:30</button>
                   </span>
                 </div>
               </div>
               <div class="grid-2">
-                <input type="time" id="fieldTimeStart" onfocus="lastFocusedTimeId=this.id" class="input-ui" />
-                <input type="text" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" class="input-ui" placeholder="結束時間 或 小數(如 1.5)" />
+                <input type="time" id="fieldTimeStart" onfocus="lastFocusedTimeId=this.id" onclick="lastFocusedTimeId=this.id" class="input-ui" />
+                <input type="text" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" onclick="lastFocusedTimeId=this.id" class="input-ui" placeholder="結束時間 或 小數(如 1.5)" />
               </div>
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
@@ -263,7 +265,7 @@
     const SINGLE_SITE = urlParams.get('site') || '';
     const IS_PUBLIC = urlParams.get('view') === 'public' || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
 
-    let activeMainView = urlParams.get('tab') === 'reports' ? 'reports' : 'schedule';
+    let activeMainView = ['schedule', 'reports', 'brief'].includes(urlParams.get('tab')) ? urlParams.get('tab') : 'schedule';
     let reports = [];
     let singleReportData = null;
     let expandedSites = new Set();
@@ -364,7 +366,7 @@
 
     function formatHours(hrs) {
       const rounded = Math.round(hrs * 100) / 100;
-      return Number.isInteger(rounded) ? `${rounded}hr` : `${rounded}hr`;
+      return `${rounded}hr`;
     }
 
     function computeEntryHoursAndPay(timeRangeStr) {
@@ -372,17 +374,17 @@
       if (!raw || raw === '全日') {
         return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
       }
-      const numMatch = raw.match(/^\s*(\d+(?:\.\d+)?)\s*(?:hr|h|小時|鐘)?\s*$/i);
-      if (numMatch) {
-        const hrs = Math.max(0, parseFloat(numMatch[1]));
-        return { hours: hrs, pay: hrs * HOURLY_RATE };
-      }
       const rangeMatch = raw.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
       if (rangeMatch) {
         const sMins = parseInt(rangeMatch[1], 10) * 60 + parseInt(rangeMatch[2], 10);
         let eMins = parseInt(rangeMatch[3], 10) * 60 + parseInt(rangeMatch[4], 10);
         if (eMins < sMins) eMins += 24 * 60;
         const hrs = Math.max(0, (eMins - sMins) / 60);
+        return { hours: hrs, pay: hrs * HOURLY_RATE };
+      }
+      const numMatch = raw.match(/^\s*(\d+(?:\.\d+)?)\s*(?:hr|h|小時|鐘)?\s*$/i);
+      if (numMatch) {
+        const hrs = Math.max(0, parseFloat(numMatch[1]));
         return { hours: hrs, pay: hrs * HOURLY_RATE };
       }
       return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
@@ -504,18 +506,26 @@
     }
 
     function switchMainView(viewName) {
-      activeMainView = viewName === 'reports' ? 'reports' : 'schedule';
+      activeMainView = ['schedule', 'reports', 'brief'].includes(viewName) ? viewName : 'schedule';
       document.getElementById('tabSchedule').classList.toggle('active', activeMainView === 'schedule');
       document.getElementById('tabReports').classList.toggle('active', activeMainView === 'reports');
+      document.getElementById('tabBrief').classList.toggle('active', activeMainView === 'brief');
       if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        document.getElementById('headerSubTitle').textContent = activeMainView === 'schedule' ? '時間表入口' : '工作紀錄';
+        const subMap = { schedule: '時間表入口', reports: '工作紀錄', brief: '交代行程總表' };
+        document.getElementById('headerSubTitle').textContent = subMap[activeMainView] || '時間表入口';
       }
       renderCurrentView();
     }
 
     function renderCurrentView() {
-      if (activeMainView === 'schedule' && !SINGLE_REPORT_ID && !SINGLE_SITE) {
+      if (SINGLE_REPORT_ID || SINGLE_SITE) {
+        renderReportList();
+        return;
+      }
+      if (activeMainView === 'schedule') {
         renderScheduleTimeline();
+      } else if (activeMainView === 'brief') {
+        renderTripBriefSummary();
       } else {
         renderReportList();
       }
@@ -523,7 +533,8 @@
 
     function bootApp() {
       if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        document.getElementById('headerSubTitle').textContent = activeMainView === 'schedule' ? '時間表入口' : '工作紀錄';
+        const subMap = { schedule: '時間表入口', reports: '工作紀錄', brief: '交代行程總表' };
+        document.getElementById('headerSubTitle').textContent = subMap[activeMainView] || '時間表入口';
       }
 
       if (SINGLE_REPORT_ID) {
@@ -563,7 +574,7 @@
     }
 
     function enterCleanPublicUI(subLabel) {
-      document.getElementById('standaloneHeaderBtns').classList.remove('hidden');
+      document.getElementById('standalonePrintBtn').classList.remove('hidden');
       document.getElementById('syncBadge').classList.add('hidden');
       document.getElementById('filterBar').classList.add('hidden');
       document.getElementById('headerSubTitle').textContent = subLabel;
@@ -581,6 +592,13 @@
       if (!m) return '';
       const u = new URL('album.html', window.location.href);
       u.search = `?albumId=${encodeURIComponent(m[1])}`;
+      return u.toString();
+    }
+
+    function getRepairPageUrl(siteName = '', dateStr = '') {
+      const u = new URL('repair.html', window.location.href);
+      if (siteName) u.searchParams.set('site', siteName);
+      if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) u.searchParams.set('date', dateStr);
       return u.toString();
     }
 
@@ -619,7 +637,7 @@
         if (!r.site && !r.title) return false;
         if (siteVal !== 'ALL' && r.site !== siteVal) return false;
         if (!SINGLE_SITE && kw) {
-          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
+          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -680,10 +698,32 @@
       return lines.join('\n').trim();
     }
 
+    function buildTripBriefExportText(dayGroups) {
+      const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
+        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
+        : '目前顯示區間';
+      const lines = [`築匠設計 ARTISAN STUDIO — 交代行程總表（${rangeLabel}）`, ''];
+
+      dayGroups.forEach(g => {
+        lines.push(`【${formatMonthDayWeekday(g.date)}】（共 ${g.items.length} 項行程）`);
+        g.items.forEach(r => {
+          const t = (r.timeRange || '').trim() || '全日';
+          const calc = computeEntryHoursAndPay(t);
+          const ass = r.assignee ? `｜${r.assignee}` : '';
+          lines.push(`• ${t}（${formatHours(calc.hours)}）｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
+          if (r.summary) lines.push(`  內容：${r.summary.replace(/\n+/g, ' / ')}`);
+          if (r.followup) lines.push(`  跟進：${r.followup}`);
+        });
+        lines.push('');
+      });
+
+      return lines.join('\n').trim();
+    }
+
     function toggleScheduleRangeBox() {
       showScheduleRangeBox = !showScheduleRangeBox;
       showScheduleOutputBox = false;
-      renderScheduleTimeline();
+      renderCurrentView();
     }
 
     function applyScheduleDateRange() {
@@ -692,7 +732,7 @@
       scheduleRangeStart = sEl ? sEl.value : '';
       scheduleRangeEnd = eEl ? eEl.value : '';
       schedulePage = 0;
-      renderScheduleTimeline();
+      renderCurrentView();
       showToast(scheduleRangeStart || scheduleRangeEnd ? '已套用日期範圍' : '已顯示全部日期');
     }
 
@@ -700,33 +740,34 @@
       scheduleRangeStart = '';
       scheduleRangeEnd = '';
       schedulePage = 0;
-      renderScheduleTimeline();
+      renderCurrentView();
       showToast('已重設為近 10 日分頁');
     }
 
     function stepSchedulePage(delta) {
       schedulePage = Math.max(0, schedulePage + delta);
-      renderScheduleTimeline();
+      renderCurrentView();
     }
 
     function openScheduleOutput() {
       showScheduleOutputBox = !showScheduleOutputBox;
       showScheduleRangeBox = false;
-      renderScheduleTimeline();
+      renderCurrentView();
     }
 
     function copyScheduleOutputText() {
       if (!latestScheduleExportText) return;
-      copyText(latestScheduleExportText, '已複製時間表輸出內容');
+      copyText(latestScheduleExportText, activeMainView === 'brief' ? '已複製交代行程內容' : '已複製時間表輸出內容');
     }
 
     function downloadScheduleOutputTxt() {
       if (!latestScheduleExportText) return;
+      const prefix = activeMainView === 'brief' ? '交代行程' : '時間表';
       const blob = new Blob([latestScheduleExportText], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `時間表_${scheduleRangeStart || '全部'}_${scheduleRangeEnd || '輸出'}.txt`;
+      a.download = `${prefix}_${scheduleRangeStart || '全部'}_${scheduleRangeEnd || '輸出'}.txt`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('已下載文字檔');
@@ -793,7 +834,6 @@
       </div>` : '';
 
       const daysHtml = visibleDays.map(g => {
-        const encDate = encodeURIComponent(g.date);
         const dayLabel = formatMonthDayWeekday(g.date);
         const slotHtml = g.items.map(r => {
           const timeLabel = (r.timeRange || '').trim() || '全日';
@@ -824,11 +864,119 @@
               <span class="t-meta muted">${g.items.length} 個地盤</span>
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="openEditorForDate(decodeURIComponent('${encDate}'))" class="schedule-add-btn">+ 加工作</button>
+              <button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn">+ 加工作</button>
             </div>` : ''}
           </div>
           <div class="schedule-day-body">
             ${slotHtml}
+          </div>
+        </div>`;
+      }).join('');
+
+      container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + daysHtml;
+    }
+
+    function renderTripBriefSummary() {
+      const container = document.getElementById('reportListContainer');
+      const filtered = getFilteredReports();
+      const allDayGroups = getScheduleDayGroups(filtered);
+
+      if (!allDayGroups.length) {
+        container.innerHTML = `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">此條件下暫無交代行程紀錄</div>`;
+        return;
+      }
+
+      const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
+      const totalPages = isCustomRange ? 1 : Math.max(1, Math.ceil(allDayGroups.length / SCHEDULE_PAGE_SIZE));
+      if (schedulePage >= totalPages) schedulePage = totalPages - 1;
+
+      const visibleDays = isCustomRange
+        ? allDayGroups
+        : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
+
+      latestScheduleExportText = buildTripBriefExportText(visibleDays);
+
+      const rangeInfoText = isCustomRange
+        ? `交代區間：${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}（${allDayGroups.length} 日）`
+        : `近10日第 ${schedulePage + 1}/${totalPages} 頁（共 ${allDayGroups.length} 日・不計價錢）`;
+
+      const toolbarHtml = `<div class="schedule-toolbar no-print">
+        <div class="row">
+          <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
+          ${!isCustomRange && totalPages > 1 ? `
+            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
+            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
+          ` : ''}
+        </div>
+        <div class="row">
+          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">幾時至幾時</button>
+          ${isCustomRange ? `<button type="button" onclick="resetScheduleToRecentTen()" class="btn-link orange">近10日</button>` : ''}
+          <button type="button" onclick="openScheduleOutput()" class="btn-orange">交代文字</button>
+        </div>
+      </div>`;
+
+      const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
+        <span class="t-meta" style="font-weight:600;">由</span>
+        <input type="date" id="schedRangeStart" value="${escapeHtml(scheduleRangeStart)}" class="input-ui" style="width:auto;" />
+        <span class="t-meta" style="font-weight:600;">至</span>
+        <input type="date" id="schedRangeEnd" value="${escapeHtml(scheduleRangeEnd)}" class="input-ui" style="width:auto;" />
+        <button type="button" onclick="applyScheduleDateRange()" class="btn-orange">套用</button>
+        <button type="button" onclick="resetScheduleToRecentTen()" class="btn-secondary">近10日</button>
+      </div>` : '';
+
+      const outputBoxHtml = showScheduleOutputBox ? `<div class="schedule-output-box no-print">
+        <div class="row-between">
+          <span class="t-meta" style="font-weight:700;">交代行程文字預覽（不計價錢）</span>
+          <div class="row">
+            <button type="button" onclick="copyScheduleOutputText()" class="btn-wa">複製文字</button>
+            <button type="button" onclick="downloadScheduleOutputTxt()" class="btn-secondary">下載 .txt</button>
+            <button type="button" onclick="window.print()" class="btn-secondary">列印/PDF</button>
+          </div>
+        </div>
+        <textarea readonly class="schedule-output-ta">${escapeHtml(latestScheduleExportText)}</textarea>
+      </div>` : '';
+
+      const daysHtml = visibleDays.map(g => {
+        const dayLabel = formatMonthDayWeekday(g.date);
+        const rowsHtml = g.items.map(r => {
+          const t = (r.timeRange || '').trim() || '全日';
+          const calc = computeEntryHoursAndPay(t);
+          const sName = r.site || '未分類單位';
+          const encSite = encodeURIComponent(sName);
+          const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
+          const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
+
+          return `<div class="brief-row">
+            <div class="brief-top">
+              <div class="brief-meta">
+                <span class="t-mono" style="font-weight:700;color:#EA580C;">${escapeHtml(t)}</span>
+                <span class="t-meta muted t-mono">(${escapeHtml(formatHours(calc.hours))})</span>
+                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+                ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+              </div>
+              ${!IS_PUBLIC ? `<div class="row no-print">
+                <a href="${escapeHtml(getRepairPageUrl(sName, r.date))}" class="btn-link orange">修繕跟進</a>
+                <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
+              </div>` : ''}
+            </div>
+            <div class="entry-title">${escapeHtml(r.title || '')}</div>
+            ${r.summary ? `<div class="brief-detail">${escapeHtml(r.summary)}</div>` : ''}
+            ${fuText ? `<div class="brief-fu"><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
+          </div>`;
+        }).join('');
+
+        return `<div class="schedule-day-card">
+          <div class="schedule-day-head row-between">
+            <div class="row">
+              <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
+              <span class="t-meta muted">${g.items.length} 項行程</span>
+            </div>
+            ${!IS_PUBLIC ? `<div class="row no-print">
+              <button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn">+ 加工作</button>
+            </div>` : ''}
+          </div>
+          <div class="schedule-day-body">
+            ${rowsHtml}
           </div>
         </div>`;
       }).join('');
@@ -1271,15 +1419,15 @@
                 <div class="inline-edit-top">
                   <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
                   <div class="inline-edit-time-wrap">
-                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
-                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="結束 / 小數" />
+                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" onfocus="lastFocusedTimeId='${tsId}'" onclick="lastFocusedTimeId='${tsId}'" class="input-ui t-meta" style="padding:2px 4px;" />
+                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" onfocus="lastFocusedTimeId='${teId}'" onclick="lastFocusedTimeId='${teId}'" class="input-ui t-meta" style="padding:2px 4px;" placeholder="結束 / 小數" />
                     <span class="mini-pair">
-                      <button type="button" onclick="setMeridiemForInput(document.getElementById('${tsId}'),'AM')" class="mini-pair-btn">上午</button>
-                      <button type="button" onclick="setMeridiemForInput(document.getElementById('${tsId}'),'PM')" class="mini-pair-btn">下午</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'AM')" class="mini-pair-btn">上午</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'PM')" class="mini-pair-btn">下午</button>
                     </span>
                     <span class="mini-pair">
-                      <button type="button" onclick="setMinuteForInput(document.getElementById('${tsId}'),'00')" class="mini-pair-btn">:00</button>
-                      <button type="button" onclick="setMinuteForInput(document.getElementById('${tsId}'),'30')" class="mini-pair-btn">:30</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'00')" class="mini-pair-btn">:00</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'30')" class="mini-pair-btn">:30</button>
                     </span>
                   </div>
                   <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
@@ -1347,6 +1495,7 @@
               <div class="site-header-actions no-print">
                 <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add" title="加日期">+ 加</button>
                 <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-album" title="截圖台">圖</button>
+                <a href="${escapeHtml(getRepairPageUrl(g.site))}" class="site-mini-btn site-mini-repair" title="問題／售後跟進清單">修</a>
                 <button type="button" onclick="openShareModal(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-share" title="Share">分</button>
               </div>
             ` : ''}
