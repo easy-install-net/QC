@@ -13,11 +13,14 @@
       padding: 8px 10px;
       margin-top: 8px;
       display: grid;
-      grid-template-columns: 1.5fr 1.1fr 135px 1.2fr auto;
+      grid-template-columns: 165px 1.4fr 1.1fr 135px 1.1fr 145px 1.1fr;
       gap: 6px;
       align-items: center;
     }
-    @media (max-width: 820px) {
+    @media (max-width: 1020px) {
+      .repair-meta-bar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
       .repair-meta-bar { grid-template-columns: 1fr; }
     }
     .repair-req-banner {
@@ -188,10 +191,21 @@
 
   <main class="container">
     <div class="repair-meta-bar no-print">
+      <select id="repairSitePick" onchange="onPickSiteFromDropdown(this.value)" class="select-ui" title="揀選現有單位">
+        <option value="">-- 揀單位 --</option>
+      </select>
       <input type="text" id="repairSite" list="repairSiteList" oninput="onRepairMetaChange()" class="input-ui" placeholder="屋苑 / 單位地址 *" />
       <datalist id="repairSiteList"></datalist>
       <input type="text" id="repairTime" oninput="onRepairMetaChange()" class="input-ui" placeholder="時間（例如：14:00 - 16:00 或 全日）*" />
       <input type="date" id="repairDate" onchange="onRepairMetaChange()" class="input-ui" />
+      <select id="repairStageStatus" onchange="onRepairStageChange(this.value)" class="select-ui" title="跟進階段狀態">
+        <option value="">狀態（未選）</option>
+        <option value="客戶提議">客戶提議</option>
+        <option value="中期執漏">中期執漏</option>
+        <option value="工廠出貨前">工廠出貨前</option>
+        <option value="交場前">交場前</option>
+        <option value="入伙後">入伙後</option>
+      </select>
       <input type="text" id="repairTitle" class="input-ui" placeholder="跟進單標題" />
       <select id="repairHistorySelect" onchange="onSelectRepairHistory(this.value)" class="select-ui">
         <option value="">載入歷史跟進單</option>
@@ -306,8 +320,10 @@
     const REPORTS_COL = 'artisan_qc_reports';
     const REPAIRS_COL = 'artisan_qc_repairs';
     const ZONES_ORDER = ['主人房', '廁所', '細房', '廳', '廚房', '其他'];
+    const STAGE_OPTIONS = ['客戶提議', '中期執漏', '工廠出貨前', '交場前', '入伙後'];
 
     let currentRepairId = null;
+    let siteReportMap = {};
     let items = [];
     let activeItemIdx = -1;
     let activePhotoIdx = -1;
@@ -355,16 +371,58 @@
     function onRepairMetaChange() {
       const ok = hasRequiredSiteAndTime();
       const banner = document.getElementById('repairReqBanner');
+      const stage = (document.getElementById('repairStageStatus')?.value || '').trim();
       if (banner) {
         banner.style.background = ok ? '#ECFDF5' : '#FFF7ED';
         banner.style.borderColor = ok ? '#6EE7B7' : '#FDBA74';
         banner.style.color = ok ? '#065F46' : '#9A3412';
+        const stageTag = stage ? `｜狀態：${stage}` : '';
         banner.textContent = ok
-          ? `已確認地址與時間（${(document.getElementById('repairSite').value || '').trim()}｜${(document.getElementById('repairTime').value || '').trim()}），可以寫修葺跟進。`
+          ? `已確認地址與時間（${(document.getElementById('repairSite').value || '').trim()}｜${(document.getElementById('repairTime').value || '').trim()}${stageTag}），可以寫修葺跟進。`
           : '必須先填寫「屋苑 / 單位地址」同「時間」，先可以寫修葺跟進及儲存。';
       }
       document.getElementById('btnOpenPaste')?.toggleAttribute('disabled', !ok);
       document.querySelectorAll('.zone-add-btn').forEach(b => b.toggleAttribute('disabled', !ok));
+    }
+
+    function onRepairStageChange(val) {
+      if (val) {
+        items.forEach(it => {
+          if (!it.stage) it.stage = val;
+        });
+      }
+      onRepairMetaChange();
+      renderIssues();
+    }
+
+    async function onPickSiteFromDropdown(siteName) {
+      if (!siteName) return;
+      document.getElementById('repairSite').value = siteName;
+      const latestRep = siteReportMap[siteName];
+      if (latestRep) {
+        if (latestRep.timeRange) document.getElementById('repairTime').value = latestRep.timeRange;
+        if (latestRep.date && /^\d{4}-\d{2}-\d{2}$/.test(latestRep.date)) {
+          document.getElementById('repairDate').value = latestRep.date;
+        }
+        document.getElementById('repairTitle').value = latestRep.title
+          ? `${siteName} — ${latestRep.title}（修葺跟進）`
+          : `${siteName} — 售後跟進清單`;
+      } else if (!document.getElementById('repairTitle').value.trim()) {
+        document.getElementById('repairTitle').value = `${siteName} — 售後跟進清單`;
+      }
+
+      const q = await db.collection(REPAIRS_COL).where('site', '==', siteName).orderBy('updatedAt', 'desc').limit(1).get().catch(() => null);
+      if (q && !q.empty) {
+        currentRepairId = q.docs[0].id;
+        await loadRepairDoc(currentRepairId);
+      } else {
+        currentRepairId = null;
+      }
+
+      await refreshRepairHistoryDropdown(siteName);
+      onRepairMetaChange();
+      renderIssues();
+      showToast(`已帶出單位：${siteName}`);
     }
 
     async function initRepairPage() {
@@ -382,16 +440,26 @@
         document.getElementById('repairTitle').value = workTitle ? `${site} — ${workTitle}（修葺跟進）` : `${site} — 售後跟進清單`;
       }
 
-      db.collection(REPORTS_COL).limit(80).get().then(snap => {
-        const sites = [...new Set(snap.docs.map(d => d.data().site).filter(Boolean))];
+      try {
+        const snap = await db.collection(REPORTS_COL).orderBy('createdAt', 'desc').limit(120).get();
+        siteReportMap = {};
+        snap.docs.forEach(d => {
+          const data = d.data();
+          const s = (data.site || '').trim();
+          if (s && !siteReportMap[s]) siteReportMap[s] = data;
+        });
+        const sites = Object.keys(siteReportMap).sort((a, b) => a.localeCompare(b, 'zh-Hant'));
         document.getElementById('repairSiteList').innerHTML = sites.map(s => `<option value="${escapeHtml(s)}"></option>`).join('');
-      }).catch(() => {});
+        document.getElementById('repairSitePick').innerHTML =
+          '<option value="">-- 揀單位 --</option>' +
+          sites.map(s => `<option value="${escapeHtml(s)}" ${s === site ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('');
+      } catch (_) {}
 
       await refreshRepairHistoryDropdown(site);
 
       if (currentRepairId) {
         await loadRepairDoc(currentRepairId);
-      } else if (site && time) {
+      } else if (site) {
         const q = await db.collection(REPAIRS_COL).where('site', '==', site).orderBy('updatedAt', 'desc').limit(1).get().catch(() => null);
         if (q && !q.empty) {
           currentRepairId = q.docs[0].id;
@@ -410,7 +478,8 @@
         const opts = ['<option value="">載入歷史跟進單</option>'];
         snap.docs.forEach(d => {
           const data = d.data();
-          const label = `${data.site || '未命名單位'} [${data.timeRange || ''}] — ${data.title || data.date || ''} (${(data.items || []).length}項)`;
+          const stText = data.stageStatus ? `[${data.stageStatus}]` : '';
+          const label = `${data.site || '未命名單位'}${stText} [${data.timeRange || ''}] — ${data.title || data.date || ''} (${(data.items || []).length}項)`;
           const mark = filterSite && data.site === filterSite ? '★ ' : '';
           opts.push(`<option value="${escapeHtml(d.id)}" ${d.id === currentRepairId ? 'selected' : ''}>${escapeHtml(mark + label)}</option>`);
         });
@@ -434,6 +503,9 @@
       document.getElementById('repairTime').value = data.timeRange || '';
       document.getElementById('repairTitle').value = data.title || '';
       document.getElementById('repairDate').value = data.date || '';
+      document.getElementById('repairStageStatus').value = data.stageStatus || '';
+      const pick = document.getElementById('repairSitePick');
+      if (pick && data.site) pick.value = data.site;
       items = Array.isArray(data.items) ? data.items : [];
       document.getElementById('repairSyncTag').textContent = `✓ 已載入 ${items.length} 項`;
     }
@@ -448,6 +520,7 @@
       const raw = (document.getElementById('pasteRawText').value || '').trim();
       if (!raw) return showToast('請先貼上跟進清單文字');
 
+      const curStage = document.getElementById('repairStageStatus')?.value || '';
       let curZone = '其他';
       let addedCount = 0;
       const lines = raw.split(/\r?\n/);
@@ -479,6 +552,7 @@
           id: 'iss_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
           zone: curZone,
           title: titlePart || cleaned,
+          stage: curStage,
           status: followupPart.includes('已') ? '跟進中' : '待跟進',
           done: false,
           followup: followupPart,
@@ -497,10 +571,12 @@
       if (!ensureSiteAndTimeOrNotify()) return;
       const title = prompt(`新增「${zone}」跟進項目：`);
       if (title === null || !title.trim()) return;
+      const curStage = document.getElementById('repairStageStatus')?.value || '';
       items.push({
         id: 'iss_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
         zone,
         title: title.trim(),
+        stage: curStage,
         status: '待跟進',
         done: false,
         followup: '',
@@ -514,6 +590,12 @@
       if (!items[idx]) return;
       items[idx].done = Boolean(checked);
       items[idx].status = items[idx].done ? '已完成' : (items[idx].status === '已完成' ? '跟進中' : items[idx].status);
+      renderIssues();
+    }
+
+    function changeItemStage(idx, val) {
+      if (!items[idx]) return;
+      items[idx].stage = val;
       renderIssues();
     }
 
@@ -823,6 +905,7 @@
         return;
       }
 
+      const defaultStage = document.getElementById('repairStageStatus')?.value || '';
       const zones = [...ZONES_ORDER, ...[...new Set(items.map(x => x.zone).filter(z => !ZONES_ORDER.includes(z)))]];
       const html = zones.map(z => {
         const zItems = items.map((it, idx) => ({ it, idx })).filter(x => x.it.zone === z);
@@ -830,6 +913,7 @@
 
         const cardsHtml = zItems.map(({ it, idx }) => {
           const isDone = Boolean(it.done || it.status === '已完成');
+          const curStage = it.stage || defaultStage || '';
           const photos = it.photos || [];
           const thumbsHtml = photos.map((p, pIdx) => {
             const isAct = activeItemIdx === idx && activePhotoIdx === pIdx;
@@ -843,6 +927,10 @@
                 <span class="issue-title-text">${escapeHtml(it.title)}</span>
               </div>
               <div class="row">
+                <select onchange="changeItemStage(${idx}, this.value)" class="select-ui" style="height:24px;font-size:12px;" title="階段狀態">
+                  <option value="" ${!curStage ? 'selected' : ''}>狀態（未選）</option>
+                  ${STAGE_OPTIONS.map(st => `<option value="${escapeHtml(st)}" ${curStage === st ? 'selected' : ''}>${escapeHtml(st)}</option>`).join('')}
+                </select>
                 <select onchange="changeItemStatus(${idx}, this.value)" class="select-ui" style="height:24px;font-size:12px;">
                   <option value="待跟進" ${it.status === '待跟進' ? 'selected' : ''}>待跟進</option>
                   <option value="待覆期" ${it.status === '待覆期' ? 'selected' : ''}>待覆期</option>
@@ -888,9 +976,10 @@
     function buildRepairExportText() {
       const site = document.getElementById('repairSite').value.trim() || '單位工程';
       const timeRange = document.getElementById('repairTime').value.trim() || '';
+      const stageStatus = document.getElementById('repairStageStatus').value.trim() || '';
       const title = document.getElementById('repairTitle').value.trim() || '修繕與售後跟進清單';
       const date = document.getElementById('repairDate').value || '';
-      const metaPart = [date, timeRange].filter(Boolean).join(' ');
+      const metaPart = [stageStatus ? `狀態:${stageStatus}` : '', date, timeRange].filter(Boolean).join(' ');
       const lines = [`${site} — ${title}${metaPart ? ` (${metaPart})` : ''}`, ''];
 
       const zones = [...ZONES_ORDER, ...[...new Set(items.map(x => x.zone).filter(z => !ZONES_ORDER.includes(z)))]];
@@ -900,9 +989,10 @@
         lines.push(`【${z}】`);
         zItems.forEach((it, i) => {
           const mark = (it.done || it.status === '已完成') ? '✓' : '☐';
+          const st = it.stage ? ` [${it.stage}]` : '';
           const fu = it.followup ? ` [${it.followup}]` : '';
           const pInfo = (it.photos && it.photos.length) ? ` (${it.photos.length}張相)` : '';
-          lines.push(`${i + 1}. ${mark} ${it.title}${fu}${pInfo}`);
+          lines.push(`${i + 1}. ${mark}${st} ${it.title}${fu}${pInfo}`);
         });
         lines.push('');
       });
@@ -927,6 +1017,7 @@
       const site = document.getElementById('repairSite').value.trim();
       const timeRange = document.getElementById('repairTime').value.trim();
       const date = document.getElementById('repairDate').value || new Date().toISOString().split('T')[0];
+      const stageStatus = document.getElementById('repairStageStatus').value.trim() || '';
       const title = document.getElementById('repairTitle').value.trim() || `${site} — 售後跟進清單`;
 
       const btn = document.getElementById('saveRepairBtn');
@@ -937,6 +1028,7 @@
         await db.collection(REPAIRS_COL).doc(docId).set({
           site,
           timeRange,
+          stageStatus,
           title,
           date,
           items,
