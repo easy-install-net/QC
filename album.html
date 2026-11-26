@@ -146,6 +146,7 @@
     let sx = 0, sy = 0, lx = 0, ly = 0, panStartClientX = 0, panStartClientY = 0, panStartScrollL = 0, panStartScrollT = 0;
     let stroke = [], baseImg = null;
     let isSavingAlbum = false;
+    let isPublicAlbumView = false;
 
     const canvas = document.getElementById('workCanvas');
     const ctx = canvas.getContext('2d');
@@ -167,7 +168,7 @@
       const stickerBtn = document.getElementById('modeStickerBtn');
       shootBtn.classList.toggle('shoot-mode', captureMode === 'shoot');
       stickerBtn.classList.toggle('shoot-mode', captureMode === 'sticker');
-      document.getElementById('deleteAlbumBtn').classList.toggle('hidden', !currentAlbumId);
+      document.getElementById('deleteAlbumBtn').classList.toggle('hidden', isPublicAlbumView || !currentAlbumId);
     }
 
     function setCaptureMode(m) {
@@ -182,9 +183,9 @@
       const date = params.get('date') || new Date().toISOString().split('T')[0];
       linkedReportId = params.get('reportId') || null;
       currentAlbumId = params.get('albumId') || null;
-      const isPublic = params.get('view') === 'public';
+      isPublicAlbumView = params.get('view') === 'public';
 
-      if (isPublic) {
+      if (isPublicAlbumView) {
         document.getElementById('backToMainBtn').classList.add('hidden');
         document.getElementById('historyAlbumSelect').classList.add('hidden');
         document.getElementById('deleteAlbumBtn').classList.add('hidden');
@@ -206,7 +207,7 @@
 
       if (currentAlbumId) {
         captureMode = 'sticker';
-        await loadExistingAlbum(currentAlbumId, isPublic);
+        await loadExistingAlbum(currentAlbumId, isPublicAlbumView);
       } else {
         captureMode = 'shoot';
         renderSidebar();
@@ -270,8 +271,7 @@
     }
 
     async function handleBackToMain(e) {
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
-      if (isPublic) return;
+      if (isPublicAlbumView) return;
       if (pages.length > 0) {
         e.preventDefault();
         await saveAlbumToCloud({ silent: true, autoDefaultTitle: true });
@@ -280,8 +280,7 @@
     }
 
     window.addEventListener('pagehide', () => {
-      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
-      if (!isPublic && pages.length > 0) {
+      if (!isPublicAlbumView && pages.length > 0) {
         saveAlbumToCloud({ silent: true, autoDefaultTitle: true });
       }
     });
@@ -346,7 +345,7 @@
     }
 
     window.addEventListener('paste', (e) => {
-      if (document.getElementById('editShell').classList.contains('hidden')) return;
+      if (isPublicAlbumView || document.getElementById('editShell').classList.contains('hidden')) return;
       if (isInputFocused(document.activeElement) || isInputFocused(e.target)) return;
       const items = (e.clipboardData || window.clipboardData)?.items || [];
       for (const item of items) {
