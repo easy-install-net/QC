@@ -12,7 +12,7 @@
 
   <header class="topbar no-print">
     <div class="row">
-      <a href="index.html" id="backToMainBtn" class="btn-secondary">退回</a>
+      <a href="index.html" id="backToMainBtn" onclick="handleBackToMain(event)" class="btn-secondary">退回</a>
       <select id="historyAlbumSelect" onchange="onSelectHistoryAlbum(this.value)" class="select-ui" style="max-width:210px;">
         <option value="">載入</option>
       </select>
@@ -89,7 +89,7 @@
             </div>
           </div>
 
-          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" class="input-ui hidden" />
+          <input type="text" id="textLabelInput" oninput="onTextLiveEdit()" onkeydown="onTextInputKeyDown(event)" class="input-ui hidden" placeholder="輸入標記文字，按 Enter 直接放上畫布或點畫布落字" />
 
           <div class="canvas-scroll" id="canvasScrollBox">
             <div class="canvas-stage-inner">
@@ -145,6 +145,7 @@
     let selectedIdx = -1, drawing = false, draggingShape = false, panningView = false;
     let sx = 0, sy = 0, lx = 0, ly = 0, panStartClientX = 0, panStartClientY = 0, panStartScrollL = 0, panStartScrollT = 0;
     let stroke = [], baseImg = null;
+    let isSavingAlbum = false;
 
     const canvas = document.getElementById('workCanvas');
     const ctx = canvas.getContext('2d');
@@ -257,10 +258,7 @@
     async function onSelectHistoryAlbum(albId) {
       if (!albId) return;
       if (pages.length > 0 && albId !== currentAlbumId) {
-        if (!confirm('確定切換至另一份截圖檔？')) {
-          document.getElementById('historyAlbumSelect').value = currentAlbumId || '';
-          return;
-        }
+        await saveAlbumToCloud({ silent: true, autoDefaultTitle: true });
       }
       currentAlbumId = albId;
       captureMode = 'sticker';
@@ -270,6 +268,23 @@
       window.history.replaceState({}, '', newUrl);
       await loadExistingAlbum(albId, false);
     }
+
+    async function handleBackToMain(e) {
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+      if (isPublic) return;
+      if (pages.length > 0) {
+        e.preventDefault();
+        await saveAlbumToCloud({ silent: true, autoDefaultTitle: true });
+        window.location.href = 'index.html';
+      }
+    }
+
+    window.addEventListener('pagehide', () => {
+      const isPublic = new URLSearchParams(window.location.search).get('view') === 'public';
+      if (!isPublic && pages.length > 0) {
+        saveAlbumToCloud({ silent: true, autoDefaultTitle: true });
+      }
+    });
 
     async function deleteCurrentAlbumWithConfirm() {
       if (!currentAlbumId) return;
@@ -483,13 +498,42 @@
 
     function syncPageNote() { if (activeIdx >= 0) pages[activeIdx].note = document.getElementById('pageNoteInput').value; }
 
+    function placeTextAt(txt, x, y) {
+      if (activeIdx < 0 || !txt) return;
+      pages[activeIdx].shapes = pages[activeIdx].shapes || [];
+      const existingCount = pages[activeIdx].shapes.length;
+      const px = typeof x === 'number' ? x : Math.round(canvas.width * (0.2 + ((existingCount % 5) * 0.08)));
+      const py = typeof y === 'number' ? y : Math.round(canvas.height * (0.2 + ((existingCount % 5) * 0.08)));
+      pages[activeIdx].shapes.push({ type: 'text', x: px, y: py, text: txt, color, scale: fontScale });
+      document.getElementById('textLabelInput').value = '';
+      setTool('move');
+      selectedIdx = pages[activeIdx].shapes.length - 1;
+      syncSelUI();
+      redraw(true);
+    }
+
+    function onTextInputKeyDown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const inp = document.getElementById('textLabelInput');
+        const txt = (inp.value || '').trim();
+        if (!txt) return showToast('請先輸入文字');
+        placeTextAt(txt);
+        showToast('已放上畫布');
+      }
+    }
+
     function setTool(t) {
       tool = t;
       ['move','pan','freehand','circle','arrow','text'].forEach(k => document.getElementById('t-'+k).classList.toggle('btn-active', k===t));
       canvas.classList.toggle('draw-cursor', ['freehand','circle','arrow','text'].includes(t));
       if (t !== 'move') { selectedIdx = -1; redraw(false); }
       syncSelUI();
-      if (t === 'text') document.getElementById('textLabelInput').focus();
+      if (t === 'text') {
+        const inp = document.getElementById('textLabelInput');
+        inp.classList.remove('hidden');
+        inp.focus();
+      }
     }
 
     function syncSelUI() {
@@ -616,11 +660,7 @@
         }
         const txt = document.getElementById('textLabelInput').value.trim();
         if (!txt) return showToast('請先輸入文字再點畫布');
-        shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color, scale: fontScale });
-        document.getElementById('textLabelInput').value = '';
-        setTool('move');
-        selectedIdx = shapes.length - 1;
-        syncSelUI(); redraw(true);
+        placeTextAt(txt, pos.x, pos.y);
         return;
       }
 
@@ -710,14 +750,38 @@
       c.restore();
     }
 
-    async function saveAlbumToCloud() {
-      const site = document.getElementById('albumSite').value.trim();
-      const title = document.getElementById('albumTitle').value.trim();
-      const date = document.getElementById('albumDate').value || new Date().toISOString().split('T')[0];
-      if (!site || !title) return showToast('請填寫單位及標題');
-      if (!pages.length) return showToast('請先加入截圖');
+    async function saveAlbumToCloud(opts = {}) {
+      if (isSavingAlbum) return;
+      const silent = Boolean(opts.silent);
+      const autoDefaultTitle = Boolean(opts.autoDefaultTitle);
 
-      const btn = document.getElementById('saveAlbumBtn'); btn.disabled = true; btn.textContent = '儲存中...';
+      const pendingText = (document.getElementById('textLabelInput')?.value || '').trim();
+      if (pendingText && activeIdx >= 0) {
+        placeTextAt(pendingText);
+      }
+
+      const site = document.getElementById('albumSite').value.trim();
+      let title = document.getElementById('albumTitle').value.trim();
+      const date = document.getElementById('albumDate').value || new Date().toISOString().split('T')[0];
+
+      if (!title && autoDefaultTitle && pages.length) {
+        title = `${date.slice(2).replace(/-/g, '')} 截圖標記紀錄`;
+        document.getElementById('albumTitle').value = title;
+      }
+
+      if (!site || !title) {
+        if (!silent) showToast('請填寫單位及標題');
+        return;
+      }
+      if (!pages.length) {
+        if (!silent) showToast('請先加入截圖');
+        return;
+      }
+
+      isSavingAlbum = true;
+      const btn = document.getElementById('saveAlbumBtn');
+      if (btn) { btn.disabled = true; btn.textContent = '儲存中...'; }
+
       try {
         const albumId = currentAlbumId || ('alb-' + Date.now());
         await db.collection(ALBUMS_COL).doc(albumId).set({ site, title, date, pageCount: pages.length, linkedReportId: linkedReportId || '', updatedAt: Date.now() });
@@ -772,11 +836,14 @@
           });
         }
         document.getElementById('statusTag').textContent = '✓ 已儲存';
-        showToast('已儲存並覆蓋更新');
+        if (!silent) showToast('已儲存並覆蓋更新');
       } catch (err) {
         console.error(err);
-        showToast('儲存失敗：' + err.message);
-      } finally { btn.disabled = false; btn.textContent = '儲存'; }
+        if (!silent) showToast('儲存失敗：' + err.message);
+      } finally {
+        isSavingAlbum = false;
+        if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
+      }
     }
 
     function buildPrintView() {
