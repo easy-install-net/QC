@@ -7,6 +7,20 @@
   <link rel="icon" href="data:," />
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="report.css" />
+  <style>
+    .future-tag-pill {
+      display: inline-block;
+      background: #FFF7ED;
+      color: #C2410C;
+      border: 1px solid #FDBA74;
+      border-radius: 3px;
+      padding: 0 5px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.45;
+      vertical-align: middle;
+    }
+  </style>
 </head>
 <body>
 
@@ -20,10 +34,26 @@
       </div>
       <div class="row" id="headerQuickActions">
         <button type="button" onclick="openRepairFromHeader()" id="headerRepairBtn" class="btn-top-white">修繕跟進</button>
+        <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="btn-top-white hidden">鎖定</button>
         <button type="button" onclick="window.print()" class="btn-top-white hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
       </div>
     </div>
   </header>
+
+  <div id="passcodeGate" class="modal-backdrop hidden no-print">
+    <div class="modal-box modal-sm">
+      <div class="modal-head">
+        <span class="t-site">輸入密碼解鎖</span>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="t-meta muted">請輸入系統密碼以使用時間表、工作紀錄與修繕跟進：</div>
+        <input type="password" id="passcodeInput" onkeydown="if(event.key==='Enter')unlockSystem()" class="input-ui" placeholder="輸入密碼" />
+      </div>
+      <div class="modal-foot">
+        <button type="button" onclick="unlockSystem()" class="btn-orange">解鎖進入</button>
+      </div>
+    </div>
+  </div>
 
   <main class="container">
     <div id="filterBar" class="filter-zone no-print">
@@ -62,31 +92,37 @@
               <input type="text" id="fieldSite" autocomplete="off" oninput="onFieldSiteInput()" onfocus="onFieldSiteInput()" class="input-ui" />
               <div id="siteSuggestBox" class="site-suggest-box hidden"></div>
             </div>
-            <div><label class="field-label">@負責人</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
+            <div><label class="field-label">@負責人 / 約定同事</label><input type="text" id="fieldAssignee" class="input-ui" /></div>
             <div><label class="field-label">項目重點標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
           </div>
           <div class="grid-2" style="margin-top:6px;">
             <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
               <div class="row-between" style="margin-bottom:3px;">
-                <label class="field-label" style="margin-bottom:0;">時段 / 小數工時</label>
+                <label class="field-label" style="margin-bottom:0;">開始時間快掣 / 完成時間或工時</label>
                 <div class="row" style="gap:4px;">
                   <span class="mini-pair">
-                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'AM')" class="mini-pair-btn">上午</button>
-                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(getActiveEditorTimeInput(), 'PM')" class="mini-pair-btn">下午</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('fieldTimeStart', 'AM')" class="mini-pair-btn">上午</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('fieldTimeStart', 'PM')" class="mini-pair-btn">下午</button>
                   </span>
                   <span class="mini-pair">
-                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(getActiveEditorTimeInput(), '00')" class="mini-pair-btn">:00</button>
-                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(getActiveEditorTimeInput(), '30')" class="mini-pair-btn">:30</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('fieldTimeStart', '00')" class="mini-pair-btn">:00</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('fieldTimeStart', '30')" class="mini-pair-btn">:30</button>
                   </span>
                 </div>
               </div>
               <div class="grid-2">
-                <input type="time" id="fieldTimeStart" onfocus="lastFocusedTimeId=this.id" onclick="lastFocusedTimeId=this.id" class="input-ui" />
-                <input type="text" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" onclick="lastFocusedTimeId=this.id" class="input-ui" placeholder="結束時間 或 小數(如 1.5)" />
+                <input type="time" id="fieldTimeStart" class="input-ui" />
+                <input type="text" id="fieldTimeEnd" class="input-ui" placeholder="完成時間 或 小數(如 1.5)" />
               </div>
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
+          </div>
+          <div style="margin-top:8px;">
+            <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
+              <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
+              <span class="t-meta" style="font-weight:700;color:#9A3412;">未來日記 / 待開工約定（開工時可一鍵轉做正式紀錄）</span>
+            </label>
           </div>
         </div>
 
@@ -255,6 +291,8 @@
     const COLLECTION_NAME = 'artisan_qc_reports';
     const PHOTOS_COL = 'artisan_qc_photos';
     const ALBUMS_COL = 'artisan_qc_albums';
+    const PASSCODE = '8888';
+    const PASSCODE_STORAGE_KEY = 'artisan_qc_unlocked_v1';
     const WEEKDAYS_HK = ['日', '一', '二', '三', '四', '五', '六'];
     const SCHEDULE_PAGE_SIZE = 10;
     const HOURLY_RATE = 150;
@@ -273,7 +311,6 @@
     let expandedSites = new Set();
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
     let managingOldSite = '';
-    let lastFocusedTimeId = 'fieldTimeStart';
 
     let schedulePage = 0;
     let scheduleRangeStart = '';
@@ -291,6 +328,64 @@
 
     const canvas = document.getElementById('annotCanvas');
     const ctx = canvas.getContext('2d');
+
+    function isUnlocked() {
+      if (IS_PUBLIC) return true;
+      return sessionStorage.getItem(PASSCODE_STORAGE_KEY) === '1';
+    }
+
+    function checkPasscodeGate() {
+      const gate = document.getElementById('passcodeGate');
+      const lockBtn = document.getElementById('lockSystemBtn');
+      if (IS_PUBLIC) {
+        gate.classList.add('hidden');
+        lockBtn.classList.add('hidden');
+        return true;
+      }
+      if (isUnlocked()) {
+        gate.classList.add('hidden');
+        lockBtn.classList.remove('hidden');
+        return true;
+      }
+      lockBtn.classList.add('hidden');
+      gate.classList.remove('hidden');
+      setTimeout(() => document.getElementById('passcodeInput')?.focus(), 50);
+      return false;
+    }
+
+    function unlockSystem() {
+      const val = (document.getElementById('passcodeInput')?.value || '').trim();
+      if (val !== PASSCODE) {
+        return showToast('密碼唔啱，請再試');
+      }
+      sessionStorage.setItem(PASSCODE_STORAGE_KEY, '1');
+      document.getElementById('passcodeInput').value = '';
+      checkPasscodeGate();
+      showToast('已解鎖');
+    }
+
+    function lockSystem() {
+      sessionStorage.removeItem(PASSCODE_STORAGE_KEY);
+      checkPasscodeGate();
+      showToast('已鎖定');
+    }
+
+    function isFutureDiaryEntry(r) {
+      return Boolean(r?.isFutureDiary);
+    }
+
+    async function convertFutureDiaryToFormal(id) {
+      const r = reports.find(x => x.id === id);
+      if (!r) return;
+      if (!hasValidTimeAndSite(r)) {
+        return showToast('請先確保有地址同時間先轉做正式紀錄');
+      }
+      await db.collection(COLLECTION_NAME).doc(id).update({
+        isFutureDiary: false,
+        updatedAt: Date.now()
+      });
+      showToast('已轉做正式紀錄');
+    }
 
     function confirmYAction(promptMsg) {
       const ans = prompt(`${promptMsg}\n請輸入 "Y" 確認：`);
@@ -315,16 +410,8 @@
       return `${mo}月${dy}日(${wd})`;
     }
 
-    function getActiveEditorTimeInput() {
-      const el = document.activeElement;
-      if (el && (el.id === 'fieldTimeStart' || el.id === 'fieldTimeEnd')) {
-        lastFocusedTimeId = el.id;
-        return el;
-      }
-      return document.getElementById(lastFocusedTimeId || 'fieldTimeStart');
-    }
-
-    function setMeridiemForInput(inputEl, period) {
+    function setMeridiemForStartInput(inputId, period) {
+      const inputEl = document.getElementById(inputId);
       if (!inputEl) return;
       const cur = (inputEl.value || '').trim();
       let hh = period === 'AM' ? 9 : 14;
@@ -341,13 +428,12 @@
         hh = hNum;
       }
       inputEl.value = `${String(hh).padStart(2, '0')}:${mm}`;
-      inputEl.focus();
-      showToast(period === 'AM' ? `已改上午 ${inputEl.value}` : `已改下午 ${inputEl.value}`);
+      showToast(period === 'AM' ? `開始時間改上午 ${inputEl.value}` : `開始時間改下午 ${inputEl.value}`);
     }
 
-    function setMinuteForInput(inputEl, mm) {
-      if (!inputEl) return;
-      if (mm !== '00' && mm !== '30') return;
+    function setMinuteForStartInput(inputId, mm) {
+      const inputEl = document.getElementById(inputId);
+      if (!inputEl || (mm !== '00' && mm !== '30')) return;
       const cur = (inputEl.value || '').trim();
       const m = cur.match(/^(\d{1,2}):(\d{2})$/);
       if (m) {
@@ -356,8 +442,7 @@
       } else {
         inputEl.value = `09:${mm}`;
       }
-      inputEl.focus();
-      showToast(`已改 :${mm}`);
+      showToast(`開始時間改 :${mm}`);
     }
 
     function formatCurrency(val) {
@@ -538,6 +623,8 @@
     }
 
     function bootApp() {
+      checkPasscodeGate();
+
       if (IS_BOSS_BRIEF) {
         enterBossBriefUI();
         db.collection(COLLECTION_NAME).orderBy('createdAt', 'desc').onSnapshot(snap => {
@@ -593,6 +680,7 @@
       document.getElementById('headerSubTitle').textContent = '行程交代';
       document.getElementById('syncBadge').classList.add('hidden');
       document.getElementById('headerRepairBtn').classList.add('hidden');
+      document.getElementById('lockSystemBtn').classList.add('hidden');
       document.getElementById('standalonePrintBtn').classList.add('hidden');
       document.getElementById('filterBar').classList.add('hidden');
     }
@@ -668,6 +756,7 @@
     function enterCleanPublicUI(subLabel) {
       document.getElementById('standalonePrintBtn').classList.remove('hidden');
       document.getElementById('syncBadge').classList.add('hidden');
+      document.getElementById('lockSystemBtn').classList.add('hidden');
       document.getElementById('filterBar').classList.add('hidden');
       document.getElementById('headerSubTitle').textContent = subLabel;
     }
@@ -802,7 +891,8 @@
           dayHours += calc.hours;
           dayPay += calc.pay;
           const ass = r.assignee ? ` (${r.assignee})` : '';
-          return `  • ${t} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類單位'}${ass}：${r.title || ''}`;
+          const tag = isFutureDiaryEntry(r) ? ' [未來日記]' : '';
+          return `  • ${t}${tag} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類單位'}${ass}：${r.title || ''}`;
         });
         grandHours += dayHours;
         grandPay += dayPay;
@@ -828,7 +918,8 @@
           const t = (r.timeRange || '').trim() || '全日';
           const calc = computeEntryHoursAndPay(t);
           const ass = r.assignee ? `｜${r.assignee}` : '';
-          lines.push(`• ${t}（${formatHours(calc.hours)}）｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
+          const tag = isFutureDiaryEntry(r) ? ' [未來日記]' : '';
+          lines.push(`• ${t}${tag}（${formatHours(calc.hours)}）｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
           if (r.summary) lines.push(`  內容：${r.summary.replace(/\n+/g, ' / ')}`);
           if (r.followup) lines.push(`  跟進：${r.followup}`);
           const docs = getDocsList(r).filter(d => d.name || d.url);
@@ -926,6 +1017,7 @@
           ` : ''}
         </div>
         <div class="row">
+          <button type="button" onclick="openEditorForFutureDiary()" class="btn-secondary">+ 未來日記</button>
           <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">幾時至幾時</button>
           ${isCustomRange ? `<button type="button" onclick="resetScheduleToRecentTen()" class="btn-link orange">近10日</button>` : ''}
           <button type="button" onclick="openScheduleOutput()" class="btn-orange">輸出</button>
@@ -959,6 +1051,7 @@
           const timeLabel = (r.timeRange || '').trim() || '全日';
           const sName = r.site || '未分類單位';
           const encSite = encodeURIComponent(sName);
+          const isFuture = isFutureDiaryEntry(r);
 
           return `<div class="schedule-slot-row">
             <div class="schedule-time-col">
@@ -968,11 +1061,14 @@
               <div class="schedule-slot-top">
                 <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="查看此單位工作紀錄">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                ${isFuture ? `<span class="future-tag-pill">未來日記</span>` : ''}
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-              <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="btn-link orange">加內容</button>
+              ${isFuture
+                ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>`
+                : `<button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="btn-link orange">加內容</button>`}
             </div>` : ''}
           </div>`;
         }).join('');
@@ -1074,8 +1170,10 @@
                 <span class="t-meta muted t-mono">(${escapeHtml(formatHours(calc.hours))})</span>
                 <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                ${isFutureDiaryEntry(r) ? `<span class="future-tag-pill">未來日記</span>` : ''}
               </div>
               ${!IS_PUBLIC ? `<div class="row no-print">
+                ${isFutureDiaryEntry(r) ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>` : ''}
                 <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="btn-link orange">修繕跟進</button>
                 <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
               </div>` : ''}
@@ -1531,6 +1629,7 @@
           const pCount = thumbs.length;
           const docs = getDocsList(r);
           const singleUrl = getSingleReportUrl(r.id);
+          const isFuture = isFutureDiaryEntry(r);
 
           if (!IS_PUBLIC && inlineEditId === r.id) {
             const pt = parseTimeRange(r.timeRange);
@@ -1541,15 +1640,15 @@
                 <div class="inline-edit-top">
                   <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
                   <div class="inline-edit-time-wrap">
-                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" onfocus="lastFocusedTimeId='${tsId}'" onclick="lastFocusedTimeId='${tsId}'" class="input-ui t-meta" style="padding:2px 4px;" />
-                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" onfocus="lastFocusedTimeId='${teId}'" onclick="lastFocusedTimeId='${teId}'" class="input-ui t-meta" style="padding:2px 4px;" placeholder="結束 / 小數" />
+                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
+                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="完成 / 小數" />
                     <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'AM')" class="mini-pair-btn">上午</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'PM')" class="mini-pair-btn">下午</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','AM')" class="mini-pair-btn">上午</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','PM')" class="mini-pair-btn">下午</button>
                     </span>
                     <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'00')" class="mini-pair-btn">:00</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForInput(document.getElementById(lastFocusedTimeId && document.getElementById(lastFocusedTimeId) ? lastFocusedTimeId : '${teId}'),'30')" class="mini-pair-btn">:30</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','00')" class="mini-pair-btn">:00</button>
+                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','30')" class="mini-pair-btn">:30</button>
                     </span>
                   </div>
                   <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
@@ -1580,6 +1679,7 @@
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
           const actionGroupHtml = !IS_PUBLIC ? `<div class="record-actions-bar no-print">
+            ${isFuture ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="rec-act-btn accent">轉正式</button>` : ''}
             <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="rec-act-btn accent">修</button>
             <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>
             <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn">快改</button>
@@ -1592,6 +1692,7 @@
               <div class="entry-date-group">
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
+                ${isFuture ? `<span class="future-tag-pill">未來日記</span>` : ''}
               </div>
               ${actionGroupHtml}
             </div>
@@ -1692,10 +1793,15 @@
       if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr;
     }
 
+    function openEditorForFutureDiary() {
+      openEditor(null);
+      document.getElementById('fieldIsFutureDiary').checked = true;
+      document.getElementById('editorModalTitle').textContent = '新增未來日記';
+    }
+
     async function openEditor(id = null) {
       editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
       currentTool = 'move';
-      lastFocusedTimeId = 'fieldTimeStart';
       document.getElementById('annotationWorkspace').classList.add('hidden');
       document.getElementById('siteSuggestBox').classList.add('hidden');
       document.getElementById('editorModal').classList.remove('hidden');
@@ -1709,6 +1815,7 @@
         document.getElementById('fieldTimeStart').value = pt.start;
         document.getElementById('fieldTimeEnd').value = pt.end;
         document.getElementById('fieldPeriodLabel').value = '';
+        document.getElementById('fieldIsFutureDiary').checked = Boolean(r.isFutureDiary);
         document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
@@ -1720,6 +1827,7 @@
       } else {
         document.getElementById('editorModalTitle').textContent = '新增單位';
         ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
+        document.getElementById('fieldIsFutureDiary').checked = false;
         const curFilter = document.getElementById('siteFilter').value;
         if (curFilter && curFilter !== 'ALL') {
           document.getElementById('fieldSite').value = curFilter;
@@ -2042,6 +2150,7 @@
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
           date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
           timeRange: buildEditorTimeValue(),
+          isFutureDiary: Boolean(document.getElementById('fieldIsFutureDiary')?.checked),
           title,
           docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
           summary: document.getElementById('fieldSummary').value.trim(),
