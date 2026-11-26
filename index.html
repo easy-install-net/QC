@@ -20,6 +20,85 @@
       line-height: 1.45;
       vertical-align: middle;
     }
+    .future-diary-box {
+      background: #FFFFFF;
+      border-left: 3px solid #EA580C;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .future-diary-head {
+      background: #FFF7ED;
+      border-bottom: 1px solid #FDBA74;
+      padding: 6px 10px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .future-diary-body {
+      padding: 6px 10px;
+    }
+    .detail-toggle-btn {
+      background: #F1F5F9;
+      color: #334155;
+      border: 1px solid #CBD5E1;
+      border-radius: 3px;
+      padding: 1px 7px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .detail-toggle-btn.is-open {
+      background: #FFF7ED;
+      color: #C2410C;
+      border-color: #FDBA74;
+    }
+    .schedule-detail-panel {
+      margin-top: 6px;
+      padding: 7px 9px;
+      background: #F8FAFC;
+      border-left: 2px solid #FDBA74;
+      border-radius: 2px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .site-quick-bar {
+      background: #FFFFFF;
+      border-left: 3px solid #EA580C;
+      padding: 8px 10px;
+      margin-top: 8px;
+    }
+    .site-quick-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .site-quick-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .site-chip-btn {
+      background: #F8FAFC;
+      color: #0F172A;
+      border: 1px solid #CBD5E1;
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .site-chip-btn.active {
+      background: #EA580C;
+      color: #FFFFFF;
+      border-color: #EA580C;
+    }
   </style>
 </head>
 <body>
@@ -33,7 +112,6 @@
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
       <div class="row" id="headerQuickActions">
-        <button type="button" onclick="openRepairFromHeader()" id="headerRepairBtn" class="btn-top-white">修繕跟進</button>
         <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="btn-top-white hidden">鎖定</button>
         <button type="button" onclick="window.print()" class="btn-top-white hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
       </div>
@@ -46,7 +124,7 @@
         <span class="t-site">輸入密碼解鎖</span>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:8px;">
-        <div class="t-meta muted">請輸入系統密碼以使用時間表、工作紀錄與修繕跟進：</div>
+        <div class="t-meta muted">請輸入系統密碼以使用時間表與工作紀錄：</div>
         <input type="password" id="passcodeInput" onkeydown="if(event.key==='Enter')unlockSystem()" class="input-ui" placeholder="輸入密碼" />
       </div>
       <div class="modal-foot">
@@ -60,7 +138,6 @@
       <div class="view-switch-bar" role="tablist">
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
-        <button type="button" id="tabBrief" onclick="switchMainView('brief')" class="view-tab-btn">交代行程</button>
       </div>
       <button type="button" onclick="openEditor()" class="btn-orange">+ 加單位</button>
       <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
@@ -121,7 +198,7 @@
           <div style="margin-top:8px;">
             <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
-              <span class="t-meta" style="font-weight:700;color:#9A3412;">未來日記 / 待開工約定（開工時可一鍵轉做正式紀錄）</span>
+              <span class="t-meta" style="font-weight:700;color:#9A3412;">未來日記 / 待開工約定（與正常日程分開，開工時可一鍵轉做正式紀錄）</span>
             </label>
           </div>
         </div>
@@ -305,10 +382,12 @@
     const IS_BOSS_BRIEF = VIEW_MODE === 'brief';
     const IS_PUBLIC = VIEW_MODE === 'public' || IS_BOSS_BRIEF || Boolean(SINGLE_REPORT_ID) || Boolean(SINGLE_SITE);
 
-    let activeMainView = ['schedule', 'reports', 'brief'].includes(urlParams.get('tab')) ? urlParams.get('tab') : 'schedule';
+    let activeMainView = urlParams.get('tab') === 'reports' ? 'reports' : 'schedule';
     let reports = [];
     let singleReportData = null;
     let expandedSites = new Set();
+    let siteChipsExpanded = true;
+    let expandedDetailIds = new Set();
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
     let managingOldSite = '';
 
@@ -372,6 +451,18 @@
 
     function isFutureDiaryEntry(r) {
       return Boolean(r?.isFutureDiary);
+    }
+
+    function toggleScheduleDetail(id) {
+      if (!id) return;
+      if (expandedDetailIds.has(id)) expandedDetailIds.delete(id);
+      else expandedDetailIds.add(id);
+      renderCurrentView();
+    }
+
+    function toggleSiteChipsCollapse() {
+      siteChipsExpanded = !siteChipsExpanded;
+      renderReportList();
     }
 
     async function convertFutureDiaryToFormal(id) {
@@ -593,13 +684,11 @@
     }
 
     function switchMainView(viewName) {
-      activeMainView = ['schedule', 'reports', 'brief'].includes(viewName) ? viewName : 'schedule';
+      activeMainView = viewName === 'reports' ? 'reports' : 'schedule';
       document.getElementById('tabSchedule').classList.toggle('active', activeMainView === 'schedule');
       document.getElementById('tabReports').classList.toggle('active', activeMainView === 'reports');
-      document.getElementById('tabBrief').classList.toggle('active', activeMainView === 'brief');
       if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        const subMap = { schedule: '時間表入口', reports: '工作紀錄', brief: '交代行程總表' };
-        document.getElementById('headerSubTitle').textContent = subMap[activeMainView] || '時間表入口';
+        document.getElementById('headerSubTitle').textContent = activeMainView === 'reports' ? '工作紀錄（分地點）' : '時間表入口';
       }
       renderCurrentView();
     }
@@ -613,12 +702,10 @@
         renderReportList();
         return;
       }
-      if (activeMainView === 'schedule') {
-        renderScheduleTimeline();
-      } else if (activeMainView === 'brief') {
-        renderTripBriefSummary();
-      } else {
+      if (activeMainView === 'reports') {
         renderReportList();
+      } else {
+        renderScheduleTimeline();
       }
     }
 
@@ -635,8 +722,7 @@
       }
 
       if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        const subMap = { schedule: '時間表入口', reports: '工作紀錄', brief: '交代行程總表' };
-        document.getElementById('headerSubTitle').textContent = subMap[activeMainView] || '時間表入口';
+        document.getElementById('headerSubTitle').textContent = activeMainView === 'reports' ? '工作紀錄（分地點）' : '時間表入口';
       }
 
       if (SINGLE_REPORT_ID) {
@@ -679,20 +765,9 @@
       document.title = '築匠設計 ARTISAN STUDIO — 行程交代';
       document.getElementById('headerSubTitle').textContent = '行程交代';
       document.getElementById('syncBadge').classList.add('hidden');
-      document.getElementById('headerRepairBtn').classList.add('hidden');
       document.getElementById('lockSystemBtn').classList.add('hidden');
       document.getElementById('standalonePrintBtn').classList.add('hidden');
       document.getElementById('filterBar').classList.add('hidden');
-    }
-
-    function getBossBriefUrl() {
-      const u = new URL('index.html', window.location.href);
-      u.search = '?view=brief';
-      return u.toString();
-    }
-
-    function copyBossBriefUrl() {
-      copyText(getBossBriefUrl(), '已複製老闆唯讀交代網頁連結');
     }
 
     function renderBossBriefAttachments(r) {
@@ -798,7 +873,7 @@
       window.location.href = getRepairPageUrl(r.site, r.date, r.timeRange || '全日', r.title || '');
     }
 
-    function openRepairFromHeader() {
+    function openRepairFromSchedule() {
       const selSite = document.getElementById('siteFilter')?.value;
       const cand = (selSite && selSite !== 'ALL')
         ? reports.find(r => r.site === selSite && hasValidTimeAndSite(r))
@@ -852,8 +927,9 @@
     }
 
     function getScheduleDayGroups(filtered) {
+      const normalEntries = filtered.filter(r => !isFutureDiaryEntry(r));
       const dayMap = {};
-      filtered.forEach(r => {
+      normalEntries.forEach(r => {
         const dKey = r.date || '未定日期';
         if (scheduleRangeStart && dKey !== '未定日期' && dKey < scheduleRangeStart) return;
         if (scheduleRangeEnd && dKey !== '未定日期' && dKey > scheduleRangeEnd) return;
@@ -873,7 +949,13 @@
         }));
     }
 
-    function buildScheduleExportText(dayGroups) {
+    function getFutureDiaryEntries(filtered) {
+      return filtered
+        .filter(r => isFutureDiaryEntry(r))
+        .sort((a, b) => (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99') || (a.timeRange || '').localeCompare(b.timeRange || ''));
+    }
+
+    function buildScheduleExportText(dayGroups, futureItems = []) {
       const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
         ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
         : '目前顯示區間';
@@ -891,8 +973,7 @@
           dayHours += calc.hours;
           dayPay += calc.pay;
           const ass = r.assignee ? ` (${r.assignee})` : '';
-          const tag = isFutureDiaryEntry(r) ? ' [未來日記]' : '';
-          return `  • ${t}${tag} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類單位'}${ass}：${r.title || ''}`;
+          return `  • ${t} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類單位'}${ass}：${r.title || ''}`;
         });
         grandHours += dayHours;
         grandPay += dayPay;
@@ -903,30 +984,16 @@
       });
 
       lines.push(`總計：${formatHours(grandHours)} ｜ ${formatCurrency(grandPay)}`);
-      return lines.join('\n').trim();
-    }
 
-    function buildTripBriefExportText(dayGroups) {
-      const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
-        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
-        : '目前顯示區間';
-      const lines = [`築匠設計 ARTISAN STUDIO — 交代行程總表（${rangeLabel}）`, ''];
-
-      dayGroups.forEach(g => {
-        lines.push(`【${formatMonthDayWeekday(g.date)}】（共 ${g.items.length} 項行程）`);
-        g.items.forEach(r => {
-          const t = (r.timeRange || '').trim() || '全日';
-          const calc = computeEntryHoursAndPay(t);
-          const ass = r.assignee ? `｜${r.assignee}` : '';
-          const tag = isFutureDiaryEntry(r) ? ' [未來日記]' : '';
-          lines.push(`• ${t}${tag}（${formatHours(calc.hours)}）｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
-          if (r.summary) lines.push(`  內容：${r.summary.replace(/\n+/g, ' / ')}`);
-          if (r.followup) lines.push(`  跟進：${r.followup}`);
-          const docs = getDocsList(r).filter(d => d.name || d.url);
-          if (docs.length) lines.push(`  附件：${docs.map(d => d.name || d.url).join('、')}`);
+      if (futureItems.length) {
+        lines.push('', '【未來日記（獨立分開）】');
+        futureItems.forEach(r => {
+          const dStr = formatMonthDayWeekday(r.date || '未定日期');
+          const tStr = (r.timeRange || '').trim() || '全日';
+          const ass = r.assignee ? ` (${r.assignee})` : '';
+          lines.push(`  • ${dStr} ${tStr}｜${r.site || '未分類單位'}${ass}：${r.title || ''}`);
         });
-        lines.push('');
-      });
+      }
 
       return lines.join('\n').trim();
     }
@@ -968,28 +1035,53 @@
 
     function copyScheduleOutputText() {
       if (!latestScheduleExportText) return;
-      copyText(latestScheduleExportText, activeMainView === 'brief' ? '已複製交代行程內容' : '已複製時間表輸出內容');
+      copyText(latestScheduleExportText, '已複製時間表輸出內容');
     }
 
     function downloadScheduleOutputTxt() {
       if (!latestScheduleExportText) return;
-      const prefix = activeMainView === 'brief' ? '交代行程' : '時間表';
       const blob = new Blob([latestScheduleExportText], { type: 'text/plain;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${prefix}_${scheduleRangeStart || '全部'}_${scheduleRangeEnd || '輸出'}.txt`;
+      a.download = `時間表_${scheduleRangeStart || '全部'}_${scheduleRangeEnd || '輸出'}.txt`;
       a.click();
       URL.revokeObjectURL(url);
       showToast('已下載文字檔');
+    }
+
+    function renderScheduleDetailHtml(r) {
+      const docs = getDocsList(r).filter(d => d.name || d.url);
+      const thumbs = getReportThumbs(r);
+      const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
+      const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
+
+      return `<div class="schedule-detail-panel">
+        ${r.summary ? `<div><b>內容：</b>${escapeHtml(r.summary)}</div>` : `<div class="muted">暫無詳細內容</div>`}
+        ${fuText ? `<div><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
+        ${docs.length ? `<div class="docs-strip" style="margin-top:2px;">
+          ${docs.map(d => d.url
+            ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件檔案')} ↗</a></div>`
+            : `<div class="doc-item-row"><span class="t-meta">📄 ${escapeHtml(d.name || '附件檔案')}</span></div>`
+          ).join('')}
+        </div>` : ''}
+        ${thumbs.length ? `<div class="thumbs" style="margin-top:2px;">${thumbs.map(t =>
+          `<img loading="lazy" decoding="async" src="${t.src}" class="thumb-box" style="width:54px;height:54px;" />`
+        ).join('')}</div>` : ''}
+        ${!IS_PUBLIC ? `<div class="row no-print" style="margin-top:2px;">
+          <button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange">留言</button>
+          <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
+        </div>` : ''}
+      </div>`;
     }
 
     function renderScheduleTimeline() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
       const allDayGroups = getScheduleDayGroups(filtered);
+      const futureItems = getFutureDiaryEntries(filtered);
 
-      if (!allDayGroups.length) {
+      if (!allDayGroups.length && !futureItems.length) {
         container.innerHTML = `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">此條件下暫無時間表紀錄</div>`;
         return;
       }
@@ -1002,7 +1094,7 @@
         ? allDayGroups
         : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
 
-      latestScheduleExportText = buildScheduleExportText(visibleDays);
+      latestScheduleExportText = buildScheduleExportText(visibleDays, futureItems);
 
       const rangeInfoText = isCustomRange
         ? `自訂：${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}（${allDayGroups.length} 日）`
@@ -1010,6 +1102,7 @@
 
       const toolbarHtml = `<div class="schedule-toolbar no-print">
         <div class="row">
+          ${!IS_PUBLIC ? `<button type="button" onclick="openRepairFromSchedule()" class="btn-secondary">修繕跟進</button>` : ''}
           <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
           ${!isCustomRange && totalPages > 1 ? `
             <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
@@ -1017,7 +1110,7 @@
           ` : ''}
         </div>
         <div class="row">
-          <button type="button" onclick="openEditorForFutureDiary()" class="btn-secondary">+ 未來日記</button>
+          ${!IS_PUBLIC ? `<button type="button" onclick="openEditorForFutureDiary()" class="btn-secondary">+ 未來日記</button>` : ''}
           <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">幾時至幾時</button>
           ${isCustomRange ? `<button type="button" onclick="resetScheduleToRecentTen()" class="btn-link orange">近10日</button>` : ''}
           <button type="button" onclick="openScheduleOutput()" class="btn-orange">輸出</button>
@@ -1045,13 +1138,51 @@
         <textarea readonly class="schedule-output-ta">${escapeHtml(latestScheduleExportText)}</textarea>
       </div>` : '';
 
+      const futureSectionHtml = futureItems.length ? `<div class="future-diary-box">
+        <div class="future-diary-head">
+          <div class="row">
+            <span class="future-tag-pill">未來日記</span>
+            <span class="t-site" style="font-size:13px;">獨立分開（${futureItems.length} 項）</span>
+          </div>
+          ${!IS_PUBLIC ? `<button type="button" onclick="openEditorForFutureDiary()" class="schedule-add-btn no-print">+ 加未來日記</button>` : ''}
+        </div>
+        <div class="future-diary-body">
+          ${futureItems.map(r => {
+            const dStr = formatMonthDayWeekday(r.date || '未定日期');
+            const tStr = (r.timeRange || '').trim() || '全日';
+            const sName = r.site || '未分類單位';
+            const encSite = encodeURIComponent(sName);
+            const isDetailOpen = expandedDetailIds.has(r.id);
+
+            return `<div class="schedule-slot-row">
+              <div class="schedule-time-col">
+                <span class="t-mono schedule-time-tag">${escapeHtml(dStr)}</span>
+                <span class="t-meta t-mono muted">${escapeHtml(tStr)}</span>
+              </div>
+              <div class="schedule-slot-main">
+                <div class="schedule-slot-top">
+                  <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+                  ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                  <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起超詳細 ▴' : '超詳細 ▾'}</button>
+                </div>
+                ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+                ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+              </div>
+              ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
+                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>
+              </div>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
       const daysHtml = visibleDays.map(g => {
         const dayLabel = formatMonthDayWeekday(g.date);
         const slotHtml = g.items.map(r => {
           const timeLabel = (r.timeRange || '').trim() || '全日';
           const sName = r.site || '未分類單位';
           const encSite = encodeURIComponent(sName);
-          const isFuture = isFutureDiaryEntry(r);
+          const isDetailOpen = expandedDetailIds.has(r.id);
 
           return `<div class="schedule-slot-row">
             <div class="schedule-time-col">
@@ -1061,14 +1192,13 @@
               <div class="schedule-slot-top">
                 <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="查看此單位工作紀錄">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                ${isFuture ? `<span class="future-tag-pill">未來日記</span>` : ''}
+                <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起超詳細 ▴' : '超詳細 ▾'}</button>
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+              ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-              ${isFuture
-                ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>`
-                : `<button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="btn-link orange">加內容</button>`}
+              <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="btn-link orange">加內容</button>
             </div>` : ''}
           </div>`;
         }).join('');
@@ -1089,118 +1219,7 @@
         </div>`;
       }).join('');
 
-      container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + daysHtml;
-    }
-
-    function renderTripBriefSummary() {
-      const container = document.getElementById('reportListContainer');
-      const filtered = getFilteredReports();
-      const allDayGroups = getScheduleDayGroups(filtered);
-
-      if (!allDayGroups.length) {
-        container.innerHTML = `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">此條件下暫無交代行程紀錄</div>`;
-        return;
-      }
-
-      const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
-      const totalPages = isCustomRange ? 1 : Math.max(1, Math.ceil(allDayGroups.length / SCHEDULE_PAGE_SIZE));
-      if (schedulePage >= totalPages) schedulePage = totalPages - 1;
-
-      const visibleDays = isCustomRange
-        ? allDayGroups
-        : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
-
-      latestScheduleExportText = buildTripBriefExportText(visibleDays);
-
-      const rangeInfoText = isCustomRange
-        ? `交代區間：${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}（${allDayGroups.length} 日）`
-        : `近10日第 ${schedulePage + 1}/${totalPages} 頁（共 ${allDayGroups.length} 日・不計價錢）`;
-
-      const toolbarHtml = `<div class="schedule-toolbar no-print">
-        <div class="row">
-          <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
-          ${!isCustomRange && totalPages > 1 ? `
-            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
-            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
-          ` : ''}
-        </div>
-        <div class="row">
-          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">幾時至幾時</button>
-          ${isCustomRange ? `<button type="button" onclick="resetScheduleToRecentTen()" class="btn-link orange">近10日</button>` : ''}
-          <button type="button" onclick="copyBossBriefUrl()" class="btn-wa">老闆唯讀連結</button>
-          <button type="button" onclick="openScheduleOutput()" class="btn-orange">交代文字</button>
-        </div>
-      </div>`;
-
-      const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
-        <span class="t-meta" style="font-weight:600;">由</span>
-        <input type="date" id="schedRangeStart" value="${escapeHtml(scheduleRangeStart)}" class="input-ui" style="width:auto;" />
-        <span class="t-meta" style="font-weight:600;">至</span>
-        <input type="date" id="schedRangeEnd" value="${escapeHtml(scheduleRangeEnd)}" class="input-ui" style="width:auto;" />
-        <button type="button" onclick="applyScheduleDateRange()" class="btn-orange">套用</button>
-        <button type="button" onclick="resetScheduleToRecentTen()" class="btn-secondary">近10日</button>
-      </div>` : '';
-
-      const outputBoxHtml = showScheduleOutputBox ? `<div class="schedule-output-box no-print">
-        <div class="row-between">
-          <span class="t-meta" style="font-weight:700;">交代行程文字預覽（不計價錢）</span>
-          <div class="row">
-            <button type="button" onclick="copyScheduleOutputText()" class="btn-wa">複製文字</button>
-            <button type="button" onclick="downloadScheduleOutputTxt()" class="btn-secondary">下載 .txt</button>
-            <button type="button" onclick="window.print()" class="btn-secondary">列印/PDF</button>
-          </div>
-        </div>
-        <textarea readonly class="schedule-output-ta">${escapeHtml(latestScheduleExportText)}</textarea>
-      </div>` : '';
-
-      const daysHtml = visibleDays.map(g => {
-        const dayLabel = formatMonthDayWeekday(g.date);
-        const rowsHtml = g.items.map(r => {
-          const t = (r.timeRange || '').trim() || '全日';
-          const calc = computeEntryHoursAndPay(t);
-          const sName = r.site || '未分類單位';
-          const encSite = encodeURIComponent(sName);
-          const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
-          const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
-
-          return `<div class="brief-row">
-            <div class="brief-top">
-              <div class="brief-meta">
-                <span class="t-mono" style="font-weight:700;color:#EA580C;">${escapeHtml(t)}</span>
-                <span class="t-meta muted t-mono">(${escapeHtml(formatHours(calc.hours))})</span>
-                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
-                ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                ${isFutureDiaryEntry(r) ? `<span class="future-tag-pill">未來日記</span>` : ''}
-              </div>
-              ${!IS_PUBLIC ? `<div class="row no-print">
-                ${isFutureDiaryEntry(r) ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="btn-link orange">轉正式紀錄</button>` : ''}
-                <button type="button" onclick="openFollowupModal('${r.id}')" class="btn-link orange">留言</button>
-                <button type="button" onclick="openEditor('${r.id}')" class="btn-link">詳編</button>
-              </div>` : ''}
-            </div>
-            <div class="entry-title">${escapeHtml(r.title || '')}</div>
-            ${r.summary ? `<div class="brief-detail">${escapeHtml(r.summary)}</div>` : ''}
-            ${fuText ? `<div class="brief-fu"><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
-          </div>`;
-        }).join('');
-
-        return `<div class="schedule-day-card">
-          <div class="schedule-day-head row-between">
-            <div class="row">
-              <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
-              <span class="t-meta muted">${g.items.length} 項行程</span>
-            </div>
-            ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn">+ 加工作</button>
-            </div>` : ''}
-          </div>
-          <div class="schedule-day-body">
-            ${rowsHtml}
-          </div>
-        </div>`;
-      }).join('');
-
-      container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + daysHtml;
+      container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + futureSectionHtml + daysHtml;
     }
 
     async function renderSingleReportStandalone(r) {
@@ -1597,15 +1616,40 @@
       </div>`;
     }
 
+    function renderSiteQuickBarHtml(siteVal) {
+      if (SINGLE_SITE || IS_PUBLIC) return '';
+      const allSites = getAllUniqueSites();
+      if (!allSites.length) return '';
+
+      const chipsHtml = siteChipsExpanded
+        ? `<div class="site-quick-list">
+            <button type="button" onclick="toggleSiteFilterByAddress('')" class="site-chip-btn ${siteVal === 'ALL' ? 'active' : ''}">全部（${allSites.length}）</button>
+            ${allSites.map(s => {
+              const encS = encodeURIComponent(s);
+              return `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encS}'))" class="site-chip-btn ${siteVal === s ? 'active' : ''}">${escapeHtml(s)}</button>`;
+            }).join('')}
+          </div>`
+        : `<div class="t-meta muted">已疊起地址按鍵（${allSites.length} 個單位）</div>`;
+
+      return `<div class="site-quick-bar no-print">
+        <div class="site-quick-head">
+          <span class="t-meta" style="font-weight:700;color:#0F172A;">現有地址快選</span>
+          <button type="button" onclick="toggleSiteChipsCollapse()" class="detail-toggle-btn ${!siteChipsExpanded ? 'is-open' : ''}">${siteChipsExpanded ? '疊起地址 ▴' : '展開地址 ▾'}</button>
+        </div>
+        ${chipsHtml}
+      </div>`;
+    }
+
     function renderReportList() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
       const siteVal = SINGLE_SITE || document.getElementById('siteFilter').value;
+      const quickBarHtml = renderSiteQuickBarHtml(siteVal);
 
       if (SINGLE_SITE) document.title = `${SINGLE_SITE} — 現場記錄`;
 
       if (!filtered.length) {
-        container.innerHTML = `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
+        container.innerHTML = quickBarHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
         return;
       }
 
@@ -1617,7 +1661,7 @@
       });
       groups.forEach(g => g.items.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0)));
 
-      container.innerHTML = groups.map(g => {
+      const cardsHtml = groups.map(g => {
         const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
         const isSingleFiltered = Boolean(SINGLE_SITE || (siteVal && siteVal !== 'ALL'));
         const isExp = isSingleFiltered ? true : expandedSites.has(g.site);
@@ -1730,6 +1774,8 @@
           </div>
         </div>`;
       }).join('');
+
+      container.innerHTML = quickBarHtml + cardsHtml;
     }
 
     function openFollowupModal(id) {
