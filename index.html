@@ -73,9 +73,15 @@
                   <button type="button" onclick="setEditorPeriod('中')" class="btn-link orange">中</button>
                   <button type="button" onclick="setEditorPeriod('午')" class="btn-link orange">午</button>
                   <button type="button" onclick="setEditorPeriod('晚')" class="btn-link orange">晚</button>
+                  <span class="muted" style="font-size:11px;">|</span>
+                  <button type="button" onclick="applyMinutePreset('00')" class="btn-link orange">:00</button>
+                  <button type="button" onclick="applyMinutePreset('30')" class="btn-link orange">:30</button>
                 </div>
               </div>
-              <div class="grid-2"><input type="time" id="fieldTimeStart" class="input-ui" /><input type="time" id="fieldTimeEnd" class="input-ui" /></div>
+              <div class="grid-2">
+                <input type="time" id="fieldTimeStart" onfocus="lastFocusedTimeId=this.id" class="input-ui" />
+                <input type="time" id="fieldTimeEnd" onfocus="lastFocusedTimeId=this.id" class="input-ui" />
+              </div>
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
           </div>
@@ -247,6 +253,7 @@
     const PHOTOS_COL = 'artisan_qc_photos';
     const ALBUMS_COL = 'artisan_qc_albums';
     const DAY_PERIODS = ['上', '中', '午', '晚'];
+    const WEEKDAYS_HK = ['日', '一', '二', '三', '四', '五', '六'];
     const SCHEDULE_PAGE_SIZE = 10;
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -260,6 +267,7 @@
     let expandedSites = new Set();
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
     let managingOldSite = '';
+    let lastFocusedTimeId = 'fieldTimeStart';
 
     let schedulePage = 0;
     let scheduleRangeStart = '';
@@ -289,12 +297,50 @@
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
     }
 
+    function formatMonthDayWeekday(dateStr) {
+      if (!dateStr || dateStr === '未定日期') return dateStr || '未定日期';
+      const m = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (!m) return String(dateStr);
+      const yr = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      const dy = parseInt(m[3], 10);
+      const dt = new Date(yr, mo - 1, dy);
+      const wd = WEEKDAYS_HK[dt.getDay()] || '';
+      return `${mo}月${dy}日(${wd})`;
+    }
+
     function setEditorPeriod(periodChar) {
       if (!DAY_PERIODS.includes(periodChar)) return;
       document.getElementById('fieldPeriodLabel').value = periodChar;
       document.getElementById('fieldTimeStart').value = '';
       document.getElementById('fieldTimeEnd').value = '';
       showToast(`已選時段：${periodChar}`);
+    }
+
+    function applyMinutePreset(mm) {
+      if (mm !== '00' && mm !== '30') return;
+      const activeEl = document.activeElement;
+      const targetId = (activeEl && (activeEl.id === 'fieldTimeStart' || activeEl.id === 'fieldTimeEnd'))
+        ? activeEl.id
+        : (lastFocusedTimeId || 'fieldTimeStart');
+      const inputEl = document.getElementById(targetId);
+      if (!inputEl) return;
+
+      document.getElementById('fieldPeriodLabel').value = '';
+      const cur = inputEl.value || '';
+      let hh = '09';
+      if (/^\d{2}:\d{2}$/.test(cur)) {
+        hh = cur.slice(0, 2);
+      } else if (targetId === 'fieldTimeEnd') {
+        const stVal = document.getElementById('fieldTimeStart').value;
+        if (/^\d{2}:\d{2}$/.test(stVal)) {
+          const nextH = (parseInt(stVal.slice(0, 2), 10) + 1) % 24;
+          hh = String(nextH).padStart(2, '0');
+        }
+      }
+      inputEl.value = `${hh}:${mm}`;
+      inputEl.focus();
+      showToast(`已設為 ${hh}:${mm}`);
     }
 
     function buildEditorTimeValue() {
@@ -382,6 +428,22 @@
       if (sInp) sInp.value = '';
       expandedSites.add(siteName);
       switchMainView('reports');
+    }
+
+    function toggleSiteFilterByAddress(siteName) {
+      if (!siteName) return;
+      const sel = document.getElementById('siteFilter');
+      if (sel.value === siteName) {
+        sel.value = 'ALL';
+        renderReportList();
+        showToast('已顯示全部單位');
+      } else {
+        updateSiteFilterOptions();
+        sel.value = siteName;
+        expandedSites.add(siteName);
+        renderReportList();
+        showToast(`只顯示：${siteName}`);
+      }
     }
 
     function onSiteFilterChange() {
@@ -512,7 +574,7 @@
         if (!r.site && !r.title) return false;
         if (siteVal !== 'ALL' && r.site !== siteVal) return false;
         if (!SINGLE_SITE && kw) {
-          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${r.timeRange||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
+          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -539,11 +601,11 @@
 
     function buildScheduleExportText(dayGroups) {
       const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
-        ? `${scheduleRangeStart || '最早'} 至 ${scheduleRangeEnd || '最新'}`
+        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
         : '目前顯示區間';
       const lines = [`築匠設計 ARTISAN STUDIO — 時間表（${rangeLabel}）`, ''];
       dayGroups.forEach(g => {
-        lines.push(`【${g.date}】`);
+        lines.push(`【${formatMonthDayWeekday(g.date)}】`);
         g.items.forEach(r => {
           const t = (r.timeRange || '').trim() || '全日';
           const ass = r.assignee ? ` (${r.assignee})` : '';
@@ -628,7 +690,7 @@
       latestScheduleExportText = buildScheduleExportText(visibleDays);
 
       const rangeInfoText = isCustomRange
-        ? `自訂：${scheduleRangeStart || '最早'} ～ ${scheduleRangeEnd || '最新'}（${allDayGroups.length} 日）`
+        ? `自訂：${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}（${allDayGroups.length} 日）`
         : `近10日第 ${schedulePage + 1}/${totalPages} 頁（共 ${allDayGroups.length} 日）`;
 
       const toolbarHtml = `<div class="schedule-toolbar no-print">
@@ -669,6 +731,7 @@
 
       const daysHtml = visibleDays.map(g => {
         const encDate = encodeURIComponent(g.date);
+        const dayLabel = formatMonthDayWeekday(g.date);
         const slotHtml = g.items.map(r => {
           const timeLabel = (r.timeRange || '').trim() || '全日';
           const sName = r.site || '未分類單位';
@@ -680,7 +743,7 @@
             </div>
             <div class="schedule-slot-main">
               <div class="schedule-slot-top">
-                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="只顯示此地址工作紀錄">${escapeHtml(sName)}</button>
+                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn" title="查看此單位工作紀錄">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
@@ -694,11 +757,11 @@
         return `<div class="schedule-day-card">
           <div class="schedule-day-head row-between">
             <div class="row">
-              <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(g.date)}</span>
+              <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
               <span class="t-meta muted">${g.items.length} 個地盤</span>
             </div>
             ${!IS_PUBLIC ? `<div class="row no-print">
-              <button type="button" onclick="openEditorForDate(decodeURIComponent('${encDate}'))" class="schedule-add-btn">+ 加當日工作</button>
+              <button type="button" onclick="openEditorForDate(decodeURIComponent('${encDate}'))" class="schedule-add-btn">+ 加工作</button>
             </div>` : ''}
           </div>
           <div class="schedule-day-body">
@@ -723,7 +786,7 @@
               ${r.assignee ? `<span class="muted t-meta">${escapeHtml(r.assignee)}</span>` : ''}
             </div>
             <div class="row">
-              <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)} ${escapeHtml(r.timeRange || '')}</span>
+              <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))} ${escapeHtml(r.timeRange || '')}</span>
             </div>
           </div>
           <div class="site-body">
@@ -859,7 +922,7 @@
               const eTitle = encodeURIComponent(r.title || '');
               const eUrl = encodeURIComponent(rUrl);
               return `<div style="padding:4px 0;border-bottom:1px dashed #E2E8F0;">
-                <div class="t-meta" style="margin-bottom:3px;"><b class="t-mono">${escapeHtml(r.date)}</b> — ${escapeHtml(r.title)}</div>
+                <div class="t-meta" style="margin-bottom:3px;"><b class="t-mono">${escapeHtml(formatMonthDayWeekday(r.date))}</b> — ${escapeHtml(r.title)}</div>
                 <div class="row">
                   <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-wa">💬 客人</button>
                   <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-orange">🛠 師傅/廠</button>
@@ -882,7 +945,7 @@
                 const eName = encodeURIComponent(cleanName);
                 const eUrl = encodeURIComponent(fullUrl);
                 return `<div style="padding:4px 0;border-bottom:1px dashed #E2E8F0;">
-                  <div class="t-meta" style="margin-bottom:3px;"><span class="muted t-mono">${escapeHtml(d.date)}</span> <b>${escapeHtml(d.name)}</b></div>
+                  <div class="t-meta" style="margin-bottom:3px;"><span class="muted t-mono">${escapeHtml(formatMonthDayWeekday(d.date))}</span> <b>${escapeHtml(d.name)}</b></div>
                   <div class="row">
                     <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-wa">💬 客人</button>
                     <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-orange">🛠 師傅/廠</button>
@@ -1163,16 +1226,15 @@
 
           const actionGroupHtml = !IS_PUBLIC ? `<div class="record-actions-bar no-print">
             <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>
-            <a href="${escapeHtml(singleUrl)}" target="_blank" class="rec-act-btn link-blue">預覽(${pCount})</a>
             <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn">快改</button>
             <button type="button" onclick="openEditor('${r.id}')" class="rec-act-btn accent">詳編</button>
             <button type="button" onclick="deleteReport('${r.id}')" class="rec-act-btn del">刪</button>
-          </div>` : (pCount > 0 ? `<a href="${escapeHtml(singleUrl)}" class="btn-link blue no-print">查看大圖 (${pCount}) →</a>` : '');
+          </div>` : '';
 
           return `<div class="entry-row">
             <div class="entry-meta-bar">
               <div class="entry-date-group">
-                <span class="t-mono" style="font-weight:700;">${escapeHtml(r.date)}</span>
+                <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
               </div>
               ${actionGroupHtml}
@@ -1190,7 +1252,9 @@
         return `<div class="site-card">
           <div class="site-header row-between">
             <div class="row" style="gap:4px;">
-              <span class="t-site" style="font-size:13.5px;">${escapeHtml(g.site)}</span>
+              ${!SINGLE_SITE
+                ? `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encSite}'))" class="site-title-btn" title="只顯示此地址紀錄">${escapeHtml(g.site)}</button>`
+                : `<span class="t-site" style="font-size:13.5px;">${escapeHtml(g.site)}</span>`}
               ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
               ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link no-print" style="padding:0 2px;text-decoration:none;" title="修改名稱 / 合併地址">✏️</button>` : ''}
             </div>
@@ -1214,7 +1278,7 @@
       const r = reports.find(x => x.id === id); if (!r) return;
       followupTargetId = id;
       document.getElementById('followupModalTitle').textContent = '新增留言';
-      document.getElementById('followupTargetTitle').textContent = `${r.site} (${r.date}) — ${r.title}`;
+      document.getElementById('followupTargetTitle').textContent = `${r.site} (${formatMonthDayWeekday(r.date)}) — ${r.title}`;
       document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
       document.getElementById('fuMessage').value = '';
       const logs = r.followupLogs || [];
@@ -1274,6 +1338,7 @@
     async function openEditor(id = null) {
       editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
       currentTool = 'move';
+      lastFocusedTimeId = 'fieldTimeStart';
       document.getElementById('annotationWorkspace').classList.add('hidden');
       document.getElementById('siteSuggestBox').classList.add('hidden');
       document.getElementById('editorModal').classList.remove('hidden');
