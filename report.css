@@ -55,7 +55,7 @@
 
 /* 時間表 */
 .schedule-day-card { background: #FFFFFF; border-left: 3px solid #EA580C; margin: 6px 0; }
-.schedule-day-head { background: #FFFBEB; padding: 5px 10px; border-bottom: 1px solid #FDE68A; }
+.schedule-day-head { background: #FFEDD5; padding: 5px 10px; border-bottom: 1px solid #FDBA74; }
 .schedule-day-body { padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; }
 .schedule-slot-row {
   display: flex; align-items: stretch; justify-content: space-between; gap: 8px;
