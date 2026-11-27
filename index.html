@@ -8,28 +8,29 @@
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="report.css" />
   <style>
+    /* 即將標籤與分區（無邊框，避免同輸入框撈亂） */
     .future-tag-pill {
       display: inline-block;
-      background: #FFFBF7;
-      color: #9A3412;
-      border: 1px solid #FDBA74;
+      background: rgba(234, 88, 12, 0.12);
+      color: #C2410C;
+      border: none;
       border-radius: 3px;
-      padding: 0 5px;
-      font-size: 11px;
-      font-weight: 600;
-      line-height: 1.45;
+      padding: 1px 5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      line-height: 1.35;
       vertical-align: middle;
     }
     .future-diary-box {
       background: #FFFFFF;
-      border-left: 2px solid #EA580C;
+      border-left: 3px solid #EA580C;
       margin-top: 8px;
       overflow: hidden;
     }
     .future-diary-head {
-      background: #FFFBF7;
-      border-bottom: 1px solid #E2E8F0;
-      padding: 6px 10px;
+      background: #FFFBEB;
+      border-bottom: 1px solid #FDE68A;
+      padding: 5px 10px;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -38,25 +39,35 @@
     }
     .future-diary-body {
       padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
+
+    /* 時間表詳細展開掣與內容面板（無框小粗字） */
     .detail-toggle-btn {
-      background: #F8FAFC;
-      color: #475569;
-      border: 1px solid #CBD5E1;
+      background: transparent;
+      color: #64748B;
+      border: none;
       border-radius: 3px;
-      padding: 1px 6px;
-      font-size: 11px;
-      font-weight: 500;
+      padding: 1px 5px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .detail-toggle-btn:hover {
+      color: #0F172A;
+      background: rgba(15, 23, 42, 0.06);
     }
     .detail-toggle-btn.is-open {
-      background: #FFFBF7;
-      color: #9A3412;
-      border-color: #FDBA74;
+      background: rgba(234, 88, 12, 0.12);
+      color: #C2410C;
     }
     .schedule-detail-panel {
-      margin-top: 6px;
-      padding: 7px 9px;
+      margin-top: 5px;
+      padding: 6px 9px;
       background: #F8FAFC;
       border-left: 2px solid #CBD5E1;
       border-radius: 2px;
@@ -66,142 +77,75 @@
       flex-direction: column;
       gap: 5px;
     }
-    .schedule-detail-footer {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 2px;
-    }
-    .detail-slot-circle {
-      display: inline-block;
-      width: 16px;
-      height: 12px;
-      border: 1px solid #CBD5E1;
-      border-radius: 999px;
-      background: #FFFFFF;
-    }
+
+    /* 工作紀錄頂部地址快選列（無框小粗字） */
     .site-quick-bar {
       background: #FFFFFF;
-      border-left: 2px solid #CBD5E1;
-      padding: 8px 10px;
-      margin-top: 8px;
+      border-left: 3px solid #CBD5E1;
+      padding: 6px 10px;
+      margin-top: 6px;
     }
     .site-quick-head {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
+      gap: 6px;
+      margin-bottom: 4px;
     }
     .site-quick-list {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 4px;
     }
     .site-chip-btn {
-      background: #F8FAFC;
-      color: #334155;
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 11.5px;
-      font-weight: 500;
+      background: transparent;
+      color: #475569;
+      border: none;
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
+      font-family: inherit;
+    }
+    .site-chip-btn:hover {
+      color: #0F172A;
+      background: rgba(15, 23, 42, 0.06);
     }
     .site-chip-btn.active {
-      background: #FFF7ED;
-      color: #9A3412;
-      border-color: #FDBA74;
-      font-weight: 600;
+      background: rgba(234, 88, 12, 0.14);
+      color: #C2410C;
+      font-weight: 800;
     }
 
-    /* 「全」掣與下拉箭咀分開，低調底色配幼框 */
+    /* 「全」掣無框，與有框下拉選單清晰區分 */
     .all-filter-split {
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      flex: 1 1 auto;
+      min-width: 0;
     }
     .all-btn {
-      padding: 4px 8px;
-      font-size: 12px;
-      font-weight: 600;
+      padding: 0 7px;
+      height: 26px;
+      font-size: 12.5px;
+      font-weight: 700;
       border-radius: 4px;
-      border: 1px solid #CBD5E1;
-      background: #F8FAFC;
-      color: #334155;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .all-btn.active {
-      background: #FFF7ED;
-      color: #9A3412;
-      border-color: #FDBA74;
-    }
-
-    /* 右上排低調淺底幼框 */
-    .borderless-top-actions {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .soft-pill-btn {
-      border: 1px solid #CBD5E1;
-      background: #F8FAFC;
-      border-radius: 3px;
-      padding: 1px 6px;
-      font-size: 11px;
-      font-weight: 500;
-      color: #475569;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .soft-pill-btn:hover {
-      background: #FFFBF7;
-      border-color: #FDBA74;
-      color: #9A3412;
-    }
-    .soft-pill-btn.accent {
-      background: #FFFBF7;
-      border-color: #FED7AA;
-      color: #9A3412;
-    }
-    .soft-pill-btn.del {
-      color: #991B1B;
-      border-color: #FECACA;
-      background: #FEF2F2;
-    }
-
-    /* 紀錄列：外 1px 幼框全包，內全部無框低調 */
-    .record-action-shell {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 6px;
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
-      padding: 1px 6px;
-      background: #F8FAFC;
-    }
-    .record-mini-btn {
       border: none;
       background: transparent;
-      padding: 1px 2px;
-      font-size: 11px;
-      font-weight: 500;
       color: #475569;
       cursor: pointer;
       white-space: nowrap;
+      font-family: inherit;
     }
-    .record-mini-btn:hover {
+    .all-btn:hover {
       color: #0F172A;
-      text-decoration: underline;
+      background: rgba(15, 23, 42, 0.06);
     }
-    .record-mini-btn.accent {
-      color: #9A3412;
-    }
-    .record-mini-btn.del {
-      color: #991B1B;
+    .all-btn.active {
+      background: rgba(234, 88, 12, 0.14);
+      color: #C2410C;
+      font-weight: 800;
     }
   </style>
 </head>
@@ -210,14 +154,14 @@
   <header class="topbar no-print">
     <div class="container row-between" style="padding-bottom:0;">
       <div class="row">
-        <span class="t-site brand-name">築匠設計 ARTISAN STUDIO</span>
-        <span class="topbar-sep">|</span>
-        <span class="topbar-sub" id="headerSubTitle">時間表</span>
+        <span class="t-site" style="color:#FFFFFF;">築匠設計 ARTISAN STUDIO</span>
+        <span class="topbar-sep hidden" id="headerSubSep">|</span>
+        <span class="topbar-sub hidden" id="headerSubTitle"></span>
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
       <div class="row" id="headerQuickActions">
-        <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="soft-pill-btn hidden">鎖定</button>
-        <button type="button" onclick="window.print()" class="soft-pill-btn hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
+        <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="btn-secondary hidden">鎖定</button>
+        <button type="button" onclick="window.print()" class="btn-secondary hidden" id="standalonePrintBtn">列印 / PDF</button>
       </div>
     </div>
   </header>
@@ -243,7 +187,7 @@
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
-      <button type="button" onclick="openEditor()" class="soft-pill-btn accent">+ 單位</button>
+      <button type="button" onclick="openEditor()" class="btn-orange" title="新增即將或工作紀錄"><span class="btn-sym">＋</span>即將</button>
       <div class="all-filter-split">
         <button type="button" id="btnAllSites" onclick="clickAllSitesBtn()" class="all-btn active">全</button>
         <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg" aria-label="選擇單位">
@@ -264,8 +208,8 @@
   <div id="editorModal" class="modal-backdrop hidden no-print">
     <div class="modal-box">
       <div class="modal-head">
-        <span class="t-site" id="editorModalTitle">新增單位</span>
-        <button type="button" onclick="closeEditor()" class="btn-link">關閉 ✕</button>
+        <span class="t-site" id="editorModalTitle">即將</span>
+        <button type="button" onclick="closeEditor()" class="btn-link">關閉 <span class="btn-sym">✕</span></button>
       </div>
       <div class="modal-body" style="padding:0;">
         <div class="editor-band band-sec-1">
@@ -305,7 +249,7 @@
           <div style="margin-top:8px;">
             <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
-              <span class="t-meta" style="font-weight:700;color:#9A3412;">+即將新單位</span>
+              <span class="t-meta" style="font-weight:700;color:#C2410C;">即將</span>
             </label>
           </div>
         </div>
@@ -318,9 +262,9 @@
             <div class="row-between" style="margin-bottom:5px;">
               <span class="t-meta" style="font-weight:600;">附件</span>
               <div class="row">
-                <button type="button" onclick="openAlbumFromEditor()" class="soft-pill-btn accent">截圖</button>
-                <label class="soft-pill-btn" style="cursor:pointer;"><span>+ PDF</span><input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" /></label>
-                <button type="button" onclick="addDocRow()" class="soft-pill-btn">+ 連結</button>
+                <button type="button" onclick="openAlbumFromEditor()" class="btn-link blue"><span class="btn-sym">📸</span>截圖</button>
+                <label class="btn-secondary" style="cursor:pointer;"><span class="btn-sym">＋</span><span>PDF</span><input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" /></label>
+                <button type="button" onclick="addDocRow()" class="btn-secondary"><span class="btn-sym">＋</span>連結</button>
               </div>
             </div>
             <div id="docRowsContainer" style="display:flex;flex-direction:column;gap:5px;"></div>
@@ -334,21 +278,21 @@
               <span id="photoCountHint" class="t-meta muted"></span>
             </div>
             <div class="row">
-              <label class="soft-pill-btn accent" style="cursor:pointer;"><span>📷 拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <label class="soft-pill-btn" style="cursor:pointer;"><span>🖼 上傳</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <button type="button" onclick="createBlankSketch()" class="soft-pill-btn">草圖</button>
+              <label class="btn-orange" style="cursor:pointer;"><span class="btn-sym">📷</span><span>拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
+              <label class="btn-secondary" style="cursor:pointer;"><span class="btn-sym">🖼</span><span>上傳</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
+              <button type="button" onclick="createBlankSketch()" class="btn-secondary"><span class="btn-sym">✎</span>草圖</button>
             </div>
           </div>
 
           <div id="annotationWorkspace" class="hidden" style="background:#FFF;padding:6px;border-top:1px solid #CBD5E1;margin-bottom:6px;">
             <div class="row-between" style="margin-bottom:5px;">
               <div class="row">
-                <button type="button" onclick="setTool('move')" id="tool-move" class="soft-pill-btn btn-active">✋ 移動</button>
-                <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="soft-pill-btn">✎ 手繪</button>
-                <button type="button" onclick="setTool('circle')" id="tool-circle" class="soft-pill-btn">◯ 線圈</button>
-                <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="soft-pill-btn">↗ 箭咀</button>
-                <button type="button" onclick="setTool('text')" id="tool-text" class="soft-pill-btn">T 打字</button>
-                <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui">
+                <button type="button" onclick="setTool('move')" id="tool-move" class="btn-secondary btn-active"><span class="btn-sym">✋</span>移動</button>
+                <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="btn-secondary"><span class="btn-sym">✎</span>手繪</button>
+                <button type="button" onclick="setTool('circle')" id="tool-circle" class="btn-secondary"><span class="btn-sym">◯</span>線圈</button>
+                <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="btn-secondary"><span class="btn-sym">↗</span>箭咀</button>
+                <button type="button" onclick="setTool('text')" id="tool-text" class="btn-secondary"><span class="btn-sym">T</span>打字</button>
+                <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui" style="width:auto;">
                   <option value="0.018">字體：細</option>
                   <option value="0.026" selected>字體：中</option>
                   <option value="0.036">字體：大</option>
@@ -360,26 +304,26 @@
                 <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot" style="background:#DC2626;"></button>
                 <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
                 <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
-                <button type="button" id="delSelectedShapeBtn" onclick="deleteSelectedShape()" class="soft-pill-btn del hidden">刪選取</button>
-                <button type="button" onclick="undoShape()" class="soft-pill-btn">復原</button>
-                <button type="button" onclick="clearShapes()" class="soft-pill-btn">全清</button>
+                <button type="button" id="delSelectedShapeBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden"><span class="btn-sym">✕</span>刪選取</button>
+                <button type="button" onclick="undoShape()" class="btn-secondary"><span class="btn-sym">↶</span>復原</button>
+                <button type="button" onclick="clearShapes()" class="btn-danger-outline">全清</button>
               </div>
             </div>
 
             <div id="textInputBar" class="hidden" style="margin-bottom:5px;">
-              <input type="text" id="canvasTextInput" oninput="onTextInputLiveEdit()" class="input-ui t-meta" />
+              <input type="text" id="canvasTextInput" oninput="onTextInputLiveEdit()" class="input-ui t-meta" placeholder="輸入標記文字，再點畫布落字" />
             </div>
 
             <div class="canvas-wrapper"><canvas id="annotCanvas"></canvas></div>
-            <input type="text" id="currentPhotoNote" oninput="syncCurrentPhotoNote()" class="input-ui t-meta" style="margin-top:5px;" />
+            <input type="text" id="currentPhotoNote" oninput="syncCurrentPhotoNote()" class="input-ui t-meta" style="margin-top:5px;" placeholder="此張相片備註..." />
           </div>
 
           <div id="photoThumbList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;"></div>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" onclick="closeEditor()" class="soft-pill-btn">取消</button>
-        <button type="button" id="saveReportBtn" onclick="saveReport()" class="soft-pill-btn accent">儲存</button>
+        <button type="button" onclick="closeEditor()" class="btn-secondary">取消</button>
+        <button type="button" id="saveReportBtn" onclick="saveReport()" class="btn-orange">儲存</button>
       </div>
     </div>
   </div>
@@ -388,7 +332,7 @@
     <div class="modal-box modal-sm">
       <div class="modal-head">
         <span class="t-site">單位改名 / 合併</span>
-        <button type="button" onclick="closeSiteManageModal()" class="btn-link">關閉 ✕</button>
+        <button type="button" onclick="closeSiteManageModal()" class="btn-link">關閉 <span class="btn-sym">✕</span></button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;">
         <div style="padding-bottom:8px;border-bottom:1px solid #CBD5E1;display:flex;flex-direction:column;gap:6px;">
@@ -396,16 +340,16 @@
           <div><label class="field-label">單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
           <div><label class="field-label">@負責人</label><input type="text" id="manageNewAssignee" class="input-ui t-meta" /></div>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitRenameSite()" class="soft-pill-btn accent">儲存修改</button>
+            <button type="button" onclick="submitRenameSite()" class="btn-orange">儲存修改</button>
           </div>
         </div>
 
         <div style="display:flex;flex-direction:column;gap:6px;">
           <div style="font-weight:700;font-size:12.5px;">2. 合併去現有地址（需輸入 "Y"）</div>
           <div class="t-meta muted" id="mergeHintText"></div>
-          <select id="manageMergeTarget" class="input-ui t-meta"></select>
+          <select id="manageMergeTarget" class="select-ui t-meta"></select>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitMergeSite()" class="soft-pill-btn accent">合併</button>
+            <button type="button" onclick="submitMergeSite()" class="btn-orange">合併</button>
           </div>
         </div>
       </div>
@@ -416,7 +360,7 @@
     <div class="modal-box modal-sm">
       <div class="modal-head">
         <span class="t-site" id="followupModalTitle">留言</span>
-        <button type="button" onclick="closeFollowupModal()" class="btn-link">關閉 ✕</button>
+        <button type="button" onclick="closeFollowupModal()" class="btn-link">關閉 <span class="btn-sym">✕</span></button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:8px;">
         <div id="followupTargetTitle" class="t-meta" style="font-weight:600;background:#F8FAFC;padding:5px 7px;"></div>
@@ -425,8 +369,8 @@
         <div><label class="field-label">留言 *</label><textarea id="fuMessage" rows="2" class="input-ui"></textarea></div>
       </div>
       <div class="modal-foot">
-        <button type="button" onclick="closeFollowupModal()" class="soft-pill-btn">取消</button>
-        <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="soft-pill-btn accent">發送</button>
+        <button type="button" onclick="closeFollowupModal()" class="btn-secondary">取消</button>
+        <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="btn-orange">發送</button>
       </div>
     </div>
   </div>
@@ -435,7 +379,7 @@
     <div class="modal-box modal-sm">
       <div class="modal-head">
         <span class="t-site" id="shareModalTitle">分享</span>
-        <button type="button" onclick="closeShareModal()" class="btn-link">關閉 ✕</button>
+        <button type="button" onclick="closeShareModal()" class="btn-link">關閉 <span class="btn-sym">✕</span></button>
       </div>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:10px;" id="shareModalBody"></div>
     </div>
@@ -576,8 +520,12 @@
 
     function toggleScheduleDetail(id) {
       if (!id) return;
-      if (expandedDetailIds.has(id)) expandedDetailIds.delete(id);
-      else expandedDetailIds.add(id);
+      if (expandedDetailIds.has(id)) {
+        expandedDetailIds.delete(id);
+        if (inlineEditId === id) inlineEditId = null;
+      } else {
+        expandedDetailIds.add(id);
+      }
       renderCurrentView();
     }
 
@@ -791,9 +739,6 @@
       activeMainView = viewName === 'reports' ? 'reports' : 'schedule';
       document.getElementById('tabSchedule').classList.toggle('active', activeMainView === 'schedule');
       document.getElementById('tabReports').classList.toggle('active', activeMainView === 'reports');
-      if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        document.getElementById('headerSubTitle').textContent = activeMainView === 'reports' ? '工作紀錄' : '時間表';
-      }
       renderCurrentView();
     }
 
@@ -824,10 +769,6 @@
           renderBossBriefCleanView();
         });
         return;
-      }
-
-      if (!IS_PUBLIC && !SINGLE_REPORT_ID && !SINGLE_SITE) {
-        document.getElementById('headerSubTitle').textContent = activeMainView === 'reports' ? '工作紀錄' : '時間表';
       }
 
       if (SINGLE_REPORT_ID) {
@@ -866,9 +807,22 @@
       }, () => setSyncStatus('離線', false));
     }
 
+    function setHeaderSubLabel(label) {
+      const sep = document.getElementById('headerSubSep');
+      const sub = document.getElementById('headerSubTitle');
+      if (label) {
+        sub.textContent = label;
+        sep?.classList.remove('hidden');
+        sub?.classList.remove('hidden');
+      } else {
+        sep?.classList.add('hidden');
+        sub?.classList.add('hidden');
+      }
+    }
+
     function enterBossBriefUI() {
       document.title = '築匠設計 ARTISAN STUDIO — 行程交代';
-      document.getElementById('headerSubTitle').textContent = '行程交代';
+      setHeaderSubLabel('行程交代');
       document.getElementById('syncBadge').classList.add('hidden');
       document.getElementById('lockSystemBtn').classList.add('hidden');
       document.getElementById('standalonePrintBtn').classList.add('hidden');
@@ -882,7 +836,7 @@
 
       const docsHtml = docs.length ? `<div class="docs-strip" style="margin-top:4px;">
         ${docs.map(d => d.url
-          ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件')} ↗</a></div>`
+          ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件')} <span class="btn-sym">↗</span></a></div>`
           : `<div class="doc-item-row"><span class="t-meta">📄 ${escapeHtml(d.name || '附件')}</span></div>`
         ).join('')}
       </div>` : '';
@@ -911,7 +865,7 @@
           const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
           return `<div class="brief-row">
             <div class="brief-meta">
-              <span class="t-mono" style="font-weight:700;color:#9A3412;">${escapeHtml(t)}</span>
+              <span class="t-mono" style="font-weight:700;color:#EA580C;">${escapeHtml(t)}</span>
               <span style="font-weight:700;color:#0F172A;">${escapeHtml(sName)}</span>
               ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
             </div>
@@ -936,7 +890,7 @@
       document.getElementById('syncBadge').classList.add('hidden');
       document.getElementById('lockSystemBtn').classList.add('hidden');
       document.getElementById('filterBar').classList.add('hidden');
-      document.getElementById('headerSubTitle').textContent = subLabel;
+      setHeaderSubLabel(subLabel);
     }
 
     function setSyncStatus(text, ok = true) {
@@ -1072,13 +1026,13 @@
     }
 
     function jumpToUpcomingNewUnit() {
-      onlyUpcomingNewUnits = true;
+      onlyUpcomingNewUnits = !onlyUpcomingNewUnits;
       const sel = document.getElementById('siteFilter');
-      if (sel) sel.value = 'ALL';
+      if (onlyUpcomingNewUnits && sel) sel.value = 'ALL';
       schedulePage = 0;
       syncAllButtonState();
       renderCurrentView();
-      showToast('+即將新單位');
+      showToast(onlyUpcomingNewUnits ? '即將' : '全部');
     }
 
     function stepSchedulePage(delta) {
@@ -1086,35 +1040,67 @@
       renderCurrentView();
     }
 
+    function renderInlineEditFormHtml(r) {
+      const pt = parseTimeRange(r.timeRange);
+      const tsId = `ie-ts-${r.id}`;
+      const teId = `ie-te-${r.id}`;
+      return `<div class="inline-edit-form" style="margin-top:5px;">
+        <div class="inline-edit-top">
+          <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
+          <div class="inline-edit-time-wrap">
+            <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
+            <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="完成 / 小數" />
+            <span class="mini-pair">
+              <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','AM')" class="mini-pair-btn">上午</button>
+              <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','PM')" class="mini-pair-btn">下午</button>
+            </span>
+            <span class="mini-pair">
+              <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','00')" class="mini-pair-btn">:00</button>
+              <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','30')" class="mini-pair-btn">:30</button>
+            </span>
+          </div>
+          <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" placeholder="工作標題 *" />
+        </div>
+        <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="跟進備註" />
+        <textarea id="ie-sum-${r.id}" rows="2" class="input-ui t-meta" placeholder="工作內容">${escapeHtml(r.summary||'')}</textarea>
+        <div class="row" style="justify-content:flex-end;">
+          <button type="button" onclick="openEditor('${r.id}')" class="btn-link blue">詳編</button>
+          <button type="button" onclick="cancelInlineEdit()" class="btn-secondary">取消</button>
+          <button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-orange">儲存</button>
+        </div>
+      </div>`;
+    }
+
     function renderScheduleDetailHtml(r) {
+      if (!IS_PUBLIC && inlineEditId === r.id) {
+        return renderInlineEditFormHtml(r);
+      }
       const docs = getDocsList(r).filter(d => d.name || d.url);
       const thumbs = getReportThumbs(r);
-      const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
-      const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
+      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
+      const hasFu = Boolean((r.followup && r.followup.trim()) || logs.length);
 
       return `<div class="schedule-detail-panel">
         ${r.summary ? `<div><b>內容：</b>${escapeHtml(r.summary)}</div>` : `<div class="muted">無內容</div>`}
-        ${fuText ? `<div><b>跟進：</b>${escapeHtml(fuText)}</div>` : ''}
+        ${hasFu ? renderFollowupBlock(r) : ''}
         ${docs.length ? `<div class="docs-strip" style="margin-top:2px;">
           ${docs.map(d => d.url
-            ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件')} ↗</a></div>`
+            ? `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" rel="noopener noreferrer" class="btn-link blue">📄 ${escapeHtml(d.name || '附件')} <span class="btn-sym">↗</span></a></div>`
             : `<div class="doc-item-row"><span class="t-meta">📄 ${escapeHtml(d.name || '附件')}</span></div>`
           ).join('')}
         </div>` : ''}
         ${thumbs.length ? `<div class="thumbs" style="margin-top:2px;">${thumbs.map(t =>
           `<img loading="lazy" decoding="async" src="${t.src}" class="thumb-box" style="width:54px;height:54px;" />`
         ).join('')}</div>` : ''}
-        <div class="schedule-detail-footer no-print">
-          ${!IS_PUBLIC ? `
-            <button type="button" onclick="openFollowupModal('${r.id}')" class="record-mini-btn accent">留言</button>
-            <button type="button" onclick="openEditor('${r.id}')" class="record-mini-btn">詳編</button>
-          ` : ''}
-          <span class="detail-slot-circle" aria-hidden="true"></span>
-          <span class="detail-slot-circle" aria-hidden="true"></span>
-          <span class="detail-slot-circle" aria-hidden="true"></span>
-          <span class="detail-slot-circle" aria-hidden="true"></span>
-        </div>
       </div>`;
+    }
+
+    function renderScheduleTopActionsHtml(r, isDetailOpen) {
+      const toggleBtn = `<button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>`;
+      if (!isDetailOpen || IS_PUBLIC) return toggleBtn;
+      return `${toggleBtn}
+        <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn blue">快改</button>
+        <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>`;
     }
 
     function renderScheduleTimeline() {
@@ -1137,26 +1123,26 @@
 
       const toolbarHtml = `<div class="schedule-toolbar no-print">
         <div class="row">
-          <button type="button" onclick="toggleScheduleRangeBox()" class="soft-pill-btn">時段</button>
-          <button type="button" onclick="jumpToUpcomingNewUnit()" class="soft-pill-btn accent">+即將新單位</button>
+          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary ${showScheduleRangeBox ? 'btn-active' : ''}">時段</button>
+          <button type="button" onclick="jumpToUpcomingNewUnit()" class="btn-orange ${onlyUpcomingNewUnits ? 'btn-active' : ''}">即將</button>
           <span class="t-meta muted" style="font-weight:500;">${escapeHtml(rangeInfoText)}</span>
           ${!isCustomRange && totalPages > 1 ? `
-            <button type="button" onclick="stepSchedulePage(-1)" class="soft-pill-btn" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
-            <button type="button" onclick="stepSchedulePage(1)" class="soft-pill-btn" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
+            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}><span class="btn-sym">‹</span>上一頁</button>
+            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁<span class="btn-sym">›</span></button>
           ` : ''}
         </div>
         <div class="row">
-          <button type="button" onclick="openCurrentViewShareModal()" class="soft-pill-btn">分享</button>
+          <button type="button" onclick="openCurrentViewShareModal()" class="btn-wa"><span class="btn-sym">↗</span>分享</button>
         </div>
       </div>`;
 
       const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
-        <span class="t-meta" style="font-weight:600;">時段：</span>
+        <span class="t-meta" style="font-weight:700;">時段：</span>
         <input type="date" id="schedRangeStart" value="${escapeHtml(scheduleRangeStart)}" class="input-ui" style="width:auto;" />
-        <span class="t-meta" style="font-weight:600;">至</span>
+        <span class="t-meta" style="font-weight:700;">至</span>
         <input type="date" id="schedRangeEnd" value="${escapeHtml(scheduleRangeEnd)}" class="input-ui" style="width:auto;" />
-        <button type="button" onclick="applyScheduleDateRange()" class="soft-pill-btn accent">套用</button>
-        <button type="button" onclick="resetScheduleToRecentTen()" class="soft-pill-btn">重設</button>
+        <button type="button" onclick="applyScheduleDateRange()" class="btn-orange">套用</button>
+        <button type="button" onclick="resetScheduleToRecentTen()" class="btn-secondary">重設</button>
       </div>` : '';
 
       if (!allDayGroups.length && !futureItems.length) {
@@ -1167,7 +1153,7 @@
       const futureSectionHtml = futureItems.length ? `<div class="future-diary-box">
         <div class="future-diary-head">
           <div class="row">
-            <span class="future-tag-pill">+即將新單位</span>
+            <span class="future-tag-pill">即將</span>
             <span class="t-site" style="font-size:13px;">${futureItems.length} 項</span>
           </div>
         </div>
@@ -1180,7 +1166,7 @@
             const isDetailOpen = expandedDetailIds.has(r.id);
 
             return `<div class="schedule-slot-row">
-              <div class="schedule-time-col">
+              <div class="schedule-time-col" style="flex-direction:column;">
                 <span class="t-mono schedule-time-tag">${escapeHtml(dStr)}</span>
                 <span class="t-meta t-mono muted">${escapeHtml(tStr)}</span>
               </div>
@@ -1188,13 +1174,13 @@
                 <div class="schedule-slot-top">
                   <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
                   ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                  <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
+                  ${renderScheduleTopActionsHtml(r, isDetailOpen)}
                 </div>
                 ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
                 ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
               </div>
-              ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="record-mini-btn accent">轉正</button>
+              ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:flex-start;flex-shrink:0;">
+                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="rec-act-btn accent">轉正</button>
               </div>` : ''}
             </div>`;
           }).join('')}
@@ -1217,7 +1203,7 @@
               <div class="schedule-slot-top">
                 <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
                 ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
+                ${renderScheduleTopActionsHtml(r, isDetailOpen)}
               </div>
               ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
               ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
@@ -1230,7 +1216,7 @@
             <div class="row">
               <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
               <span class="t-meta muted">${g.items.length} 個地盤</span>
-              ${!IS_PUBLIC ? `<button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn no-print">+ 加工作</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn no-print"><span class="btn-sym">＋</span>加工作</button>` : ''}
             </div>
           </div>
           <div class="schedule-day-body">
@@ -1264,7 +1250,7 @@
 
             ${docs.filter(d => !d.url.includes('albumId=')).length ? `
               <div class="docs-strip">
-                ${docs.filter(d => !d.url.includes('albumId=')).map(d => `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue">📄 ${escapeHtml(d.name)} ↗</a></div>`).join('')}
+                ${docs.filter(d => !d.url.includes('albumId=')).map(d => `<div class="doc-item-row"><a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue">📄 ${escapeHtml(d.name)} <span class="btn-sym">↗</span></a></div>`).join('')}
               </div>
             ` : ''}
 
@@ -1340,13 +1326,15 @@
     function buildCurrentViewShareSummary(items) {
       const selSite = document.getElementById('siteFilter')?.value || 'ALL';
       const scopeLabel = onlyUpcomingNewUnits
-        ? '+即將新單位'
-        : (selSite && selSite !== 'ALL' ? selSite : '全部已選記錄');
+        ? '即將'
+        : (selSite && selSite !== 'ALL' ? selSite : '目前版面全部記錄');
       const lines = items.map(r => {
         const dStr = formatMonthDayWeekday(r.date || '未定日期');
         const tStr = (r.timeRange || '').trim();
         const sStr = r.site || '未分類';
-        return `• ${dStr}${tStr ? ` ${tStr}` : ''}｜${sStr}：${r.title || ''}`;
+        const sumStr = r.summary ? `（${r.summary.replace(/\s+/g, ' ')}）` : '';
+        const fuStr = r.followup ? ` [跟進：${r.followup}]` : '';
+        return `• ${dStr}${tStr ? ` ${tStr}` : ''}｜${sStr}：${r.title || ''}${sumStr}${fuStr}`;
       });
       return { scopeLabel, text: lines.join('\n') };
     }
@@ -1390,10 +1378,8 @@
       const viewItems = activeMainView === 'schedule'
         ? (() => {
             const days = getScheduleDayGroups(filtered);
-            const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
-            const visDays = isCustomRange ? days : days.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
             const futureItems = getFutureDiaryEntries(filtered);
-            return [...futureItems, ...visDays.flatMap(d => d.items)];
+            return [...futureItems, ...days.flatMap(d => d.items)];
           })()
         : filtered;
 
@@ -1411,13 +1397,13 @@
       document.getElementById('shareModalTitle').textContent = `分享全部（${scopeLabel}）`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
-          <div class="t-meta" style="margin-bottom:6px;">目前版面共 <b>${viewItems.length}</b> 項記錄：</div>
-          <textarea readonly rows="5" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(listText)}</textarea>
+          <div class="t-meta" style="margin-bottom:6px;">已涵蓋目前所選共 <b>${viewItems.length}</b> 項全部內容：</div>
+          <textarea readonly rows="6" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(listText)}</textarea>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="soft-pill-btn accent">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="soft-pill-btn accent">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(shareUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
-            <a href="${escapeHtml(shareUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(shareUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(shareUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
           </div>
         </div>`;
       document.getElementById('shareModal').classList.remove('hidden');
@@ -1428,17 +1414,21 @@
       const siteUrl = getSingleSiteUrl(siteName);
       const latestDate = items[0]?.date || '';
       const encSite = encodeURIComponent(siteName);
-      const summaryLines = items.map(r => `• ${formatMonthDayWeekday(r.date || '未定日期')}｜${r.title || ''}`).join('\n');
+      const summaryLines = items.map(r => {
+        const sumStr = r.summary ? `（${r.summary.replace(/\s+/g, ' ')}）` : '';
+        return `• ${formatMonthDayWeekday(r.date || '未定日期')}｜${r.title || ''}${sumStr}`;
+      }).join('\n');
 
       document.getElementById('shareModalTitle').textContent = `全分享：${siteName}`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
-          <div style="font-weight:700;margin-bottom:6px;">整個單位記錄（共 ${items.length} 條）</div>
+          <div style="font-weight:700;margin-bottom:6px;">整個單位全部記錄（共 ${items.length} 條）</div>
+          <textarea readonly rows="5" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(summaryLines)}</textarea>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="soft-pill-btn accent">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="soft-pill-btn accent">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
-            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
           </div>
         </div>`;
       document.getElementById('shareModal').classList.remove('hidden');
@@ -1452,16 +1442,18 @@
       const eDate = encodeURIComponent(r.date || '');
       const eTitle = encodeURIComponent(r.title || '');
       const eUrl = encodeURIComponent(rUrl);
+      const extraDetail = [r.summary || '', r.followup ? `跟進：${r.followup}` : ''].filter(Boolean).join('\n');
+      const eExtra = encodeURIComponent(extraDetail);
 
       document.getElementById('shareModalTitle').textContent = `單分享：${r.site || ''}`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
           <div class="t-meta" style="margin-bottom:6px;"><b class="t-mono">${escapeHtml(formatMonthDayWeekday(r.date))}</b> — ${escapeHtml(r.title)}</div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="soft-pill-btn accent">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="soft-pill-btn accent">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
-            <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
           </div>
         </div>`;
       document.getElementById('shareModal').classList.remove('hidden');
@@ -1479,10 +1471,10 @@
         <div>
           <div class="t-meta" style="margin-bottom:6px;"><b>${escapeHtml(fileName || '附件')}</b></div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="soft-pill-btn accent">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="soft-pill-btn accent">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
-            <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
           </div>
         </div>`;
       document.getElementById('shareModal').classList.remove('hidden');
@@ -1674,8 +1666,15 @@
       showToast('已合併');
     }
 
-    function startInlineEdit(id) { inlineEditId = id; renderReportList(); }
-    function cancelInlineEdit() { inlineEditId = null; renderReportList(); }
+    function startInlineEdit(id) {
+      inlineEditId = id;
+      expandedDetailIds.add(id);
+      renderCurrentView();
+    }
+    function cancelInlineEdit() {
+      inlineEditId = null;
+      renderCurrentView();
+    }
     async function saveInlineEdit(id) {
       const title = document.getElementById(`ie-title-${id}`).value.trim();
       if (!title) return showToast('標題不能為空');
@@ -1687,7 +1686,8 @@
         followup: document.getElementById(`ie-fu-${id}`).value.trim(),
         updatedAt: Date.now()
       });
-      inlineEditId = null; showToast('已儲存');
+      inlineEditId = null;
+      showToast('已儲存');
     }
 
     function toggleExpandSite(s) { expandedSites.has(s) ? expandedSites.delete(s) : expandedSites.add(s); renderReportList(); }
@@ -1719,9 +1719,12 @@
         : `<div class="t-meta muted">已疊起（${allSites.length}）</div>`;
 
       return `<div class="site-quick-bar no-print">
-        <div class="site-quick-head">
-          <span class="t-meta" style="font-weight:700;color:#0F172A;">地址</span>
-          <button type="button" onclick="toggleSiteChipsCollapse()" class="detail-toggle-btn ${!siteChipsExpanded ? 'is-open' : ''}">${siteChipsExpanded ? '疊起 ▴' : '展開 ▾'}</button>
+        <div class="row-between" style="margin-bottom:${siteChipsExpanded ? '4px' : '0'};">
+          <div class="row">
+            <span class="t-meta" style="font-weight:700;color:#0F172A;">地址</span>
+            <button type="button" onclick="toggleSiteChipsCollapse()" class="detail-toggle-btn ${!siteChipsExpanded ? 'is-open' : ''}">${siteChipsExpanded ? '疊起 ▴' : '展開 ▾'}</button>
+          </div>
+          <button type="button" onclick="openCurrentViewShareModal()" class="btn-wa"><span class="btn-sym">↗</span>分享</button>
         </div>
         ${chipsHtml}
       </div>`;
@@ -1763,32 +1766,7 @@
           const isFuture = isFutureDiaryEntry(r);
 
           if (!IS_PUBLIC && inlineEditId === r.id) {
-            const pt = parseTimeRange(r.timeRange);
-            const tsId = `ie-ts-${r.id}`;
-            const teId = `ie-te-${r.id}`;
-            return `<div class="entry-row">
-              <div class="inline-edit-form">
-                <div class="inline-edit-top">
-                  <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
-                  <div class="inline-edit-time-wrap">
-                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
-                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="完成 / 小數" />
-                    <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','AM')" class="mini-pair-btn">上午</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','PM')" class="mini-pair-btn">下午</button>
-                    </span>
-                    <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','00')" class="mini-pair-btn">:00</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','30')" class="mini-pair-btn">:30</button>
-                    </span>
-                  </div>
-                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
-                </div>
-                <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="跟進" />
-                <textarea id="ie-sum-${r.id}" rows="2" class="input-ui t-meta">${escapeHtml(r.summary||'')}</textarea>
-                <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="soft-pill-btn">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="soft-pill-btn accent">儲存</button></div>
-              </div>
-            </div>`;
+            return `<div class="entry-row">${renderInlineEditFormHtml(r)}</div>`;
           }
 
           const docsHtml = docs.length ? `<div class="docs-strip">
@@ -1796,13 +1774,13 @@
               const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
               return `<div class="doc-item-row">
                 ${d.url
-                  ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
+                  ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} <span class="btn-sym">↗</span></a>`
                   : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
                 ${!IS_PUBLIC ? `<div class="doc-actions no-print">
                   ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : ''}
                   <label class="btn-link" style="cursor:pointer;"><span>換檔</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
-                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="btn-link danger">刪除X</button>
-                  ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="btn-link blue">單文件分享</button>` : ''}
+                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="btn-link danger"><span class="btn-sym">✕</span></button>
+                  ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="btn-link blue"><span class="btn-sym">↗</span>分</button>` : ''}
                 </div>` : ''}
               </div>`;
             }).join('')}
@@ -1811,12 +1789,12 @@
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
           const actionGroupHtml = !IS_PUBLIC ? `
-            <div class="record-action-shell no-print">
-              <button type="button" onclick="openEditor('${r.id}')" class="record-mini-btn accent">詳編</button>
-              <button type="button" onclick="openFollowupModal('${r.id}')" class="record-mini-btn accent">留言</button>
-              <button type="button" onclick="startInlineEdit('${r.id}')" class="record-mini-btn">快改</button>
-              <button type="button" onclick="deleteReport('${r.id}')" class="record-mini-btn del">X</button>
-              <button type="button" onclick="openSingleShareModal('${r.id}')" class="record-mini-btn">單分</button>
+            <div class="record-actions-bar no-print">
+              <button type="button" onclick="openEditor('${r.id}')" class="rec-act-btn blue">詳編</button>
+              <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>
+              <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn">快改</button>
+              <button type="button" onclick="openSingleShareModal('${r.id}')" class="rec-act-btn green"><span class="btn-sym">↗</span>單分</button>
+              <button type="button" onclick="deleteReport('${r.id}')" class="rec-act-btn del" title="刪除此紀錄"><span class="btn-sym">✕</span></button>
             </div>
           ` : '';
 
@@ -1825,7 +1803,7 @@
               <div class="entry-date-group">
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
-                ${isFuture ? `<span class="future-tag-pill">+即將新單位</span>` : ''}
+                ${isFuture ? `<span class="future-tag-pill">即將</span>` : ''}
               </div>
               ${actionGroupHtml}
             </div>
@@ -1846,20 +1824,20 @@
                 ? `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encSite}'))" class="site-title-btn">${escapeHtml(g.site)}</button>`
                 : `<span class="t-site" style="font-size:13.5px;">${escapeHtml(g.site)}</span>`}
               ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link no-print" style="padding:0 2px;text-decoration:none;">✏️</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print" title="單位改名 / 合併"><span class="btn-sym">✎</span></button>` : ''}
             </div>
             ${!IS_PUBLIC ? `
-              <div class="borderless-top-actions no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="soft-pill-btn accent">+ 工作</button>
-                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="soft-pill-btn">截圖</button>
-                <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('需有地址同時間')`}" class="soft-pill-btn accent">修繕</button>
-                <button type="button" onclick="openFullShareModal(decodeURIComponent('${encSite}'))" class="soft-pill-btn">全分享</button>
+              <div class="site-header-actions no-print">
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add"><span class="btn-sym">＋</span>工作</button>
+                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-album"><span class="btn-sym">📸</span>截圖</button>
+                <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('需有地址同時間')`}" class="site-mini-btn site-mini-repair">修繕</button>
+                <button type="button" onclick="openFullShareModal(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-share"><span class="btn-sym">↗</span>全分</button>
               </div>
             ` : ''}
           </div>
           <div class="site-body">
             ${rowsHtml}
-            ${(!isSingleFiltered && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:6px;padding-top:5px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted" style="font-size:12px;">${isExp ? '收起 ▴' : `展開 ${g.items.length - 3} 條 ▾`}</button></div>` : ''}
+            ${(!isSingleFiltered && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:6px;padding-top:5px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收起 ▴' : `展開其餘 ${g.items.length - 3} 條 ▾`}</button></div>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -1899,10 +1877,10 @@
       c.innerHTML = draftDocs.map((d, i) => {
         const editUrl = getAlbumEditUrl(d.url);
         return `<div class="doc-edit-row">
-          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" />
-          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" />
+          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" placeholder="文件名稱" />
+          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" placeholder="網址連結" />
           ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : `<span></span>`}
-          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
+          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger"><span class="btn-sym">✕</span></button>
         </div>`;
       }).join('');
     }
@@ -1918,13 +1896,17 @@
 
     function openEditorForSite(site, ass) {
       openEditor(null);
+      document.getElementById('editorModalTitle').textContent = '新增工作';
       document.getElementById('fieldSite').value = site;
       document.getElementById('fieldAssignee').value = ass || '';
+      document.getElementById('fieldIsFutureDiary').checked = false;
       document.getElementById('siteSuggestBox').classList.add('hidden');
     }
 
     function openEditorForDate(dateStr) {
       openEditor(null);
+      document.getElementById('editorModalTitle').textContent = '新增工作';
+      document.getElementById('fieldIsFutureDiary').checked = false;
       if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr;
     }
 
@@ -1937,7 +1919,7 @@
 
       if (id) {
         const r = reports.find(x => x.id === id); if (!r) return;
-        document.getElementById('editorModalTitle').textContent = '編輯';
+        document.getElementById('editorModalTitle').textContent = '詳編';
         document.getElementById('fieldSite').value = r.site || ''; document.getElementById('fieldAssignee').value = r.assignee || '';
         document.getElementById('fieldDate').value = r.date || '';
         const pt = parseTimeRange(r.timeRange);
@@ -1954,7 +1936,7 @@
         draftPhotos = JSON.parse(JSON.stringify(loadedPhotos));
         originalPhotoIds = draftPhotos.map(p => p.id);
       } else {
-        document.getElementById('editorModalTitle').textContent = '新增單位';
+        document.getElementById('editorModalTitle').textContent = '即將';
         ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
         document.getElementById('fieldIsFutureDiary').checked = true;
         const curFilter = document.getElementById('siteFilter').value;
@@ -2023,9 +2005,9 @@
     function renderPhotoThumbList() {
       document.getElementById('photoCountHint').textContent = `${draftPhotos.length} 張`;
       document.getElementById('photoThumbList').innerHTML = draftPhotos.map((p, i) => `
-        <div onclick="selectPhotoForAnnotation(${i})" style="border:2px solid ${i===activePhotoIndex?'#EA580C':'#CBD5E1'};overflow:hidden;cursor:pointer;background:#FFF;">
+        <div onclick="selectPhotoForAnnotation(${i})" style="border:2px solid ${i===activePhotoIndex?'#EA580C':'#CBD5E1'};border-radius:3px;overflow:hidden;cursor:pointer;background:#FFF;">
           <img src="${p.base64Annotated||p.base64Raw}" style="width:100%;height:72px;object-fit:cover;display:block;" />
-          <div class="row-between t-meta" style="padding:2px 5px;"><span>#${i+1}</span><button type="button" onclick="removeDraftPhoto(event,${i})" class="btn-link danger">✕</button></div>
+          <div class="row-between t-meta" style="padding:2px 5px;"><b>#${i+1}</b><button type="button" onclick="removeDraftPhoto(event,${i})" class="btn-link danger"><span class="btn-sym">✕</span></button></div>
         </div>`).join('');
     }
 
@@ -2247,8 +2229,7 @@
       const btn = document.getElementById('saveReportBtn'); btn.disabled = true; btn.textContent = '同步中...';
 
       const docId = editingReportId || ('rep-' + Date.now()), ex = reports.find(r => r.id === docId);
-      const isNewSite = !reports.some(r => (r.site || '').trim() === site);
-      const isFutureVal = Boolean(document.getElementById('fieldIsFutureDiary')?.checked) || (!editingReportId && isNewSite);
+      const isFutureVal = Boolean(document.getElementById('fieldIsFutureDiary')?.checked);
       const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件', url: d.url.trim() }));
 
       try {
