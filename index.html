@@ -1303,7 +1303,7 @@
           await db.collection(COLLECTION_NAME).doc(reportId).update({
             docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
           });
-          showToast('已換檔');
+          showToast('已換');
         };
         rd.readAsDataURL(file);
         return;
@@ -1317,7 +1317,7 @@
       await db.collection(COLLECTION_NAME).doc(reportId).update({
         docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
       });
-      showToast('已換檔');
+      showToast('已換');
     }
 
     async function removeReportDoc(reportId, idx) {
@@ -1440,7 +1440,7 @@
 
       const chipsHtml = siteChipsExpanded
         ? `<div class="site-quick-list">
-            <button type="button" onclick="toggleSiteFilterByAddress('')" class="site-chip-btn ${siteVal === 'ALL' ? 'active' : ''}">全部（${allSites.length}）</button>
+            <button type="button" onclick="showAllUnitsDirect()" class="site-chip-btn ${siteVal === 'ALL' ? 'active' : ''}">全部（${allSites.length}）</button>
             ${allSites.map(s => {
               const encS = encodeURIComponent(s);
               return `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encS}'))" class="site-chip-btn ${siteVal === s ? 'active' : ''}">${escapeHtml(s)}</button>`;
@@ -1499,10 +1499,10 @@
                   ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
                   : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
                 ${!IS_PUBLIC ? `<div class="doc-actions no-print">
-                  ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="card-action-link orange">改圖</a>` : ''}
-                  <label class="card-action-link slate" style="cursor:pointer;"><span>換檔</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
-                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="card-action-link red">刪除X</button>
+                  ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="card-action-link orange">改</a>` : ''}
+                  <label class="card-action-link slate" style="cursor:pointer;"><span>換</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
                   ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="card-action-link blue">單文件分享</button>` : ''}
+                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="card-action-link red">刪除X</button>
                 </div>` : ''}
               </div>`;
             }).join('')}
@@ -1516,8 +1516,8 @@
               <button type="button" onclick="openAlbumWorkspace('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${r.id}')" class="card-action-link blue">截圖</button>
               <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green">詳編</button>
               <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate">留言</button>
-              <button type="button" onclick="deleteReport('${r.id}')" class="card-action-link red">刪除X</button>
               <button type="button" onclick="openSingleShareModal('${r.id}')" class="card-action-link blue">單分享</button>
+              <button type="button" onclick="deleteReport('${r.id}')" class="card-action-link red">刪除X</button>
             </div>
           ` : '';
 
@@ -1602,7 +1602,7 @@
         return `<div class="doc-edit-row">
           <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" />
           <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" />
-          ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : `<span></span>`}
+          ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改</a>` : `<span></span>`}
           <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
         </div>`;
       }).join('');
