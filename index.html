@@ -1496,12 +1496,18 @@
             ${docs.map((d, dIdx) => {
               const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
               return `<div class="doc-item-row">
-                ${d.url
-                  ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
-                  : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
+                <div class="row" style="min-width:0;gap:6px;">
+                  ${!IS_PUBLIC ? `
+                    <div class="doc-actions no-print" style="gap:6px;">
+                      ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="card-action-link orange">改</a>` : ''}
+                      <label class="card-action-link slate" style="cursor:pointer;"><span>換</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
+                    </div>
+                  ` : ''}
+                  ${d.url
+                    ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} ↗</a>`
+                    : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
+                </div>
                 ${!IS_PUBLIC ? `<div class="doc-actions no-print">
-                  ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="card-action-link orange">改</a>` : ''}
-                  <label class="card-action-link slate" style="cursor:pointer;"><span>換</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
                   ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="card-action-link blue">文件分享</button>` : ''}
                   <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="box-cross-btn" title="刪除">✕</button>
                 </div>` : ''}
