@@ -1514,8 +1514,6 @@
 
           const actionGroupHtml = !IS_PUBLIC ? `
             <div class="record-actions-bar no-print">
-              <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green">詳編</button>
-              <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate">留言</button>
               <button type="button" onclick="openSingleShareModal('${r.id}')" class="card-action-link blue">單分享</button>
               <button type="button" onclick="deleteReport('${r.id}')" class="box-cross-btn" title="刪除">✕</button>
             </div>
@@ -1527,6 +1525,10 @@
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
                 ${isFuture ? `<span class="card-action-link orange" style="border-bottom:none;">即將</span>` : ''}
+                ${!IS_PUBLIC ? `
+                  <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green no-print">詳編</button>
+                  <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate no-print">留言</button>
+                ` : ''}
               </div>
               ${actionGroupHtml}
             </div>
