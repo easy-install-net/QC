@@ -7,125 +7,6 @@
   <link rel="icon" href="data:," />
   <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="report.css" />
-  <style>
-    .future-tag-pill {
-      display: inline-block;
-      background: #FFF7ED;
-      color: #C2410C;
-      border: 1px solid #FDBA74;
-      border-radius: 3px;
-      padding: 0 5px;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1.45;
-      vertical-align: middle;
-    }
-    .future-diary-box {
-      background: #FFFFFF;
-      border-left: 3px solid #EA580C;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    .future-diary-head {
-      background: #FFF7ED;
-      border-bottom: 1px solid #FDBA74;
-      padding: 6px 10px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .future-diary-body {
-      padding: 6px 10px;
-    }
-    .detail-toggle-btn {
-      background: #F1F5F9;
-      color: #334155;
-      border: 1px solid #CBD5E1;
-      border-radius: 3px;
-      padding: 1px 7px;
-      font-size: 11.5px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .detail-toggle-btn.is-open {
-      background: #FFF7ED;
-      color: #C2410C;
-      border-color: #FDBA74;
-    }
-    .schedule-detail-panel {
-      margin-top: 6px;
-      padding: 7px 9px;
-      background: #F8FAFC;
-      border-left: 2px solid #FDBA74;
-      border-radius: 2px;
-      font-size: 12.5px;
-      line-height: 1.5;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-    .site-quick-bar {
-      background: #FFFFFF;
-      border-left: 3px solid #EA580C;
-      padding: 8px 10px;
-      margin-top: 8px;
-    }
-    .site-quick-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .site-quick-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .site-chip-btn {
-      background: #F8FAFC;
-      color: #0F172A;
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .site-chip-btn.active {
-      background: #EA580C;
-      color: #FFFFFF;
-      border-color: #EA580C;
-    }
-    .two-char-btn {
-      min-width: 40px;
-      padding: 2px 7px;
-      font-size: 11.5px;
-      font-weight: 600;
-      border-radius: 3px;
-      border: 1px solid #CBD5E1;
-      background: #FFFFFF;
-      color: #0F172A;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .two-char-btn:hover {
-      border-color: #EA580C;
-      color: #EA580C;
-    }
-    .two-char-btn.accent {
-      background: #FFF7ED;
-      border-color: #FDBA74;
-      color: #C2410C;
-    }
-    .two-char-btn.del {
-      background: #FEF2F2;
-      border-color: #FCA5A5;
-      color: #B91C1C;
-    }
-  </style>
 </head>
 <body>
 
@@ -326,7 +207,7 @@
           <div class="t-meta muted" id="mergeHintText"></div>
           <select id="manageMergeTarget" class="input-ui t-meta"></select>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitMergeSite()" class="btn-secondary" style="border-color:#EA580C;color:#EA580C;">合併</button>
+            <button type="button" onclick="submitMergeSite()" class="btn-secondary" style="color:#EA580C;">合併</button>
           </div>
         </div>
       </div>
@@ -1125,6 +1006,37 @@
       </div>`;
     }
 
+    function renderScheduleSlotRow(r, isFuture = false) {
+      const dStr = formatMonthDayWeekday(r.date || '未定日期');
+      const tStr = (r.timeRange || '').trim() || '全日';
+      const sName = r.site || '未分類';
+      const encSite = encodeURIComponent(sName);
+      const isDetailOpen = expandedDetailIds.has(r.id);
+
+      return `<div class="schedule-slot-row">
+        <div class="schedule-time-col">
+          ${isFuture ? `<span class="t-mono schedule-time-tag">${escapeHtml(dStr)}</span><span class="t-meta t-mono muted" style="margin-left:4px;">${escapeHtml(tStr)}</span>`
+            : `<span class="t-mono schedule-time-tag">${escapeHtml(tStr)}</span>`}
+        </div>
+        <div class="schedule-slot-main">
+          <div class="schedule-slot-top">
+            <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+            ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+            <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
+            ${!IS_PUBLIC ? `<button type="button" onclick="startScheduleInlineEdit('${r.id}')" class="two-char-btn">快改</button>` : ''}
+            ${!IS_PUBLIC && isFuture ? `<button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="two-char-btn accent">轉正</button>` : ''}
+          </div>
+          ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+          ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+        </div>
+      </div>`;
+    }
+
+    function startScheduleInlineEdit(id) {
+      inlineEditId = id;
+      switchMainView('reports');
+    }
+
     function renderScheduleTimeline() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
@@ -1200,58 +1112,13 @@
           </div>
         </div>
         <div class="future-diary-body">
-          ${futureItems.map(r => {
-            const dStr = formatMonthDayWeekday(r.date || '未定日期');
-            const tStr = (r.timeRange || '').trim() || '全日';
-            const sName = r.site || '未分類';
-            const encSite = encodeURIComponent(sName);
-            const isDetailOpen = expandedDetailIds.has(r.id);
-
-            return `<div class="schedule-slot-row">
-              <div class="schedule-time-col">
-                <span class="t-mono schedule-time-tag">${escapeHtml(dStr)}</span>
-                <span class="t-meta t-mono muted">${escapeHtml(tStr)}</span>
-              </div>
-              <div class="schedule-slot-main">
-                <div class="schedule-slot-top">
-                  <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
-                  ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                  <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
-                </div>
-                ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
-                ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
-              </div>
-              ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="two-char-btn accent">轉正</button>
-              </div>` : ''}
-            </div>`;
-          }).join('')}
+          ${futureItems.map(r => renderScheduleSlotRow(r, true)).join('')}
         </div>
       </div>` : '';
 
       const daysHtml = visibleDays.map(g => {
         const dayLabel = formatMonthDayWeekday(g.date);
-        const slotHtml = g.items.map(r => {
-          const timeLabel = (r.timeRange || '').trim() || '全日';
-          const sName = r.site || '未分類';
-          const encSite = encodeURIComponent(sName);
-          const isDetailOpen = expandedDetailIds.has(r.id);
-
-          return `<div class="schedule-slot-row">
-            <div class="schedule-time-col">
-              <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
-            </div>
-            <div class="schedule-slot-main">
-              <div class="schedule-slot-top">
-                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
-                ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-                <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
-              </div>
-              ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
-              ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
-            </div>
-          </div>`;
-        }).join('');
+        const slotHtml = g.items.map(r => renderScheduleSlotRow(r, false)).join('');
 
         return `<div class="schedule-day-card">
           <div class="schedule-day-head row-between">
@@ -1681,7 +1548,6 @@
 
       return `<div class="site-quick-bar no-print">
         <div class="site-quick-head">
-          <span class="t-meta" style="font-weight:700;color:#0F172A;">地址</span>
           <button type="button" onclick="toggleSiteChipsCollapse()" class="detail-toggle-btn ${!siteChipsExpanded ? 'is-open' : ''}">${siteChipsExpanded ? '疊起 ▴' : '展開 ▾'}</button>
         </div>
         ${chipsHtml}
@@ -1778,9 +1644,6 @@
               <button type="button" onclick="openAlbumWorkspace('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${r.id}')" class="two-char-btn">截圖</button>
               <button type="button" onclick="openEditor('${r.id}')" class="two-char-btn accent">詳編</button>
               <button type="button" onclick="openFollowupModal('${r.id}')" class="two-char-btn accent">留言</button>
-              <button type="button" onclick="startInlineEdit('${r.id}')" class="two-char-btn">快改</button>
-            </div>
-            <div class="record-actions-bar no-print" style="margin-top:4px;">
               <button type="button" onclick="deleteReport('${r.id}')" class="two-char-btn del">刪除X</button>
               <button type="button" onclick="openSingleShareModal('${r.id}')" class="two-char-btn">單分享</button>
             </div>
@@ -1812,7 +1675,7 @@
                 ? `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encSite}'))" class="site-title-btn">${escapeHtml(g.site)}</button>`
                 : `<span class="t-site" style="font-size:13.5px;">${escapeHtml(g.site)}</span>`}
               ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
-              ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link no-print" style="padding:0 2px;text-decoration:none;">✏️</button>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link no-print" style="padding:0 2px;">✏️</button>` : ''}
             </div>
             ${!IS_PUBLIC ? `
               <div class="site-header-actions no-print">
