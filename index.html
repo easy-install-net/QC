@@ -533,7 +533,26 @@
     }
 
     function confirmYAction(promptMsg) {
-      const ans = prompt(`${promptMsg}\n輸入 "Y" 確認：`); return ans !== null && ans.trim().toUpperCase() === 'Y'; }  function isTypingInputTarget(el) { if (!el) return false; const tag = el.tagName; return tag === 'INPUT' \vert{}\vert{} tag === 'TEXTAREA' \vert{}\vert{} tag === 'SELECT' \vert{}\vert{} el.isContentEditable; }  function formatMonthDayWeekday(dateStr) { if (!dateStr \vert{}\vert{} dateStr === '未定日期') return '未定日期'; const m = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (!m) return String(dateStr); const yr = parseInt(m[1], 10); const mo = parseInt(m[2], 10); const dy = parseInt(m[3], 10); const dt = new Date(yr, mo - 1, dy); const wd = WEEKDAYS_HK[dt.getDay()] \vert{}\vert{} ''; return `${mo}月${dy}日(${wd})`;
+      const ans = prompt(`${promptMsg}\n輸入 "Y" 確認：`);
+      return ans !== null && ans.trim().toUpperCase() === 'Y';
+    }
+
+    function isTypingInputTarget(el) {
+      if (!el) return false;
+      const tag = el.tagName;
+      return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+    }
+
+    function formatMonthDayWeekday(dateStr) {
+      if (!dateStr || dateStr === '未定日期') return '未定日期';
+      const m = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (!m) return String(dateStr);
+      const yr = parseInt(m[1], 10);
+      const mo = parseInt(m[2], 10);
+      const dy = parseInt(m[3], 10);
+      const dt = new Date(yr, mo - 1, dy);
+      const wd = WEEKDAYS_HK[dt.getDay()] || '';
+      return `${mo}月${dy}日(${wd})`;
     }
 
     function setMeridiemForStartInput(inputId, period) {
@@ -566,13 +585,15 @@
         const hh = String(parseInt(m[1], 10)).padStart(2, '0');
         inputEl.value = `${hh}:${mm}`;
       } else {
-        inputEl.value = `09:${mm}`; } showToast(`:${mm}`);
+        inputEl.value = `09:${mm}`;
+      }
+      showToast(`:${mm}`);
     }
 
     function buildEditorTimeValue() {
       const s = (document.getElementById('fieldTimeStart').value || '').trim();
       const e = (document.getElementById('fieldTimeEnd').value || '').trim();
-      if (s && e) return `${s} -${e}`;
+      if (s && e) return `${s} - ${e}`;
       return s || e || '';
     }
 
@@ -782,7 +803,7 @@
         if (!r.site && !r.title) return false;
         if (siteVal && siteVal !== 'ALL' && r.site !== siteVal) return false;
         if (kw) {
-          const hay = `${r.site}${r.assignee||''} ${r.date\vert{}\vert{}''}${formatMonthDayWeekday(r.date||'')} ${r.timeRange\vert{}\vert{}''}${r.title} ${r.summary\vert{}\vert{}''}${r.followup||''} ${getDocsList(r).map(d=>d.name).join(' ')}${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
+          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -853,7 +874,8 @@
 
     function renderInlineEditFormHtml(r) {
       const pt = parseTimeRange(r.timeRange);
-      const tsId = `ie-ts-${r.id}`; const teId = `ie-te-${r.id}`;
+      const tsId = `ie-ts-${r.id}`;
+      const teId = `ie-te-${r.id}`;
       const dateVal = isUndatedEntry(r) ? '' : (r.date || '');
       return `<div class="inline-edit-form" style="margin-top:5px;">
         <div class="inline-edit-top">
@@ -906,4 +928,1165 @@
     }
 
     function renderScheduleTopActionsHtml(r, isDetailOpen) {
-      const toggleBtn = `<button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>`; if (!isDetailOpen) return toggleBtn; return `${toggleBtn}
+      const toggleBtn = `<button type="button" onclick="toggleScheduleDetail('${r.id}')" class="detail-toggle-btn ${isDetailOpen ? 'is-open' : ''}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>`;
+      if (!isDetailOpen) return toggleBtn;
+      return `${toggleBtn}
+        <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn blue">快改</button>
+        <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>`;
+    }
+
+    function renderScheduleTimeline() {
+      const container = document.getElementById('reportListContainer');
+      const filtered = getFilteredReports();
+      const undatedItems = getUndatedEntries(filtered);
+      const futureItems = getDatedFutureEntries(filtered);
+      const allDayGroups = getScheduleDayGroups(filtered);
+
+      const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
+      const totalPages = isCustomRange ? 1 : Math.max(1, Math.ceil(allDayGroups.length / SCHEDULE_PAGE_SIZE));
+      if (schedulePage >= totalPages) schedulePage = totalPages - 1;
+
+      const visibleDays = isCustomRange
+        ? allDayGroups
+        : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
+
+      const rangeInfoText = isCustomRange
+        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
+        : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
+
+      /* 置頂於「時段」上一格：未定日期（常駐提醒有咩未做） */
+      const undatedTopHtml = undatedItems.length ? `<div class="schedule-day-card">
+        <div class="schedule-day-head row-between">
+          <div class="row">
+            <span class="t-site" style="font-size:13px;color:#C2410C;">未定日期</span>
+            <span class="t-meta muted">${undatedItems.length} 個地盤</span>
+            <button type="button" onclick="openEditorForDate('')" class="schedule-add-btn no-print"><span class="btn-sym">＋</span>加工作</button>
+          </div>
+        </div>
+        <div class="schedule-day-body">
+          ${undatedItems.map(r => {
+            const timeLabel = (r.timeRange || '').trim() || '全日';
+            const sName = r.site || '未分類';
+            const encSite = encodeURIComponent(sName);
+            const isDetailOpen = expandedDetailIds.has(r.id);
+
+            return `<div class="schedule-slot-row">
+              <div class="schedule-time-col">
+                <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
+              </div>
+              <div class="schedule-slot-main">
+                <div class="schedule-slot-top">
+                  <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+                  ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                  ${isFutureDiaryEntry(r) ? `<span class="future-tag-pill">即將</span>` : ''}
+                  ${renderScheduleTopActionsHtml(r, isDetailOpen)}
+                </div>
+                ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+                ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+      /* 時段控制列（已移除隔離重複嘅「即將」掣） */
+      const toolbarHtml = `<div class="schedule-toolbar no-print">
+        <div class="row">
+          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary ${showScheduleRangeBox ? 'btn-active' : ''}">時段</button>
+          <span class="t-meta muted" style="font-weight:500;">${escapeHtml(rangeInfoText)}</span>
+          ${!isCustomRange && totalPages > 1 ? `
+            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}><span class="btn-sym">‹</span>上一頁</button>
+            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁<span class="btn-sym">›</span></button>
+          ` : ''}
+        </div>
+        <div class="row">
+          <button type="button" onclick="openCurrentViewShareModal()" class="btn-wa"><span class="btn-sym">↗</span>分享</button>
+        </div>
+      </div>`;
+
+      const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
+        <span class="t-meta" style="font-weight:700;">時段：</span>
+        <input type="date" id="schedRangeStart" value="${escapeHtml(scheduleRangeStart)}" class="input-ui" style="width:auto;" />
+        <span class="t-meta" style="font-weight:700;">至</span>
+        <input type="date" id="schedRangeEnd" value="${escapeHtml(scheduleRangeEnd)}" class="input-ui" style="width:auto;" />
+        <button type="button" onclick="applyScheduleDateRange()" class="btn-orange">套用</button>
+        <button type="button" onclick="resetScheduleToRecentTen()" class="btn-secondary">重設</button>
+      </div>` : '';
+
+      if (!undatedItems.length && !allDayGroups.length && !futureItems.length) {
+        container.innerHTML = toolbarHtml + rangeBoxHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
+        return;
+      }
+
+      const futureSectionHtml = futureItems.length ? `<div class="future-diary-box">
+        <div class="future-diary-head">
+          <div class="row">
+            <span class="future-tag-pill">即將</span>
+            <span class="t-site" style="font-size:13px;">${futureItems.length} 項</span>
+          </div>
+        </div>
+        <div class="future-diary-body">
+          ${futureItems.map(r => {
+            const dStr = formatMonthDayWeekday(r.date);
+            const tStr = (r.timeRange || '').trim() || '全日';
+            const sName = r.site || '未分類';
+            const encSite = encodeURIComponent(sName);
+            const isDetailOpen = expandedDetailIds.has(r.id);
+
+            return `<div class="schedule-slot-row">
+              <div class="schedule-time-col" style="flex-direction:column;">
+                <span class="t-mono schedule-time-tag">${escapeHtml(dStr)}</span>
+                <span class="t-meta t-mono muted">${escapeHtml(tStr)}</span>
+              </div>
+              <div class="schedule-slot-main">
+                <div class="schedule-slot-top">
+                  <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+                  ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                  ${renderScheduleTopActionsHtml(r, isDetailOpen)}
+                </div>
+                ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+                ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+              </div>
+              <div class="row no-print" style="align-self:flex-start;flex-shrink:0;">
+                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="rec-act-btn accent">轉正</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>` : '';
+
+      const daysHtml = visibleDays.map(g => {
+        const dayLabel = formatMonthDayWeekday(g.date);
+        const slotHtml = g.items.map(r => {
+          const timeLabel = (r.timeRange || '').trim() || '全日';
+          const sName = r.site || '未分類';
+          const encSite = encodeURIComponent(sName);
+          const isDetailOpen = expandedDetailIds.has(r.id);
+
+          return `<div class="schedule-slot-row">
+            <div class="schedule-time-col">
+              <span class="t-mono schedule-time-tag">${escapeHtml(timeLabel)}</span>
+            </div>
+            <div class="schedule-slot-main">
+              <div class="schedule-slot-top">
+                <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+                ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+                ${renderScheduleTopActionsHtml(r, isDetailOpen)}
+              </div>
+              ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+              ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+            </div>
+          </div>`;
+        }).join('');
+
+        return `<div class="schedule-day-card">
+          <div class="schedule-day-head row-between">
+            <div class="row">
+              <span class="t-site t-mono" style="font-size:13px;">${escapeHtml(dayLabel)}</span>
+              <span class="t-meta muted">${g.items.length} 個地盤</span>
+              <button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn no-print"><span class="btn-sym">＋</span>加工作</button>
+            </div>
+          </div>
+          <div class="schedule-day-body">
+            ${slotHtml}
+          </div>
+        </div>`;
+      }).join('');
+
+      container.innerHTML = undatedTopHtml + toolbarHtml + rangeBoxHtml + futureSectionHtml + daysHtml;
+    }
+
+    /* 所有公開分享連結統一指向獨立純閱讀頁 view.html */
+    function getSingleReportUrl(id) {
+      const u = new URL('view.html', window.location.href);
+      u.search = `?reportId=${encodeURIComponent(id)}`;
+      return u.toString();
+    }
+
+    function getSingleSiteUrl(siteName) {
+      const u = new URL('view.html', window.location.href);
+      u.search = `?site=${encodeURIComponent(siteName)}`;
+      return u.toString();
+    }
+
+    function buildCurrentViewShareUrl() {
+      const u = new URL('view.html', window.location.href);
+      u.searchParams.set('tab', activeMainView);
+      const selSite = document.getElementById('siteFilter')?.value || 'ALL';
+      if (selSite && selSite !== 'ALL') u.searchParams.set('site', selSite);
+      if (activeMainView === 'schedule') {
+        if (scheduleRangeStart) u.searchParams.set('start', scheduleRangeStart);
+        if (scheduleRangeEnd) u.searchParams.set('end', scheduleRangeEnd);
+      }
+      return u.toString();
+    }
+
+    function buildCurrentViewShareSummary(items) {
+      const selSite = document.getElementById('siteFilter')?.value || 'ALL';
+      const scopeLabel = selSite && selSite !== 'ALL' ? selSite : '目前版面全部記錄';
+      const lines = items.map(r => {
+        const dStr = formatMonthDayWeekday(r.date || '');
+        const tStr = (r.timeRange || '').trim();
+        const sStr = r.site || '未分類';
+        const sumStr = r.summary ? `（${r.summary.replace(/\s+/g, ' ')}）` : '';
+        const fuStr = r.followup ? ` [跟進：${r.followup}]` : '';
+        return `• ${dStr}${tStr ? ` ${tStr}` : ''}｜${sStr}：${r.title || ''}${sumStr}${fuStr}`;
+      });
+      return { scopeLabel, text: lines.join('\n') };
+    }
+
+    function buildWhatsAppMessage({ audience, site, date, title, url, extraLines = '' }) {
+      if (audience === 'client') {
+        return [
+          `你好！以下為 *${site}* 的記錄，請查閱：`,
+          date ? `📅 ${date}` : '',
+          title ? `📌 ${title}` : '',
+          extraLines,
+          `🔗 ${url}`,
+          `— 築匠設計 ARTISAN STUDIO`
+        ].filter(Boolean).join('\n');
+      } else {
+        return [
+          `跟進以下記錄：`,
+          `🏠 *${site}*`,
+          date ? `📅 ${date}` : '',
+          title ? `📌 ${title}` : '',
+          extraLines,
+          `🔗 ${url}`
+        ].filter(Boolean).join('\n');
+      }
+    }
+
+    function copyWaMsg(audience, encSite, encDate, encTitle, encUrl, encExtra = '') {
+      const msg = buildWhatsAppMessage({
+        audience,
+        site: decodeURIComponent(encSite),
+        date: decodeURIComponent(encDate),
+        title: decodeURIComponent(encTitle),
+        url: decodeURIComponent(encUrl),
+        extraLines: encExtra ? decodeURIComponent(encExtra) : ''
+      });
+      copyText(msg, audience === 'client' ? '已複製客人訊息' : '已複製師傅/廠訊息');
+    }
+
+    function openCurrentViewShareModal() {
+      const filtered = getFilteredReports();
+      const viewItems = activeMainView === 'schedule'
+        ? (() => {
+            const undated = getUndatedEntries(filtered);
+            const futureItems = getDatedFutureEntries(filtered);
+            const days = getScheduleDayGroups(filtered);
+            return [...undated, ...futureItems, ...days.flatMap(d => d.items)];
+          })()
+        : filtered;
+
+      if (!viewItems.length) return showToast('無可分享記錄');
+
+      const { scopeLabel, text: listText } = buildCurrentViewShareSummary(viewItems);
+      const shareUrl = buildCurrentViewShareUrl();
+      const latestDate = viewItems.find(x => !isUndatedEntry(x))?.date || '';
+      const encSite = encodeURIComponent(scopeLabel);
+      const eDate = encodeURIComponent(latestDate);
+      const eTitle = encodeURIComponent(`共 ${viewItems.length} 項`);
+      const eUrl = encodeURIComponent(shareUrl);
+      const eExtra = encodeURIComponent(listText);
+
+      document.getElementById('shareModalTitle').textContent = `分享全部（${scopeLabel}）`;
+      document.getElementById('shareModalBody').innerHTML = `
+        <div>
+          <div class="t-meta" style="margin-bottom:6px;">已涵蓋目前所選共 <b>${viewItems.length}</b> 項全部內容：</div>
+          <textarea readonly rows="6" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(listText)}</textarea>
+          <div class="row">
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(shareUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(shareUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
+          </div>
+        </div>`;
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    function openFullShareModal(siteName) {
+      const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+      const siteUrl = getSingleSiteUrl(siteName);
+      const latestDate = items.find(x => !isUndatedEntry(x))?.date || '';
+      const encSite = encodeURIComponent(siteName);
+      const summaryLines = items.map(r => {
+        const sumStr = r.summary ? `（${r.summary.replace(/\s+/g, ' ')}）` : '';
+        return `• ${formatMonthDayWeekday(r.date || '')}｜${r.title || ''}${sumStr}`;
+      }).join('\n');
+
+      document.getElementById('shareModalTitle').textContent = `全分享：${siteName}`;
+      document.getElementById('shareModalBody').innerHTML = `
+        <div>
+          <div style="font-weight:700;margin-bottom:6px;">整個單位全部記錄（共 ${items.length} 條）</div>
+          <textarea readonly rows="5" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(summaryLines)}</textarea>
+          <div class="row">
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
+          </div>
+        </div>`;
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    function openSingleShareModal(recordId) {
+      const r = reports.find(x => x.id === recordId);
+      if (!r) return;
+      const rUrl = getSingleReportUrl(r.id);
+      const encSite = encodeURIComponent(r.site || '');
+      const eDate = encodeURIComponent(r.date || '');
+      const eTitle = encodeURIComponent(r.title || '');
+      const eUrl = encodeURIComponent(rUrl);
+      const extraDetail = [r.summary || '', r.followup ? `跟進：${r.followup}` : ''].filter(Boolean).join('\n');
+      const eExtra = encodeURIComponent(extraDetail);
+
+      document.getElementById('shareModalTitle').textContent = `單分享：${r.site || ''}`;
+      document.getElementById('shareModalBody').innerHTML = `
+        <div>
+          <div class="t-meta" style="margin-bottom:6px;"><b class="t-mono">${escapeHtml(formatMonthDayWeekday(r.date))}</b> — ${escapeHtml(r.title)}</div>
+          <div class="row">
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
+          </div>
+        </div>`;
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    function openFileShareModal(siteName, dateStr, fileName, fileUrl) {
+      const fullUrl = fileUrl.startsWith('http') ? fileUrl : new URL(fileUrl, window.location.href).toString();
+      const encSite = encodeURIComponent(siteName || '');
+      const eDate = encodeURIComponent(dateStr || '');
+      const eName = encodeURIComponent(fileName || '');
+      const eUrl = encodeURIComponent(fullUrl);
+
+      document.getElementById('shareModalTitle').textContent = `單文件分享`;
+      document.getElementById('shareModalBody').innerHTML = `
+        <div>
+          <div class="t-meta" style="margin-bottom:6px;"><b>${escapeHtml(fileName || '附件')}</b></div>
+          <div class="row">
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 <span class="btn-sym">↗</span></a>
+          </div>
+        </div>`;
+      document.getElementById('shareModal').classList.remove('hidden');
+    }
+
+    function closeShareModal() { document.getElementById('shareModal').classList.add('hidden'); }
+
+    window.addEventListener('paste', (e) => {
+      if (document.getElementById('editorModal').classList.contains('hidden')) return;
+      if (isTypingInputTarget(document.activeElement) || isTypingInputTarget(e.target)) return;
+      for (const item of (e.clipboardData || window.clipboardData).items) {
+        if (item.type.indexOf('image') !== -1) {
+          e.preventDefault();
+          processImageFile(item.getAsFile());
+          return;
+        }
+      }
+    });
+
+    function openAlbumWorkspace(siteName = '', dateStr = '', reportId = '') {
+      const url = new URL('album.html', window.location.href);
+      if (siteName) url.searchParams.set('site', siteName);
+      if (dateStr) url.searchParams.set('date', dateStr);
+      if (reportId) url.searchParams.set('reportId', reportId);
+      window.open(url.toString(), '_blank');
+    }
+
+    function openAlbumFromEditor() {
+      openAlbumWorkspace(document.getElementById('fieldSite').value.trim(), document.getElementById('fieldDate').value, editingReportId || '');
+    }
+
+    function copyText(text, msg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showToast(msg));
+      else { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showToast(msg); }
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast'); el.textContent = msg; el.classList.remove('hidden');
+      clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2000);
+    }
+
+    function updateSiteFilterOptions() {
+      const select = document.getElementById('siteFilter'), cur = select.value;
+      const sites = getAllUniqueSites();
+      select.innerHTML = '<option value="ALL">-- 選擇單位 --</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      if (sites.includes(cur)) select.value = cur;
+      else select.value = 'ALL';
+      syncAllButtonState();
+    }
+
+    function getDocsList(r) {
+      if (Array.isArray(r.docs) && r.docs.length > 0) return r.docs;
+      if (r.docName) return [{ name: r.docName, url: r.docUrl || '' }];
+      return [];
+    }
+
+    async function replaceReportDoc(reportId, idx, e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep) return;
+      const docs = [...getDocsList(rep)];
+      if (!docs[idx]) return;
+
+      if (file.type === 'application/pdf' && file.size <= 650 * 1024) {
+        const rd = new FileReader();
+        rd.onload = async ev => {
+          docs[idx] = { name: file.name, url: ev.target.result };
+          await db.collection(COLLECTION_NAME).doc(reportId).update({
+            docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+          });
+          showToast('已換檔');
+        };
+        rd.readAsDataURL(file);
+        return;
+      }
+
+      const newUrl = prompt('新連結：', docs[idx].url || '');
+      if (newUrl === null) return;
+      const newName = prompt('新檔名：', file.name || docs[idx].name || '');
+      if (newName === null) return;
+      docs[idx] = { name: newName.trim() || file.name || '附件', url: newUrl.trim() };
+      await db.collection(COLLECTION_NAME).doc(reportId).update({
+        docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+      });
+      showToast('已換檔');
+    }
+
+    async function removeReportDoc(reportId, idx) {
+      const rep = reports.find(r => r.id === reportId);
+      if (!rep) return;
+      const docs = [...getDocsList(rep)];
+      const target = docs[idx];
+      if (!target) return;
+      if (!confirmYAction(`刪除「${target.name}」？`)) return;
+      docs.splice(idx, 1);
+      await db.collection(COLLECTION_NAME).doc(reportId).update({
+        docs, docName: docs[0]?.name || '', docUrl: docs[0]?.url || '', updatedAt: Date.now()
+      });
+      showToast('已刪除');
+    }
+
+    function parseTimeRange(str) {
+      const raw = (str || '').trim();
+      const rangeM = raw.match(/(\d{1,2}:\d{2})\s*-\s*(.+)$/);
+      if (rangeM) return { start: rangeM[1].padStart(5, '0'), end: rangeM[2].trim() };
+      const singleM = raw.match(/^(\d{1,2}:\d{2})$/);
+      if (singleM) return { start: singleM[1].padStart(5, '0'), end: '' };
+      return { start: '', end: raw };
+    }
+
+    function formatTimeRange(s, e) {
+      const st = (s || '').trim();
+      const en = (e || '').trim();
+      if (st && en) return `${st} - ${en}`;
+      return st || en || '';
+    }
+
+    function openSiteManageModal(oldSite, oldAssignee) {
+      managingOldSite = oldSite;
+      document.getElementById('manageNewSite').value = oldSite || '';
+      document.getElementById('manageNewAssignee').value = oldAssignee || '';
+      const count = reports.filter(r => r.site === oldSite).length;
+      document.getElementById('mergeHintText').textContent = `「${oldSite}」（${count}條）合併至：`;
+
+      const otherSites = getAllUniqueSites()
+        .filter(s => s !== oldSite)
+        .sort((a, b) => scoreSiteSimilarity(b, oldSite) - scoreSiteSimilarity(a, oldSite));
+
+      const sel = document.getElementById('manageMergeTarget');
+      if (!otherSites.length) {
+        sel.innerHTML = `<option value="">無其他單位</option>`;
+      } else {
+        sel.innerHTML = `<option value="">-- 選擇地址 --</option>` +
+          otherSites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      }
+      document.getElementById('siteManageModal').classList.remove('hidden');
+    }
+
+    function closeSiteManageModal() {
+      document.getElementById('siteManageModal').classList.add('hidden');
+    }
+
+    async function submitRenameSite() {
+      const newSite = document.getElementById('manageNewSite').value.trim();
+      const newAss = document.getElementById('manageNewAssignee').value.trim();
+      if (!newSite) return showToast('名稱不能為空');
+
+      const batch = db.batch();
+      reports.filter(r => r.site === managingOldSite).forEach(r => {
+        batch.update(db.collection(COLLECTION_NAME).doc(r.id), {
+          site: newSite,
+          assignee: newAss,
+          updatedAt: Date.now()
+        });
+      });
+      await batch.commit();
+
+      const sel = document.getElementById('siteFilter');
+      if (sel.value === managingOldSite) sel.value = newSite;
+      closeSiteManageModal();
+      showToast('已更新');
+    }
+
+    async function submitMergeSite() {
+      const targetSite = document.getElementById('manageMergeTarget').value;
+      if (!targetSite) return showToast('請選地址');
+      const itemsToMerge = reports.filter(r => r.site === managingOldSite);
+      if (!confirmYAction(`合併「${managingOldSite}」至「${targetSite}」？`)) return;
+
+      const targetRefItem = reports.find(r => r.site === targetSite && r.assignee);
+      const batch = db.batch();
+      itemsToMerge.forEach(r => {
+        const upd = { site: targetSite, updatedAt: Date.now() };
+        if (!r.assignee && targetRefItem?.assignee) upd.assignee = targetRefItem.assignee;
+        batch.update(db.collection(COLLECTION_NAME).doc(r.id), upd);
+      });
+      await batch.commit();
+
+      const sel = document.getElementById('siteFilter');
+      if (sel.value === managingOldSite) sel.value = targetSite;
+      expandedSites.add(targetSite);
+      closeSiteManageModal();
+      showToast('已合併');
+    }
+
+    function startInlineEdit(id) {
+      inlineEditId = id;
+      expandedDetailIds.add(id);
+      renderCurrentView();
+    }
+    function cancelInlineEdit() {
+      inlineEditId = null;
+      renderCurrentView();
+    }
+    async function saveInlineEdit(id) {
+      const title = document.getElementById(`ie-title-${id}`).value.trim();
+      if (!title) return showToast('標題不能為空');
+      await db.collection(COLLECTION_NAME).doc(id).update({
+        date: (document.getElementById(`ie-date-${id}`).value || '').trim(),
+        timeRange: formatTimeRange(document.getElementById(`ie-ts-${id}`).value, document.getElementById(`ie-te-${id}`).value),
+        title,
+        summary: document.getElementById(`ie-sum-${id}`).value.trim(),
+        followup: document.getElementById(`ie-fu-${id}`).value.trim(),
+        updatedAt: Date.now()
+      });
+      inlineEditId = null;
+      showToast('已儲存');
+    }
+
+    function toggleExpandSite(s) { expandedSites.has(s) ? expandedSites.delete(s) : expandedSites.add(s); renderReportList(); }
+
+    function renderFollowupBlock(r) {
+      const logs = Array.isArray(r.followupLogs) ? r.followupLogs : [];
+      const hasFollowupText = Boolean(r.followup && r.followup.trim());
+      if (!hasFollowupText && logs.length === 0) return '';
+
+      return `<div class="fu-area">
+        ${hasFollowupText ? `<div><b>跟進：</b>${escapeHtml(r.followup)}</div>` : ''}
+        ${logs.map(l => `<div class="fu-log"><span><b>${escapeHtml(l.author)}</b> ${escapeHtml(l.message)}</span><span class="muted t-mono">${escapeHtml(l.createdAtStr||'')}</span></div>`).join('')}
+      </div>`;
+    }
+
+    function renderSiteQuickBarHtml(siteVal) {
+      const allSites = getAllUniqueSites();
+      if (!allSites.length) return '';
+
+      const chipsHtml = siteChipsExpanded
+        ? `<div class="site-quick-list">
+            <button type="button" onclick="toggleSiteFilterByAddress('')" class="site-chip-btn ${siteVal === 'ALL' ? 'active' : ''}">全部（${allSites.length}）</button>
+            ${allSites.map(s => {
+              const encS = encodeURIComponent(s);
+              return `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encS}'))" class="site-chip-btn ${siteVal === s ? 'active' : ''}">${escapeHtml(s)}</button>`;
+            }).join('')}
+          </div>`
+        : `<div class="t-meta muted">已疊起（${allSites.length}）</div>`;
+
+      return `<div class="site-quick-bar no-print">
+        <div class="row-between" style="margin-bottom:${siteChipsExpanded ? '4px' : '0'};">
+          <div class="row">
+            <span class="t-meta" style="font-weight:700;color:#0F172A;">地址</span>
+            <button type="button" onclick="toggleSiteChipsCollapse()" class="detail-toggle-btn ${!siteChipsExpanded ? 'is-open' : ''}">${siteChipsExpanded ? '疊起 ▴' : '展開 ▾'}</button>
+          </div>
+          <button type="button" onclick="openCurrentViewShareModal()" class="btn-wa"><span class="btn-sym">↗</span>分享</button>
+        </div>
+        ${chipsHtml}
+      </div>`;
+    }
+
+    function renderReportList() {
+      const container = document.getElementById('reportListContainer');
+      const filtered = getFilteredReports();
+      const siteVal = document.getElementById('siteFilter').value;
+      const quickBarHtml = renderSiteQuickBarHtml(siteVal);
+
+      if (!filtered.length) {
+        container.innerHTML = quickBarHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
+        return;
+      }
+
+      const groups = [], map = {};
+      filtered.forEach(r => {
+        const k = r.site || '未分類';
+        if (!map[k]) { map[k] = { site: k, assignee: r.assignee || '', items: [] }; groups.push(map[k]); }
+        map[k].items.push(r);
+      });
+      groups.forEach(g => g.items.sort((a, b) => {
+        const aUndated = isUndatedEntry(a);
+        const bUndated = isUndatedEntry(b);
+        if (aUndated !== bUndated) return aUndated ? -1 : 1;
+        return (b.date || '').localeCompare(a.date || '') || (b.createdAt || 0) - (a.createdAt || 0);
+      }));
+
+      const cardsHtml = groups.map(g => {
+        const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
+        const isSingleFiltered = Boolean(siteVal && siteVal !== 'ALL');
+        const isExp = isSingleFiltered ? true : expandedSites.has(g.site);
+        const vis = isExp ? g.items : g.items.slice(0, 3);
+        const validRepairItem = g.items.find(x => hasValidTimeAndSite(x));
+
+        const rowsHtml = vis.map(r => {
+          const thumbs = getReportThumbs(r);
+          const pCount = thumbs.length;
+          const docs = getDocsList(r);
+          const singleUrl = getSingleReportUrl(r.id);
+          const isFuture = isFutureDiaryEntry(r);
+
+          if (inlineEditId === r.id) {
+            return `<div class="entry-row">${renderInlineEditFormHtml(r)}</div>`;
+          }
+
+          const docsHtml = docs.length ? `<div class="docs-strip">
+            ${docs.map((d, dIdx) => {
+              const editUrl = getAlbumEditUrl(d.url);
+              return `<div class="doc-item-row">
+                ${d.url
+                  ? `<a href="${escapeHtml(d.url)}" target="_blank" class="btn-link blue" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;" title="${escapeHtml(d.name)}">📄 ${escapeHtml(d.name)} <span class="btn-sym">↗</span></a>`
+                  : `<span class="t-meta" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">📄 ${escapeHtml(d.name)}</span>`}
+                <div class="doc-actions no-print">
+                  ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : ''}
+                  <label class="btn-link" style="cursor:pointer;"><span>換檔</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
+                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="btn-link danger"><span class="btn-sym">✕</span></button>
+                  ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="btn-link blue"><span class="btn-sym">↗</span>分</button>` : ''}
+                </div>
+              </div>`;
+            }).join('')}
+          </div>` : '';
+
+          const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="_blank" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
+
+          const actionGroupHtml = `
+            <div class="record-actions-bar no-print">
+              <button type="button" onclick="openEditor('${r.id}')" class="rec-act-btn blue">詳編</button>
+              <button type="button" onclick="openFollowupModal('${r.id}')" class="rec-act-btn accent">留言</button>
+              <button type="button" onclick="startInlineEdit('${r.id}')" class="rec-act-btn">快改</button>
+              <button type="button" onclick="openSingleShareModal('${r.id}')" class="rec-act-btn green"><span class="btn-sym">↗</span>單分</button>
+              <button type="button" onclick="deleteReport('${r.id}')" class="rec-act-btn del" title="刪除此紀錄"><span class="btn-sym">✕</span></button>
+            </div>
+          `;
+
+          return `<div class="entry-row">
+            <div class="entry-meta-bar">
+              <div class="entry-date-group">
+                <span class="t-mono" style="font-weight:700;${isUndatedEntry(r) ? 'color:#C2410C;' : ''}">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
+                ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
+                ${isFuture ? `<span class="future-tag-pill">即將</span>` : ''}
+              </div>
+              ${actionGroupHtml}
+            </div>
+            <div class="entry-content-block">
+              <div class="entry-title">${escapeHtml(r.title)}</div>
+              ${r.summary ? `<div class="entry-summary">${escapeHtml(r.summary)}</div>` : ''}
+              ${thumbsHtml}
+              ${docsHtml}
+              ${renderFollowupBlock(r)}
+            </div>
+          </div>`;
+        }).join('');
+
+        return `<div class="site-card">
+          <div class="site-header row-between">
+            <div class="row" style="gap:4px;">
+              <button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encSite}'))" class="site-title-btn">${escapeHtml(g.site)}</button>
+              ${g.assignee ? `<span class="muted t-meta">${escapeHtml(g.assignee)}</span>` : ''}
+              <button type="button" onclick="openSiteManageModal(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="btn-link orange no-print" title="單位改名 / 合併"><span class="btn-sym">✎</span></button>
+            </div>
+            <div class="site-header-actions no-print">
+              <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="site-mini-btn site-mini-add"><span class="btn-sym">＋</span>工作</button>
+              <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-album"><span class="btn-sym">📸</span>截圖</button>
+              <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('需有地址同日期')`}" class="site-mini-btn site-mini-repair">修繕</button>
+              <button type="button" onclick="openFullShareModal(decodeURIComponent('${encSite}'))" class="site-mini-btn site-mini-share"><span class="btn-sym">↗</span>全分</button>
+            </div>
+          </div>
+          <div class="site-body">
+            ${rowsHtml}
+            ${(!isSingleFiltered && g.items.length > 3) ? `<div class="no-print" style="text-align:center;margin-top:6px;padding-top:5px;border-top:1px solid #E2E8F0;"><button type="button" onclick="toggleExpandSite(decodeURIComponent('${encSite}'))" class="btn-link muted">${isExp ? '收起 ▴' : `展開其餘 ${g.items.length - 3} 條 ▾`}</button></div>` : ''}
+          </div>
+        </div>`;
+      }).join('');
+
+      container.innerHTML = quickBarHtml + cardsHtml;
+    }
+
+    function openFollowupModal(id) {
+      const r = reports.find(x => x.id === id); if (!r) return;
+      followupTargetId = id;
+      document.getElementById('followupModalTitle').textContent = '留言';
+      document.getElementById('followupTargetTitle').textContent = `${r.site} (${formatMonthDayWeekday(r.date)}) — ${r.title}`;
+      document.getElementById('fuAuthor').value = localStorage.getItem('artisan_user_name') || '';
+      document.getElementById('fuMessage').value = '';
+      const logs = r.followupLogs || [];
+      document.getElementById('followupHistoryList').innerHTML = logs.length
+        ? logs.map(l => `<div class="fu-log"><span><b>${escapeHtml(l.author)}</b> ${escapeHtml(l.message)}</span><span class="muted t-mono">${escapeHtml(l.createdAtStr||'')}</span></div>`).join('')
+        : '<div class="t-meta muted" style="text-align:center;">無紀錄</div>';
+      document.getElementById('followupModal').classList.remove('hidden');
+    }
+    function closeFollowupModal() { document.getElementById('followupModal').classList.add('hidden'); }
+
+    async function submitFollowupLog() {
+      const author = document.getElementById('fuAuthor').value.trim(), message = document.getElementById('fuMessage').value.trim();
+      if (!author || !message) return showToast('請填寫名字及留言');
+      localStorage.setItem('artisan_user_name', author);
+      const now = new Date(), timeStr = `${now.getMonth()+1}/${now.getDate()} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      const rep = reports.find(r => r.id === followupTargetId);
+      const upd = { followupLogs: [...(rep.followupLogs||[]), { id: 'log-'+Date.now(), author, message, createdAtStr: timeStr }], updatedAt: Date.now() };
+      await db.collection(COLLECTION_NAME).doc(followupTargetId).update(upd);
+      closeFollowupModal(); showToast('已同步');
+    }
+
+    function renderDocRows() {
+      const c = document.getElementById('docRowsContainer');
+      if (!draftDocs.length) { c.innerHTML = ''; return; }
+      c.innerHTML = draftDocs.map((d, i) => {
+        const editUrl = getAlbumEditUrl(d.url);
+        return `<div class="doc-edit-row">
+          <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" placeholder="文件名稱" />
+          <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" placeholder="網址連結" />
+          ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改圖</a>` : `<span></span>`}
+          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger"><span class="btn-sym">✕</span></button>
+        </div>`;
+      }).join('');
+    }
+    function addDocRow(name = '', url = '') { draftDocs.push({ name, url }); renderDocRows(); }
+    function removeDocRow(i) { draftDocs.splice(i, 1); renderDocRows(); }
+    function handlePdfUpload(e) {
+      Array.from(e.target.files || []).forEach(f => {
+        if (f.size > 650 * 1024) return showToast('超過 650KB');
+        const rd = new FileReader(); rd.onload = ev => { addDocRow(f.name, ev.target.result); showToast('已載入'); }; rd.readAsDataURL(f);
+      });
+      e.target.value = '';
+    }
+
+    function openEditorForSite(site, ass) {
+      openEditor(null);
+      document.getElementById('editorModalTitle').textContent = '新增工作';
+      document.getElementById('fieldSite').value = site;
+      document.getElementById('fieldAssignee').value = ass || '';
+      document.getElementById('fieldIsFutureDiary').checked = false;
+      document.getElementById('siteSuggestBox').classList.add('hidden');
+    }
+
+    /* 支援「未定日期」直接傳空字串留白日期欄 */
+    function openEditorForDate(dateStr) {
+      openEditor(null);
+      document.getElementById('editorModalTitle').textContent = dateStr ? '新增工作' : '新增未定日期工作';
+      document.getElementById('fieldIsFutureDiary').checked = false;
+      document.getElementById('fieldDate').value = (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) ? dateStr : '';
+    }
+
+    async function openEditor(id = null) {
+      editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
+      currentTool = 'move';
+      document.getElementById('annotationWorkspace').classList.add('hidden');
+      document.getElementById('siteSuggestBox').classList.add('hidden');
+      document.getElementById('editorModal').classList.remove('hidden');
+
+      if (id) {
+        const r = reports.find(x => x.id === id); if (!r) return;
+        document.getElementById('editorModalTitle').textContent = '詳編';
+        document.getElementById('fieldSite').value = r.site || ''; document.getElementById('fieldAssignee').value = r.assignee || '';
+        document.getElementById('fieldDate').value = isUndatedEntry(r) ? '' : (r.date || '');
+        const pt = parseTimeRange(r.timeRange);
+        document.getElementById('fieldTimeStart').value = pt.start;
+        document.getElementById('fieldTimeEnd').value = pt.end;
+        document.getElementById('fieldPeriodLabel').value = '';
+        document.getElementById('fieldIsFutureDiary').checked = Boolean(r.isFutureDiary || r.isUpcoming);
+        document.getElementById('fieldTitle').value = r.title || '';
+        document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
+        draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
+        renderDocRows();
+
+        const loadedPhotos = await fetchFullPhotosForReport(r);
+        draftPhotos = JSON.parse(JSON.stringify(loadedPhotos));
+        originalPhotoIds = draftPhotos.map(p => p.id);
+      } else {
+        document.getElementById('editorModalTitle').textContent = '即將';
+        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
+        document.getElementById('fieldIsFutureDiary').checked = true;
+        const curFilter = document.getElementById('siteFilter').value;
+        if (curFilter && curFilter !== 'ALL') {
+          document.getElementById('fieldSite').value = curFilter;
+          const found = reports.find(r => r.site === curFilter && r.assignee);
+          if (found) document.getElementById('fieldAssignee').value = found.assignee;
+        }
+        document.getElementById('fieldDate').value = '';
+        renderDocRows();
+      }
+      renderPhotoThumbList();
+      if (draftPhotos.length) selectPhotoForAnnotation(0);
+    }
+    function closeEditor() { document.getElementById('editorModal').classList.add('hidden'); }
+
+    function handlePhotoUpload(e) {
+      const files = Array.from(e.target.files || []);
+      files.forEach(processImageFile);
+      e.target.value = '';
+    }
+
+    function processImageFile(file) {
+      if (!file) return;
+      const rd = new FileReader();
+      rd.onload = ev => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height, m = 1150;
+          if (w > m || h > m) { if (w > h) { h = Math.round(h * m / w); w = m; } else { w = Math.round(w * m / h); h = m; } }
+          const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h);
+          const b64 = c.toDataURL('image/jpeg', 0.78);
+          draftPhotos.push({ id: 'ph_' + Date.now() + '_' + Math.random().toString(36).slice(2,6), base64Raw: b64, base64Annotated: b64, shapes: [], note: '' });
+          renderPhotoThumbList();
+          selectPhotoForAnnotation(draftPhotos.length - 1);
+          showToast(`第 ${draftPhotos.length} 張`);
+        };
+        img.src = ev.target.result;
+      };
+      rd.readAsDataURL(file);
+    }
+
+    function createBlankSketch() {
+      const c = document.createElement('canvas'); c.width = 900; c.height = 620;
+      const cx = c.getContext('2d'); cx.fillStyle = '#FFF'; cx.fillRect(0,0,900,620);
+      const b64 = c.toDataURL('image/jpeg', 0.85);
+      draftPhotos.push({ id: 'sk_' + Date.now(), base64Raw: b64, base64Annotated: b64, shapes: [], note: '' });
+      renderPhotoThumbList(); selectPhotoForAnnotation(draftPhotos.length - 1);
+    }
+
+    function makeSmallThumb(dataUrl) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height, m = 180;
+          if (w > m || h > m) { if (w > h) { h = Math.round(h * m / w); w = m; } else { w = Math.round(w * m / h); h = m; } }
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(c.toDataURL('image/jpeg', 0.6));
+        };
+        img.onerror = () => resolve('');
+        img.src = dataUrl;
+      });
+    }
+
+    function renderPhotoThumbList() {
+      document.getElementById('photoCountHint').textContent = `${draftPhotos.length} 張`;
+      document.getElementById('photoThumbList').innerHTML = draftPhotos.map((p, i) => `
+        <div onclick="selectPhotoForAnnotation(${i})" style="border:2px solid ${i===activePhotoIndex?'#EA580C':'#CBD5E1'};border-radius:3px;overflow:hidden;cursor:pointer;background:#FFF;">
+          <img src="${p.base64Annotated||p.base64Raw}" style="width:100%;height:72px;object-fit:cover;display:block;" />
+          <div class="row-between t-meta" style="padding:2px 5px;"><b>#${i+1}</b><button type="button" onclick="removeDraftPhoto(event,${i})" class="btn-link danger"><span class="btn-sym">✕</span></button></div>
+        </div>`).join('');
+    }
+
+    function removeDraftPhoto(e, i) {
+      e.stopPropagation();
+      if (!confirmYAction(`刪除第 #${i + 1} 張？`)) return;
+      draftPhotos.splice(i, 1); selectedShapeIdx = -1;
+      activePhotoIndex = draftPhotos.length ? Math.min(i, draftPhotos.length - 1) : -1;
+      renderPhotoThumbList();
+      if (activePhotoIndex >= 0) selectPhotoForAnnotation(activePhotoIndex);
+      else document.getElementById('annotationWorkspace').classList.add('hidden');
+    }
+
+    function selectPhotoForAnnotation(i) {
+      activePhotoIndex = i; selectedShapeIdx = -1; updateSelectionUI();
+      const p = draftPhotos[i]; if (!p) return;
+      if (!p.base64Raw) p.base64Raw = p.base64Annotated;
+      document.getElementById('annotationWorkspace').classList.remove('hidden');
+      document.getElementById('currentPhotoNote').value = p.note || '';
+      renderPhotoThumbList();
+      baseImageObj = new Image();
+      baseImageObj.onload = () => { canvas.width = baseImageObj.width; canvas.height = baseImageObj.height; redrawCanvas(false); };
+      baseImageObj.src = p.base64Raw;
+    }
+
+    function syncCurrentPhotoNote() { if (activePhotoIndex >= 0) draftPhotos[activePhotoIndex].note = document.getElementById('currentPhotoNote').value; }
+
+    function setTool(t) {
+      currentTool = t;
+      ['move','freehand','circle','arrow','text'].forEach(k => document.getElementById('tool-'+k).classList.toggle('btn-active', k===t));
+      canvas.style.cursor = t === 'move' ? 'grab' : 'crosshair';
+      if (t !== 'move') { selectedShapeIdx = -1; redrawCanvas(false); }
+      updateSelectionUI();
+    }
+
+    function updateSelectionUI() {
+      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
+      const sel = selectedShapeIdx >= 0 ? shapes[selectedShapeIdx] : null;
+      document.getElementById('delSelectedShapeBtn').classList.toggle('hidden', !sel);
+      const showTextBar = currentTool === 'text' || (sel && sel.type === 'text');
+      document.getElementById('textInputBar').classList.toggle('hidden', !showTextBar);
+      if (sel && sel.type === 'text') {
+        document.getElementById('canvasTextInput').value = sel.text || '';
+        if (sel.scale) document.getElementById('fontSizeSelect').value = String(sel.scale);
+      }
+    }
+
+    function onFontSizeChange() {
+      currentFontScale = parseFloat(document.getElementById('fontSizeSelect').value) || 0.026;
+      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
+      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]?.type === 'text') {
+        shapes[selectedShapeIdx].scale = currentFontScale;
+        redrawCanvas(true);
+      }
+    }
+
+    function onTextInputLiveEdit() {
+      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
+      if (currentTool === 'move' && selectedShapeIdx >= 0 && shapes[selectedShapeIdx]?.type === 'text') {
+        shapes[selectedShapeIdx].text = document.getElementById('canvasTextInput').value;
+        redrawCanvas(true);
+      }
+    }
+
+    function setColor(c, btnEl) {
+      currentColor = c;
+      document.querySelectorAll('#annotationWorkspace .color-dot').forEach(b => b.classList.remove('active-color'));
+      if (btnEl) btnEl.classList.add('active-color');
+      const shapes = activePhotoIndex >= 0 ? (draftPhotos[activePhotoIndex]?.shapes || []) : [];
+      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]) {
+        shapes[selectedShapeIdx].color = c;
+        redrawCanvas(true);
+      }
+    }
+
+    function deleteSelectedShape() {
+      if (activePhotoIndex < 0 || selectedShapeIdx < 0) return;
+      draftPhotos[activePhotoIndex].shapes.splice(selectedShapeIdx, 1);
+      selectedShapeIdx = -1;
+      updateSelectionUI();
+      redrawCanvas(true);
+    }
+
+    function undoShape() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes.pop(); selectedShapeIdx = -1; updateSelectionUI(); redrawCanvas(true); } }
+    function clearShapes() { if (activePhotoIndex >= 0) { draftPhotos[activePhotoIndex].shapes = []; selectedShapeIdx = -1; updateSelectionUI(); redrawCanvas(true); } }
+
+    function getShapeBounds(c, s) {
+      if (s.type === 'text') {
+        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.026)));
+        c.save(); c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text || '').width; c.restore();
+        return { x1: s.x - 10, y1: s.y - fs - 4, x2: s.x + w + 10, y2: s.y + 10 };
+      }
+      if (s.type === 'freehand' && s.points?.length) {
+        const xs = s.points.map(p => p.x), ys = s.points.map(p => p.y);
+        return { x1: Math.min(...xs) - 10, y1: Math.min(...ys) - 10, x2: Math.max(...xs) + 10, y2: Math.max(...ys) + 10 };
+      }
+      return { x1: Math.min(s.x1, s.x2) - 10, y1: Math.min(s.y1, s.y2) - 10, x2: Math.max(s.x1, s.x2) + 10, y2: Math.max(s.y1, s.y2) + 10 };
+    }
+
+    function hitTestShape(shapes, x, y) {
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        const b = getShapeBounds(ctx, shapes[i]);
+        if (x >= b.x1 && x <= b.x2 && y >= b.y1 && y <= b.y2) return i;
+      }
+      return -1;
+    }
+
+    function moveShapeBy(s, dx, dy) {
+      if (s.type === 'text') { s.x += dx; s.y += dy; }
+      else if (s.type === 'freehand' && s.points) { s.points.forEach(p => { p.x += dx; p.y += dy; }); }
+      else { s.x1 += dx; s.y1 += dy; s.x2 += dx; s.y2 += dy; }
+    }
+
+    function getCoords(e) { const r = canvas.getBoundingClientRect(), cx = e.touches ? e.touches[0].clientX : e.clientX, cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: (cx - r.left) * (canvas.width / r.width), y: (cy - r.top) * (canvas.height / r.height) }; }
+    canvas.addEventListener('mousedown', pDown); canvas.addEventListener('mousemove', pMove); canvas.addEventListener('mouseup', pUp);
+    canvas.addEventListener('touchstart', pDown, { passive: false }); canvas.addEventListener('touchmove', pMove, { passive: false }); canvas.addEventListener('touchend', pUp);
+
+    function pDown(e) {
+      if (activePhotoIndex < 0) return; e.preventDefault();
+      const pos = getCoords(e);
+      const shapes = draftPhotos[activePhotoIndex].shapes || [];
+
+      if (currentTool === 'move') {
+        const hit = hitTestShape(shapes, pos.x, pos.y);
+        selectedShapeIdx = hit;
+        updateSelectionUI();
+        redrawCanvas(false);
+        if (hit >= 0) { isDraggingShape = true; lastDragX = pos.x; lastDragY = pos.y; }
+        return;
+      }
+
+      if (currentTool === 'text') {
+        const hit = hitTestShape(shapes, pos.x, pos.y);
+        if (hit >= 0 && shapes[hit].type === 'text') {
+          setTool('move'); selectedShapeIdx = hit; updateSelectionUI(); redrawCanvas(false);
+          isDraggingShape = true; lastDragX = pos.x; lastDragY = pos.y;
+          return;
+        }
+        const txt = document.getElementById('canvasTextInput').value.trim();
+        if (!txt) return showToast('請先輸入文字');
+        shapes.push({ type: 'text', x: pos.x, y: pos.y, text: txt, color: currentColor, scale: currentFontScale });
+        document.getElementById('canvasTextInput').value = '';
+        setTool('move');
+        selectedShapeIdx = shapes.length - 1;
+        updateSelectionUI();
+        redrawCanvas(true);
+        return;
+      }
+
+      isDrawing = true; startX = pos.x; startY = pos.y;
+      if (currentTool === 'freehand') currentStroke = [pos];
+    }
+
+    function pMove(e) {
+      if (activePhotoIndex < 0) return;
+      if (isDraggingShape && selectedShapeIdx >= 0) {
+        e.preventDefault();
+        const pos = getCoords(e);
+        moveShapeBy(draftPhotos[activePhotoIndex].shapes[selectedShapeIdx], pos.x - lastDragX, pos.y - lastDragY);
+        lastDragX = pos.x; lastDragY = pos.y;
+        redrawCanvas(false);
+        return;
+      }
+      if (!isDrawing) return; e.preventDefault();
+      const pos = getCoords(e); redrawCanvas(false);
+      if (currentTool === 'freehand') { currentStroke.push(pos); drawShape(ctx, { type: 'freehand', points: currentStroke, color: currentColor }); }
+      else drawShape(ctx, { type: currentTool, x1: startX, y1: startY, x2: pos.x, y2: pos.y, color: currentColor });
+    }
+
+    function pUp(e) {
+      if (isDraggingShape) { isDraggingShape = false; redrawCanvas(true); return; }
+      if (!isDrawing || activePhotoIndex < 0) return; isDrawing = false;
+      if (currentTool === 'freehand') { if (currentStroke.length > 1) draftPhotos[activePhotoIndex].shapes.push({ type: 'freehand', points: currentStroke, color: currentColor }); currentStroke = []; redrawCanvas(true); return; }
+      const r = canvas.getBoundingClientRect(), cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX, cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const ex = (cx - r.left) * (canvas.width / r.width), ey = (cy - r.top) * (canvas.height / r.height);
+      if (Math.hypot(ex - startX, ey - startY) > 6) draftPhotos[activePhotoIndex].shapes.push({ type: currentTool, x1: startX, y1: startY, x2: ex, y2: ey, color: currentColor });
+      redrawCanvas(true);
+    }
+
+    function redrawCanvas(save = false) {
+      if (!baseImageObj || activePhotoIndex < 0) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.drawImage(baseImageObj, 0, 0);
+      const shapes = draftPhotos[activePhotoIndex].shapes || [];
+      shapes.forEach(s => drawShape(ctx, s));
+      if (save) {
+        draftPhotos[activePhotoIndex].base64Annotated = canvas.toDataURL('image/jpeg', 0.8);
+        renderPhotoThumbList();
+      }
+      if (selectedShapeIdx >= 0 && shapes[selectedShapeIdx]) {
+        const b = getShapeBounds(ctx, shapes[selectedShapeIdx]);
+        ctx.save();
+        ctx.strokeStyle = '#EA580C';
+        ctx.lineWidth = Math.max(2, Math.round(canvas.width * 0.003));
+        ctx.setLineDash([8, 6]);
+        ctx.strokeRect(b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1);
+        ctx.restore();
+      }
+    }
+
+    function drawShape(c, s) {
+      c.save(); const lw = Math.max(4, Math.round(canvas.width * 0.005)); c.strokeStyle = s.color; c.fillStyle = s.color; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+      if (s.type === 'freehand' && s.points?.length > 1) { c.beginPath(); c.moveTo(s.points[0].x, s.points[0].y); s.points.slice(1).forEach(p => c.lineTo(p.x, p.y)); c.stroke(); }
+      else if (s.type === 'circle') { c.beginPath(); c.ellipse((s.x1+s.x2)/2, (s.y1+s.y2)/2, Math.max(Math.abs(s.x2-s.x1)/2,4), Math.max(Math.abs(s.y2-s.y1)/2,4), 0, 0, Math.PI*2); c.stroke(); }
+      else if (s.type === 'arrow') { const hl = lw*4, a = Math.atan2(s.y2-s.y1, s.x2-s.x1); c.beginPath(); c.moveTo(s.x1,s.y1); c.lineTo(s.x2,s.y2); c.stroke(); c.beginPath(); c.moveTo(s.x2,s.y2); c.lineTo(s.x2-hl*Math.cos(a-Math.PI/6), s.y2-hl*Math.sin(a-Math.PI/6)); c.lineTo(s.x2-hl*Math.cos(a+Math.PI/6), s.y2-hl*Math.sin(a+Math.PI/6)); c.closePath(); c.fill(); }
+      else if (s.type === 'text') {
+        const fs = Math.max(16, Math.round(canvas.width * (s.scale || 0.026)));
+        c.font = `bold ${fs}px sans-serif`; const w = c.measureText(s.text).width;
+        c.fillStyle = 'rgba(15,23,42,0.85)'; c.fillRect(s.x-8, s.y-fs, w+16, fs+10);
+        c.fillStyle = s.color && s.color.includes('234,179,8') ? '#FEF08A' : '#FFF';
+        c.strokeStyle = s.color; c.lineWidth = 2; c.strokeRect(s.x-8, s.y-fs, w+16, fs+10);
+        c.fillText(s.text, s.x, s.y);
+      }
+      c.restore();
+    }
+
+    async function saveReport() {
+      const site = document.getElementById('fieldSite').value.trim(), title = document.getElementById('fieldTitle').value.trim();
+      if (!site || !title) return showToast('請填寫單位及標題');
+      const btn = document.getElementById('saveReportBtn'); btn.disabled = true; btn.textContent = '同步中...';
+
+      const docId = editingReportId || ('rep-' + Date.now()), ex = reports.find(r => r.id === docId);
+      const dateVal = (document.getElementById('fieldDate').value || '').trim();
+      const isFutureVal = Boolean(document.getElementById('fieldIsFutureDiary')?.checked);
+      const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件', url: d.url.trim() }));
+
+      try {
+        const photoMeta = [];
+        for (let i = 0; i < draftPhotos.length; i++) {
+          const p = draftPhotos[i];
+          const pid = p.id || (`ph_${docId}_${i}_${Date.now()}`);
+          p.id = pid;
+          const rendered = p.base64Annotated || p.base64Raw;
+          const smallThumb = await makeSmallThumb(rendered);
+
+          await db.collection(PHOTOS_COL).doc(pid).set({
+            reportId: docId,
+            order: i,
+            base64Raw: (p.shapes && p.shapes.length > 0) ? p.base64Raw : '',
+            base64Annotated: rendered,
+            shapes: p.shapes || [],
+            note: p.note || '',
+            updatedAt: Date.now()
+          });
+          photoMeta.push({ id: pid, thumb: smallThumb, note: p.note || '' });
+        }
+
+        const curIds = photoMeta.map(m => m.id);
+        for (const oldId of originalPhotoIds) {
+          if (!curIds.includes(oldId)) await db.collection(PHOTOS_COL).doc(oldId).delete().catch(() => {});
+        }
+
+        await db.collection(COLLECTION_NAME).doc(docId).set({
+          site, assignee: document.getElementById('fieldAssignee').value.trim(),
+          date: dateVal,
+          timeRange: buildEditorTimeValue(),
+          isFutureDiary: isFutureVal,
+          isUpcoming: isFutureVal,
+          title,
+          docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
+          summary: document.getElementById('fieldSummary').value.trim(),
+          followup: document.getElementById('fieldFollowup').value.trim(),
+          followupLogs: ex ? (ex.followupLogs || []) : [],
+          photoMeta,
+          photos: [],
+          createdAt: ex ? ex.createdAt : Date.now(), updatedAt: Date.now()
+        });
+        closeEditor(); showToast(`已儲存（${photoMeta.length}張）`);
+      } catch (e) {
+        console.error(e);
+        showToast('儲存失敗：' + e.message);
+      } finally { btn.disabled = false; btn.textContent = '儲存'; }
+    }
+
+    async function deleteReport(id) {
+      if (!confirmYAction('刪除此紀錄？')) return;
+      const r = reports.find(x => x.id === id);
+      if (r && Array.isArray(r.photoMeta)) {
+        r.photoMeta.forEach(m => db.collection(PHOTOS_COL).doc(m.id).delete().catch(() => {}));
+      }
+      await db.collection(COLLECTION_NAME).doc(id).delete();
+      showToast('已刪除');
+    }
+
+    function escapeHtml(s) { return !s ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function escapeAttr(s) { return escapeHtml(s).replace(/'/g, "\\'"); }
+
+    bootApp();
+  </script>
+</body>
+</html>
