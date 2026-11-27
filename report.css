@@ -1,4 +1,4 @@
-/* 視角切換列：時間表（預設入口） / 工作紀錄 / 交代行程 */
+/* 視角切換列：時間表（預設入口） / 工作紀錄 / 交代行程 */ 
 .view-switch-bar {
   display: inline-flex; align-items: center; gap: 2px;
   background: #E2E8F0; padding: 2px; border-radius: 4px;
