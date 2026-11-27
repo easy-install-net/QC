@@ -1442,7 +1442,6 @@
 
       const chipsHtml = siteChipsExpanded
         ? `<div class="site-quick-list">
-            <button type="button" onclick="showAllUnitsDirect()" class="site-chip-btn ${siteVal === 'ALL' ? 'active' : ''}">全部（${allSites.length}）</button>
             ${allSites.map(s => {
               const encS = encodeURIComponent(s);
               return `<button type="button" onclick="toggleSiteFilterByAddress(decodeURIComponent('${encS}'))" class="site-chip-btn ${siteVal === s ? 'active' : ''}">${escapeHtml(s)}</button>`;
