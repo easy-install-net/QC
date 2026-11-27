@@ -297,6 +297,7 @@
     let expandedDetailIds = new Set();
     let inlineEditId = null, editingReportId = null, followupTargetId = null;
     let managingOldSite = '';
+    let forceUpcomingNoDate = false;
 
     let schedulePage = 0;
     let scheduleRangeStart = '';
@@ -904,6 +905,7 @@
         updatedAt: Date.now()
       });
       inlineEditId = null;
+      renderScheduleTimeline();
       showToast('已原地更新');
     }
 
@@ -1223,7 +1225,7 @@
       const eName = encodeURIComponent(fileName || '');
       const eUrl = encodeURIComponent(fullUrl);
 
-      document.getElementById('shareModalTitle').textContent = `單文件分享`;
+      document.getElementById('shareModalTitle').textContent = `文件分享`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
           <div class="t-meta" style="margin-bottom:6px;"><b>${escapeHtml(fileName || '附件')}</b></div>
@@ -1501,8 +1503,8 @@
                 ${!IS_PUBLIC ? `<div class="doc-actions no-print">
                   ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="card-action-link orange">改</a>` : ''}
                   <label class="card-action-link slate" style="cursor:pointer;"><span>換</span><input type="file" class="hidden" onchange="replaceReportDoc('${r.id}',${dIdx},event)" /></label>
-                  ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="card-action-link blue">單文件分享</button>` : ''}
-                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="card-action-link red">刪除X</button>
+                  ${d.url ? `<button type="button" onclick="openFileShareModal('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${escapeAttr(d.name||'附件')}','${escapeAttr(d.url)}')" class="card-action-link blue">文件分享</button>` : ''}
+                  <button type="button" onclick="removeReportDoc('${r.id}',${dIdx})" class="box-cross-btn" title="刪除">✕</button>
                 </div>` : ''}
               </div>`;
             }).join('')}
@@ -1512,12 +1514,10 @@
 
           const actionGroupHtml = !IS_PUBLIC ? `
             <div class="record-actions-bar no-print">
-              <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="card-action-link orange">修繕</button>
-              <button type="button" onclick="openAlbumWorkspace('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${r.id}')" class="card-action-link blue">截圖</button>
               <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green">詳編</button>
               <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate">留言</button>
               <button type="button" onclick="openSingleShareModal('${r.id}')" class="card-action-link blue">單分享</button>
-              <button type="button" onclick="deleteReport('${r.id}')" class="card-action-link red">刪除X</button>
+              <button type="button" onclick="deleteReport('${r.id}')" class="box-cross-btn" title="刪除">✕</button>
             </div>
           ` : '';
 
@@ -1603,7 +1603,7 @@
           <input type="text" value="${escapeHtml(d.name)}" oninput="draftDocs[${i}].name=this.value" class="input-ui t-meta" />
           <input type="text" value="${escapeHtml(d.url)}" oninput="draftDocs[${i}].url=this.value" class="input-ui t-meta" />
           ${editUrl ? `<a href="${escapeHtml(editUrl)}" target="_blank" class="btn-link orange">改</a>` : `<span></span>`}
-          <button type="button" onclick="removeDocRow(${i})" class="btn-link danger">✕</button>
+          <button type="button" onclick="removeDocRow(${i})" class="box-cross-btn" title="刪除">✕</button>
         </div>`;
       }).join('');
     }
@@ -1618,7 +1618,7 @@
     }
 
     function openEditorForUpcomingNewUnit() {
-      openEditor(null);
+      openEditor(null, { forceNoDate: true });
       document.getElementById('fieldDate').value = '';
       document.getElementById('fieldIsFutureDiary').checked = true;
       document.getElementById('editorModalTitle').textContent = '新增即將新單位（未有日期）';
@@ -1636,8 +1636,10 @@
       if (dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) document.getElementById('fieldDate').value = dateStr;
     }
 
-    async function openEditor(id = null) {
-      editingReportId = id; draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
+    async function openEditor(id = null, opts = {}) {
+      editingReportId = id;
+      forceUpcomingNoDate = Boolean(opts.forceNoDate);
+      draftPhotos = []; draftDocs = []; activePhotoIndex = -1; selectedShapeIdx = -1; originalPhotoIds = [];
       currentTool = 'move';
       document.getElementById('annotationWorkspace').classList.add('hidden');
       document.getElementById('siteSuggestBox').classList.add('hidden');
@@ -1672,13 +1674,16 @@
           const found = reports.find(r => r.site === curFilter && r.assignee);
           if (found) document.getElementById('fieldAssignee').value = found.assignee;
         }
-        document.getElementById('fieldDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('fieldDate').value = forceUpcomingNoDate ? '' : new Date().toISOString().split('T')[0];
         renderDocRows();
       }
       renderPhotoThumbList();
       if (draftPhotos.length) selectPhotoForAnnotation(0);
     }
-    function closeEditor() { document.getElementById('editorModal').classList.add('hidden'); }
+    function closeEditor() {
+      forceUpcomingNoDate = false;
+      document.getElementById('editorModal').classList.add('hidden');
+    }
 
     function handlePhotoUpload(e) {
       const files = Array.from(e.target.files || []);
@@ -1734,7 +1739,7 @@
       document.getElementById('photoThumbList').innerHTML = draftPhotos.map((p, i) => `
         <div onclick="selectPhotoForAnnotation(${i})" style="border:2px solid ${i===activePhotoIndex?'#EA580C':'#CBD5E1'};overflow:hidden;cursor:pointer;background:#FFF;">
           <img src="${p.base64Annotated||p.base64Raw}" style="width:100%;height:72px;object-fit:cover;display:block;" />
-          <div class="row-between t-meta" style="padding:2px 5px;"><span>#${i+1}</span><button type="button" onclick="removeDraftPhoto(event,${i})" class="btn-link danger">✕</button></div>
+          <div class="row-between t-meta" style="padding:2px 5px;"><span>#${i+1}</span><button type="button" onclick="removeDraftPhoto(event,${i})" class="box-cross-btn" title="刪除">✕</button></div>
         </div>`).join('');
     }
 
@@ -1957,7 +1962,7 @@
 
       const docId = editingReportId || ('rep-' + Date.now()), ex = reports.find(r => r.id === docId);
       const isNewSite = !reports.some(r => (r.site || '').trim() === site);
-      const isFuture = Boolean(document.getElementById('fieldIsFutureDiary')?.checked);
+      const isFuture = Boolean(document.getElementById('fieldIsFutureDiary')?.checked) || forceUpcomingNoDate;
       const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件', url: d.url.trim() }));
 
       try {
@@ -1986,7 +1991,8 @@
           if (!curIds.includes(oldId)) await db.collection(PHOTOS_COL).doc(oldId).delete().catch(() => {});
         }
 
-        const dateVal = document.getElementById('fieldDate').value || (isFuture ? '' : new Date().toISOString().split('T')[0]);
+        const rawDateInput = (document.getElementById('fieldDate').value || '').trim();
+        const dateVal = rawDateInput || (isFuture ? '' : new Date().toISOString().split('T')[0]);
 
         await db.collection(COLLECTION_NAME).doc(docId).set({
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
