@@ -47,9 +47,9 @@
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
       <button type="button" onclick="openEditorForUpcomingNewUnit()" class="btn-orange">+ 即將新單位</button>
+      <button type="button" onclick="showAllUnitsDirect()" class="btn-secondary">全部顯示</button>
       <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
         <option value="ALL">全部單位</option>
-        <option value="即將">即將</option>
       </select>
       <div class="search-eight-wrap">
         <input type="text" id="searchInput" oninput="onSearchInput()" class="search-eight-input" placeholder="搜尋..." />
@@ -81,7 +81,7 @@
             <div><label class="field-label">標題 *</label><input type="text" id="fieldTitle" class="input-ui" /></div>
           </div>
           <div class="grid-2" style="margin-top:6px;">
-            <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
+            <div><label class="field-label">日期（留空＝未有日期）</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
               <div class="row-between" style="margin-bottom:3px;">
                 <label class="field-label" style="margin-bottom:0;">開始 / 小時 → 完工時</label>
@@ -382,7 +382,7 @@
     }
 
     function formatMonthDayWeekday(dateStr) {
-      if (!dateStr || dateStr === '未定日期') return dateStr || '未定日期';
+      if (!dateStr || dateStr === '未定日期') return '未定日期';
       const m = String(dateStr).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
       if (!m) return String(dateStr);
       const yr = parseInt(m[1], 10);
@@ -524,6 +524,18 @@
       }
     });
 
+    function showAllUnitsDirect() {
+      updateSiteFilterOptions();
+      const sel = document.getElementById('siteFilter');
+      if (sel) sel.value = 'ALL';
+      const sInp = document.getElementById('searchInput');
+      if (sInp) sInp.value = '';
+      inlineEditId = null;
+      schedulePage = 0;
+      renderCurrentView();
+      showToast('全部顯示');
+    }
+
     function jumpToSingleSite(siteName) {
       if (!siteName) return;
       updateSiteFilterOptions();
@@ -535,9 +547,8 @@
     }
 
     function toggleSiteFilterByAddress(siteName) {
-      if (!siteName) return;
       const sel = document.getElementById('siteFilter');
-      if (sel.value === siteName) {
+      if (!siteName || sel.value === siteName) {
         sel.value = 'ALL';
         renderReportList();
         showToast('全部單位');
@@ -552,7 +563,8 @@
 
     function onSiteFilterChange() {
       const val = document.getElementById('siteFilter').value;
-      if (val && val !== 'ALL' && val !== '即將') expandedSites.add(val);
+      if (val && val !== 'ALL') expandedSites.add(val);
+      inlineEditId = null;
       schedulePage = 0;
       renderCurrentView();
     }
@@ -783,14 +795,11 @@
 
       return reports.filter(r => {
         if (!r.site && !r.title) return false;
-        if (siteVal === '即將') {
-          if (!isFutureDiaryEntry(r)) return false;
-        } else if (siteVal !== 'ALL' && r.site !== siteVal) {
+        if (siteVal !== 'ALL' && r.site !== siteVal) {
           return false;
         }
         if (!SINGLE_SITE && kw) {
-          const futureTag = isFutureDiaryEntry(r) ? '即將' : '';
-          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${futureTag} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
+          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -848,16 +857,6 @@
       renderCurrentView();
     }
 
-    function getScopedRangeSite(visibleDays) {
-      const selSiteVal = document.getElementById('siteFilter')?.value || '';
-      if (selSiteVal && selSiteVal !== 'ALL' && selSiteVal !== '即將') return selSiteVal;
-      for (const g of visibleDays) {
-        const hit = g.items.find(r => (r.site || '').trim());
-        if (hit) return hit.site.trim();
-      }
-      return '';
-    }
-
     function renderScheduleDetailHtml(r) {
       const docs = getDocsList(r).filter(d => d.name || d.url);
       const thumbs = getReportThumbs(r);
@@ -883,11 +882,72 @@
       </div>`;
     }
 
+    function startScheduleInlineEdit(id) {
+      inlineEditId = id;
+      renderScheduleTimeline();
+    }
+
+    async function saveScheduleInlineEdit(id) {
+      const title = document.getElementById(`se-title-${id}`)?.value.trim();
+      if (!title) return showToast('標題不能為空');
+      const dateVal = document.getElementById(`se-date-${id}`)?.value || '';
+      const timeVal = formatTimeRange(
+        document.getElementById(`se-ts-${id}`)?.value || '',
+        document.getElementById(`se-te-${id}`)?.value || ''
+      );
+      const summaryVal = document.getElementById(`se-sum-${id}`)?.value.trim() || '';
+      await db.collection(COLLECTION_NAME).doc(id).update({
+        date: dateVal,
+        timeRange: timeVal,
+        title,
+        summary: summaryVal,
+        updatedAt: Date.now()
+      });
+      inlineEditId = null;
+      showToast('已原地更新');
+    }
+
     function renderScheduleSlotRow(r) {
       const tStr = (r.timeRange || '').trim() || '全日';
       const sName = r.site || '未分類';
       const encSite = encodeURIComponent(sName);
       const isDetailOpen = expandedDetailIds.has(r.id);
+
+      if (!IS_PUBLIC && inlineEditId === r.id) {
+        const pt = parseTimeRange(r.timeRange);
+        const tsId = `se-ts-${r.id}`;
+        const teId = `se-te-${r.id}`;
+        return `<div class="schedule-slot-row">
+          <div class="schedule-time-col">
+            <span class="t-mono schedule-time-tag">${escapeHtml(tStr)}</span>
+          </div>
+          <div class="schedule-slot-main">
+            <div class="inline-edit-form">
+              <div class="inline-edit-top">
+                <input type="date" id="se-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
+                <div class="inline-edit-time-wrap">
+                  <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
+                  <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="完工 / 小數" />
+                  <span class="mini-pair">
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','AM')" class="mini-pair-btn">上午</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','PM')" class="mini-pair-btn">下午</button>
+                  </span>
+                  <span class="mini-pair">
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','00')" class="mini-pair-btn">:00</button>
+                    <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','30')" class="mini-pair-btn">:30</button>
+                  </span>
+                </div>
+                <input type="text" id="se-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
+              </div>
+              <textarea id="se-sum-${r.id}" rows="2" class="input-ui t-meta" placeholder="內容">${escapeHtml(r.summary||'')}</textarea>
+              <div class="row" style="justify-content:flex-end;gap:10px;">
+                <button type="button" onclick="cancelInlineEdit()" class="card-action-link slate">取消</button>
+                <button type="button" onclick="saveScheduleInlineEdit('${r.id}')" class="card-action-link orange">儲存</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }
 
       return `<div class="schedule-slot-row">
         <div class="schedule-time-col">
@@ -901,14 +961,10 @@
             ${!IS_PUBLIC ? `<button type="button" onclick="startScheduleInlineEdit('${r.id}')" class="card-action-link green">快改</button>` : ''}
           </div>
           ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+          ${r.summary ? `<div class="entry-summary">${escapeHtml(r.summary)}</div>` : ''}
           ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
         </div>
       </div>`;
-    }
-
-    function startScheduleInlineEdit(id) {
-      inlineEditId = id;
-      switchMainView('reports');
     }
 
     function renderScheduleTimeline() {
@@ -928,8 +984,6 @@
         ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
         : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
 
-      const scopedSite = getScopedRangeSite(visibleDays);
-
       const toolbarHtml = `<div class="schedule-toolbar no-print">
         <div class="row">
           <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">時段</button>
@@ -938,9 +992,6 @@
             <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
             <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
           ` : ''}
-        </div>
-        <div class="row">
-          <button type="button" onclick="${scopedSite ? `openScopedRangeShareModal('${escapeAttr(scopedSite)}')` : `showToast('暫無區段單位可分享')`}" class="btn-orange">分享</button>
         </div>
       </div>`;
 
@@ -969,6 +1020,7 @@
               <span class="t-meta muted">${g.items.length} 個地盤</span>
               ${!IS_PUBLIC ? `<button type="button" onclick="openEditorForDate('${escapeAttr(g.date)}')" class="schedule-add-btn no-print">+ 加工作</button>` : ''}
             </div>
+            ${g.date !== '未定日期' ? `<button type="button" onclick="openDailyShareModal('${escapeAttr(g.date)}')" class="card-action-link blue no-print">分享</button>` : ''}
           </div>
           <div class="schedule-day-body">
             ${slotHtml}
@@ -1094,23 +1146,27 @@
       copyText(msg, audience === 'client' ? '已複製客人訊息' : '已複製師傅/廠訊息');
     }
 
-    function openScopedRangeShareModal(siteName) {
-      if (!siteName) return showToast('請先揀單位');
-      const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
-        ? `${scheduleRangeStart || '起'}～${scheduleRangeEnd || '止'}`
-        : '所選區段';
-      const siteUrl = getSingleSiteUrl(siteName);
-      const encSite = encodeURIComponent(siteName);
+    function openDailyShareModal(dateStr) {
+      const dayItems = reports.filter(r => r.date === dateStr && !isFutureDiaryEntry(r));
+      if (!dayItems.length) return showToast('當日無紀錄');
+      const dayLabel = formatMonthDayWeekday(dateStr);
+      const first = dayItems[0];
+      const shareUrl = getSingleReportUrl(first.id);
+      const summaryTitles = dayItems.map(x => `${x.site || ''} ${x.title || ''}`.trim()).join('、');
+      const encSite = encodeURIComponent(dayLabel);
+      const eDate = encodeURIComponent(dateStr);
+      const eTitle = encodeURIComponent(summaryTitles);
+      const eUrl = encodeURIComponent(shareUrl);
 
-      document.getElementById('shareModalTitle').textContent = `區段分享：${siteName}`;
+      document.getElementById('shareModalTitle').textContent = `日期分享：${dayLabel}`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
-          <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(siteName)}（${escapeHtml(rangeLabel)}）</div>
+          <div style="font-weight:700;margin-bottom:6px;">${escapeHtml(dayLabel)}（共 ${dayItems.length} 項）</div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(rangeLabel)}','${encodeURIComponent('所選區段記錄')}','${encodeURIComponent(siteUrl)}')" class="btn-wa">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(rangeLabel)}','${encodeURIComponent('所選區段記錄')}','${encodeURIComponent(siteUrl)}')" class="btn-orange">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="btn-secondary">連結</button>
-            <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-wa">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-orange">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(shareUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <a href="${escapeHtml(shareUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
           </div>
         </div>`;
       document.getElementById('shareModal').classList.remove('hidden');
@@ -1220,8 +1276,8 @@
     function updateSiteFilterOptions() {
       const select = document.getElementById('siteFilter'), cur = select.value;
       const sites = getAllUniqueSites();
-      select.innerHTML = '<option value="ALL">全部單位</option><option value="即將">即將</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-      if (cur === '即將' || sites.includes(cur)) select.value = cur;
+      select.innerHTML = '<option value="ALL">全部單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      if (sites.includes(cur)) select.value = cur;
       else select.value = 'ALL';
     }
 
@@ -1362,21 +1418,7 @@
       showToast('已合併');
     }
 
-    function startInlineEdit(id) { inlineEditId = id; renderReportList(); }
-    function cancelInlineEdit() { inlineEditId = null; renderReportList(); }
-    async function saveInlineEdit(id) {
-      const title = document.getElementById(`ie-title-${id}`).value.trim();
-      if (!title) return showToast('標題不能為空');
-      await db.collection(COLLECTION_NAME).doc(id).update({
-        date: document.getElementById(`ie-date-${id}`).value,
-        timeRange: formatTimeRange(document.getElementById(`ie-ts-${id}`).value, document.getElementById(`ie-te-${id}`).value),
-        title,
-        summary: document.getElementById(`ie-sum-${id}`).value.trim(),
-        followup: document.getElementById(`ie-fu-${id}`).value.trim(),
-        updatedAt: Date.now()
-      });
-      inlineEditId = null; showToast('已儲存');
-    }
+    function cancelInlineEdit() { inlineEditId = null; renderCurrentView(); }
 
     function toggleExpandSite(s) { expandedSites.has(s) ? expandedSites.delete(s) : expandedSites.add(s); renderReportList(); }
 
@@ -1437,7 +1479,7 @@
 
       const cardsHtml = groups.map(g => {
         const encSite = encodeURIComponent(g.site), encAss = encodeURIComponent(g.assignee || g.items[0].assignee || '');
-        const isSingleFiltered = Boolean(SINGLE_SITE || (siteVal && siteVal !== 'ALL' && siteVal !== '即將'));
+        const isSingleFiltered = Boolean(SINGLE_SITE || (siteVal && siteVal !== 'ALL'));
         const isExp = isSingleFiltered ? true : expandedSites.has(g.site);
         const vis = isExp ? g.items : g.items.slice(0, 3);
         const validRepairItem = g.items.find(x => hasValidTimeAndSite(x));
@@ -1448,35 +1490,6 @@
           const docs = getDocsList(r);
           const singleUrl = getSingleReportUrl(r.id);
           const isFuture = isFutureDiaryEntry(r);
-
-          if (!IS_PUBLIC && inlineEditId === r.id) {
-            const pt = parseTimeRange(r.timeRange);
-            const tsId = `ie-ts-${r.id}`;
-            const teId = `ie-te-${r.id}`;
-            return `<div class="entry-row">
-              <div class="inline-edit-form">
-                <div class="inline-edit-top">
-                  <input type="date" id="ie-date-${r.id}" value="${escapeHtml(r.date||'')}" class="input-ui t-meta" style="padding:2px 4px;" />
-                  <div class="inline-edit-time-wrap">
-                    <input type="time" id="${tsId}" value="${escapeHtml(pt.start)}" class="input-ui t-meta" style="padding:2px 4px;" />
-                    <input type="text" id="${teId}" value="${escapeHtml(pt.end)}" class="input-ui t-meta" style="padding:2px 4px;" placeholder="完成 / 小數" />
-                    <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','AM')" class="mini-pair-btn">上午</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('${tsId}','PM')" class="mini-pair-btn">下午</button>
-                    </span>
-                    <span class="mini-pair">
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','00')" class="mini-pair-btn">:00</button>
-                      <button type="button" onmousedown="event.preventDefault()" onclick="setMinuteForStartInput('${tsId}','30')" class="mini-pair-btn">:30</button>
-                    </span>
-                  </div>
-                  <input type="text" id="ie-title-${r.id}" value="${escapeHtml(r.title||'')}" class="input-ui t-meta" style="font-weight:700;" />
-                </div>
-                <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="跟進" />
-                <textarea id="ie-sum-${r.id}" rows="2" class="input-ui t-meta">${escapeHtml(r.summary||'')}</textarea>
-                <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="btn-secondary">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-orange">儲存</button></div>
-              </div>
-            </div>`;
-          }
 
           const docsHtml = docs.length ? `<div class="docs-strip">
             ${docs.map((d, dIdx) => {
@@ -1606,8 +1619,9 @@
 
     function openEditorForUpcomingNewUnit() {
       openEditor(null);
+      document.getElementById('fieldDate').value = '';
       document.getElementById('fieldIsFutureDiary').checked = true;
-      document.getElementById('editorModalTitle').textContent = '新增即將新單位';
+      document.getElementById('editorModalTitle').textContent = '新增即將新單位（未有日期）';
     }
 
     function openEditorForSite(site, ass) {
@@ -1653,7 +1667,7 @@
         ['fieldSite','fieldAssignee','fieldTimeStart','fieldDurationHours','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
         document.getElementById('fieldIsFutureDiary').checked = false;
         const curFilter = document.getElementById('siteFilter').value;
-        if (curFilter && curFilter !== 'ALL' && curFilter !== '即將') {
+        if (curFilter && curFilter !== 'ALL') {
           document.getElementById('fieldSite').value = curFilter;
           const found = reports.find(r => r.site === curFilter && r.assignee);
           if (found) document.getElementById('fieldAssignee').value = found.assignee;
@@ -1972,9 +1986,11 @@
           if (!curIds.includes(oldId)) await db.collection(PHOTOS_COL).doc(oldId).delete().catch(() => {});
         }
 
+        const dateVal = document.getElementById('fieldDate').value || (isFuture ? '' : new Date().toISOString().split('T')[0]);
+
         await db.collection(COLLECTION_NAME).doc(docId).set({
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
-          date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
+          date: dateVal,
           timeRange: buildEditorTimeValue(),
           isFutureDiary: isFuture,
           isUpcoming: ex ? Boolean(ex.isUpcoming) : (isNewSite || isFuture),
