@@ -165,7 +165,7 @@
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
-      <button type="button" onclick="openEditor()" class="btn-orange">+ 單位</button>
+      <button type="button" onclick="openEditorForUpcomingNewUnit()" class="btn-orange">+ 即將新單位</button>
       <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
         <option value="ALL">全部單位</option>
         <option value="即將新單位">即將新單位</option>
@@ -203,7 +203,7 @@
             <div><label class="field-label">日期</label><input type="date" id="fieldDate" class="input-ui" /></div>
             <div>
               <div class="row-between" style="margin-bottom:3px;">
-                <label class="field-label" style="margin-bottom:0;">開始 / 完成或工時</label>
+                <label class="field-label" style="margin-bottom:0;">開始 / 小時 → 完工時</label>
                 <div class="row" style="gap:4px;">
                   <span class="mini-pair">
                     <button type="button" onmousedown="event.preventDefault()" onclick="setMeridiemForStartInput('fieldTimeStart', 'AM')" class="mini-pair-btn">上午</button>
@@ -215,9 +215,10 @@
                   </span>
                 </div>
               </div>
-              <div class="grid-2">
-                <input type="time" id="fieldTimeStart" class="input-ui" />
-                <input type="text" id="fieldTimeEnd" class="input-ui" placeholder="完成 / 小數" />
+              <div style="display:grid;grid-template-columns:1fr 78px 1fr;gap:4px;">
+                <input type="time" id="fieldTimeStart" oninput="calcEndTimeFromHours()" class="input-ui" />
+                <input type="number" step="0.5" min="0" id="fieldDurationHours" oninput="calcEndTimeFromHours()" class="input-ui" placeholder="小時" title="輸入小時自動計完工時間" />
+                <input type="text" id="fieldTimeEnd" class="input-ui" placeholder="完工 / 小數" />
               </div>
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
@@ -547,6 +548,7 @@
         hh = hNum;
       }
       inputEl.value = `${String(hh).padStart(2, '0')}:${mm}`;
+      calcEndTimeFromHours();
       showToast(period === 'AM' ? `上午 ${inputEl.value}` : `下午 ${inputEl.value}`);
     }
 
@@ -561,7 +563,25 @@
       } else {
         inputEl.value = `09:${mm}`;
       }
+      calcEndTimeFromHours();
       showToast(`:${mm}`);
+    }
+
+    function calcEndTimeFromHours() {
+      const startVal = (document.getElementById('fieldTimeStart')?.value || '').trim();
+      const hrsVal = (document.getElementById('fieldDurationHours')?.value || '').trim();
+      const endEl = document.getElementById('fieldTimeEnd');
+      if (!endEl || !startVal || !hrsVal) return;
+
+      const m = startVal.match(/^(\d{1,2}):(\d{2})$/);
+      const hrs = parseFloat(hrsVal);
+      if (!m || Number.isNaN(hrs) || hrs < 0) return;
+
+      const startMins = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      const endMins = ((startMins + Math.round(hrs * 60)) % (24 * 60) + (24 * 60)) % (24 * 60);
+      const eh = String(Math.floor(endMins / 60)).padStart(2, '0');
+      const em = String(endMins % 60).padStart(2, '0');
+      endEl.value = `${eh}:${em}`;
     }
 
     function formatCurrency(val) {
@@ -940,7 +960,8 @@
           return false;
         }
         if (!SINGLE_SITE && kw) {
-          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
+          const futureTag = isFutureDiaryEntry(r) ? '未來日記' : '';
+          const hay = `${r.site} ${r.assignee||''} ${r.date||''} ${formatMonthDayWeekday(r.date||'')} ${r.timeRange||''} ${r.title} ${r.summary||''} ${r.followup||''} ${futureTag} ${getDocsList(r).map(d=>d.name).join(' ')} ${(r.followupLogs||[]).map(l=>l.message).join(' ')}`.toLowerCase();
           if (!hay.includes(kw)) return false;
         }
         return true;
@@ -1124,6 +1145,11 @@
         ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
         : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
 
+      const selSiteVal = document.getElementById('siteFilter')?.value || '';
+      const shareTargetSite = (selSiteVal && selSiteVal !== 'ALL' && selSiteVal !== '即將新單位')
+        ? selSiteVal
+        : (reports.find(r => (r.site || '').trim())?.site || '');
+
       const toolbarHtml = `<div class="schedule-toolbar no-print">
         <div class="row">
           <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">時段</button>
@@ -1135,7 +1161,7 @@
           ` : ''}
         </div>
         <div class="row">
-          <button type="button" onclick="openShareModal(document.getElementById('siteFilter').value && document.getElementById('siteFilter').value !== 'ALL' ? document.getElementById('siteFilter').value : (reports[0]?.site || '全部單位'))" class="btn-secondary">分享</button>
+          <button type="button" onclick="${shareTargetSite ? `openShareModal('${escapeAttr(shareTargetSite)}')` : `showToast('暫無單位可分享')`}" class="btn-secondary">分享</button>
           <button type="button" onclick="openScheduleOutput()" class="btn-orange">輸出</button>
         </div>
       </div>`;
@@ -1360,6 +1386,7 @@
     }
 
     function openFullShareModal(siteName) {
+      if (!siteName) return showToast('請先揀單位');
       const items = reports.filter(r => r.site === siteName).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
       const siteUrl = getSingleSiteUrl(siteName);
       const latestDate = items[0]?.date || '';
@@ -1468,6 +1495,7 @@
       const sites = getAllUniqueSites();
       select.innerHTML = '<option value="ALL">全部單位</option><option value="即將新單位">即將新單位</option>' + sites.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
       if (cur === '即將新單位' || sites.includes(cur)) select.value = cur;
+      else select.value = 'ALL';
     }
 
     function getDocsList(r) {
@@ -1854,6 +1882,12 @@
       e.target.value = '';
     }
 
+    function openEditorForUpcomingNewUnit() {
+      openEditor(null);
+      document.getElementById('fieldIsFutureDiary').checked = true;
+      document.getElementById('editorModalTitle').textContent = '新增即將新單位';
+    }
+
     function openEditorForSite(site, ass) {
       openEditor(null);
       document.getElementById('fieldSite').value = site;
@@ -1880,6 +1914,7 @@
         document.getElementById('fieldDate').value = r.date || '';
         const pt = parseTimeRange(r.timeRange);
         document.getElementById('fieldTimeStart').value = pt.start;
+        document.getElementById('fieldDurationHours').value = '';
         document.getElementById('fieldTimeEnd').value = pt.end;
         document.getElementById('fieldPeriodLabel').value = '';
         document.getElementById('fieldIsFutureDiary').checked = Boolean(r.isFutureDiary);
@@ -1893,7 +1928,7 @@
         originalPhotoIds = draftPhotos.map(p => p.id);
       } else {
         document.getElementById('editorModalTitle').textContent = '新增單位';
-        ['fieldSite','fieldAssignee','fieldTimeStart','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
+        ['fieldSite','fieldAssignee','fieldTimeStart','fieldDurationHours','fieldTimeEnd','fieldPeriodLabel','fieldTitle','fieldSummary','fieldFollowup'].forEach(k => document.getElementById(k).value = '');
         document.getElementById('fieldIsFutureDiary').checked = false;
         const curFilter = document.getElementById('siteFilter').value;
         if (curFilter && curFilter !== 'ALL' && curFilter !== '即將新單位') {
@@ -2186,6 +2221,7 @@
 
       const docId = editingReportId || ('rep-' + Date.now()), ex = reports.find(r => r.id === docId);
       const isNewSite = !reports.some(r => (r.site || '').trim() === site);
+      const isFuture = Boolean(document.getElementById('fieldIsFutureDiary')?.checked);
       const validDocs = draftDocs.filter(d => d.name.trim() || d.url.trim()).map(d => ({ name: d.name.trim() || '附件', url: d.url.trim() }));
 
       try {
@@ -2218,8 +2254,8 @@
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
           date: document.getElementById('fieldDate').value || new Date().toISOString().split('T')[0],
           timeRange: buildEditorTimeValue(),
-          isFutureDiary: Boolean(document.getElementById('fieldIsFutureDiary')?.checked),
-          isUpcoming: ex ? Boolean(ex.isUpcoming) : isNewSite,
+          isFutureDiary: isFuture,
+          isUpcoming: ex ? Boolean(ex.isUpcoming) : (isNewSite || isFuture),
           title,
           docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
           summary: document.getElementById('fieldSummary').value.trim(),
