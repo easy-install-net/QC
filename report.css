@@ -108,19 +108,19 @@
 
 /* 單位報告區 */
 .site-card { background: #FFFFFF; border-left: 3px solid #EA580C; margin: 8px 0; }
-.site-header { background: #FEF3C7; padding: 5px 10px; border-bottom: 1px solid #F59E0B; gap: 5px; }
+.site-header { background: #FFEDD5; padding: 5px 10px; border-bottom: 1px solid #FDBA74; gap: 5px; }
 .site-title-btn {
   background: none; border: none; padding: 0 2px 0 0;
-  font-size: 14px; font-weight: 800; line-height: 1.35; letter-spacing: 0.02em; color: #0F172A;
+  font-size: 15px; font-weight: 800; line-height: 1.35; letter-spacing: 0.02em; color: #0F172A;
   cursor: pointer; text-align: left; font-family: inherit;
   display: inline-flex; align-items: center; gap: 4px;
 }
 .site-title-btn:hover { color: #EA580C; text-decoration: underline; }
-.site-title-arrow { font-size: 10px; color: #EA580C; line-height: 1; }
+.site-title-arrow { font-size: 10.5px; color: #EA580C; line-height: 1; }
 .site-header-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; flex-shrink: 0; }
 .site-body { padding: 6px 10px; }
 
-/* 工作紀錄列：唔增加上下行距，以淺橙日期底條與稍深分隔線強化每日相隔感 */
+/* 工作紀錄列：唔增加上下行距，日期底色再淺少少，以稍深分隔線強化每日相隔感 */
 .entry-row { display: flex; flex-direction: column; gap: 2px; min-width: 0; max-width: 100%; }
 .entry-row + .entry-row {
   margin-top: 5px;
@@ -129,11 +129,13 @@
 }
 .entry-meta-bar {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px;
-  background: #FFEDD5;
-  border-left: 3px solid #EA580C;
+  background: #FFFBEB;
+  border-left: 2.5px solid #FDE68A;
   padding: 1px 6px;
 }
-.entry-date-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12.5px; }
+.entry-date-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 11.5px; }
+.entry-date-group .t-mono,
+.entry-date-group .t-meta { font-size: 11.5px; }
 
 /* 卡片內無框小字粗體底線群組 */
 .record-actions-bar {
@@ -187,10 +189,12 @@
 }
 
 .entry-content-block { min-width: 0; max-width: 100%; }
-.entry-title { font-size: 13px; font-weight: 700; color: #0F172A; line-height: 1.35; word-break: break-word; }
+.entry-title { font-size: 14px; font-weight: 700; color: #0F172A; line-height: 1.35; word-break: break-word; }
 .entry-summary { color: #1E293B; white-space: pre-line; margin-top: 2px; font-size: 12.5px; line-height: 1.45; word-break: break-word; }
 
-.docs-strip { margin-top: 4px; padding: 4px 7px; background: #F8FAFC; border-left: 2px solid #94A3B8; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
+.docs-strip { margin-top: 4px; padding: 4px 7px; background: #F8FAFC; border-left: 2px solid #94A3B8; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.docs-strip .btn-link,
+.docs-strip .t-meta { font-size: 13px; }
 .doc-item-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
 .doc-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; flex-shrink: 0; }
 
