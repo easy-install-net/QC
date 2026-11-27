@@ -187,7 +187,7 @@
 .doc-item-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
 .doc-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; flex-shrink: 0; }
 
-/* 快改表單 */
+/* 原地快改表單 */
 .inline-edit-form {
   display: flex; flex-direction: column; gap: 5px;
   background: #F8FAFC; padding: 6px 8px; border-radius: 4px;
