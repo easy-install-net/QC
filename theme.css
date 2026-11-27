@@ -18,7 +18,7 @@ a { color: inherit; }
 .t-mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .muted { color: #64748B; }
 
-/* 純底色按鈕系統（無框線） */
+/* 頂部與主功能純底色按鈕（無框線） */
 .btn-orange,
 .btn-top-white,
 .btn-wa,
@@ -58,6 +58,31 @@ a { color: inherit; }
 .btn-danger-outline:hover { background: #FECACA; }
 
 .btn-active { background: #EA580C !important; color: #FFF !important; }
+
+/* 卡片內無框小字粗體底線操作樣式 */
+.card-action-link {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid currentColor;
+  border-radius: 0;
+  padding: 0 1px 1px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #334155;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.card-action-link:hover { opacity: 0.75; }
+.card-action-link.orange { color: #C2410C; }
+.card-action-link.blue { color: #1D4ED8; }
+.card-action-link.green { color: #047857; }
+.card-action-link.slate { color: #475569; }
+.card-action-link.red { color: #B91C1C; }
 
 .btn-link {
   background: none; border: none; padding: 1px 4px; font-size: 12.5px; line-height: 1.25;
