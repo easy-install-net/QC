@@ -52,14 +52,6 @@
   background: #FFF7ED; border-radius: 4px;
   padding: 6px 10px; margin-top: 6px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
 }
-.schedule-output-box {
-  background: #FFFFFF; border-left: 3px solid #EA580C;
-  border-radius: 4px; padding: 8px 10px; margin-top: 6px; display: flex; flex-direction: column; gap: 6px;
-}
-.schedule-output-ta {
-  width: 100%; min-height: 132px; border: 1px solid #CBD5E1; border-radius: 4px;
-  padding: 6px 8px; font-size: 12px; line-height: 1.45; font-family: inherit; background: #F8FAFC; color: #0F172A;
-}
 
 /* 時間表 */
 .schedule-day-card { background: #FFFFFF; border-left: 3px solid #EA580C; margin: 6px 0; }
@@ -76,7 +68,7 @@
 }
 .schedule-time-tag { font-size: 12.5px; font-weight: 700; color: #EA580C; line-height: 1.35; }
 .schedule-slot-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
-.schedule-slot-top { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; min-width: 0; }
+.schedule-slot-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .schedule-site-btn { background: none; border: none; padding: 0; font-size: 12.5px; font-weight: 700; color: #0F172A; cursor: pointer; text-align: left; font-family: inherit; }
 .schedule-site-btn:hover { color: #EA580C; text-decoration: underline; }
 .schedule-topic { color: #1E293B; font-size: 12.5px; line-height: 1.4; word-break: break-word; }
@@ -123,7 +115,7 @@
   cursor: pointer; text-align: left; font-family: inherit;
 }
 .site-title-btn:hover { color: #EA580C; text-decoration: underline; }
-.site-header-actions { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.site-header-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; flex-shrink: 0; }
 .site-body { padding: 6px 10px; }
 
 /* 工作紀錄列 */
@@ -133,48 +125,14 @@
   padding-top: 12px;
   border-top: 1.5px solid #CBD5E1;
 }
-.entry-meta-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 5px; }
+.entry-meta-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
 .entry-date-group { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; }
 
-/* 純底色操作按鈕列（無框線） */
+/* 卡片內無框小字粗體底線群組 */
 .record-actions-bar {
   display: inline-flex; flex-wrap: wrap; align-items: center;
-  gap: 4px;
+  gap: 10px;
 }
-.two-char-btn {
-  min-width: 36px;
-  height: 22px;
-  padding: 0 7px;
-  font-size: 11.5px;
-  font-weight: 600;
-  border: none;
-  border-radius: 4px;
-  background: #E2E8F0;
-  color: #0F172A;
-  cursor: pointer;
-  white-space: nowrap;
-  font-family: inherit;
-}
-.two-char-btn:hover { background: #CBD5E1; color: #EA580C; }
-.two-char-btn.accent { background: #FFF7ED; color: #C2410C; }
-.two-char-btn.accent:hover { background: #FFEDD5; }
-.two-char-btn.del { background: #FEE2E2; color: #B91C1C; }
-.two-char-btn.del:hover { background: #FECACA; }
-
-.detail-toggle-btn {
-  background: #E2E8F0;
-  color: #334155;
-  border: none;
-  border-radius: 4px;
-  padding: 1px 7px;
-  height: 22px;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-}
-.detail-toggle-btn:hover { background: #CBD5E1; color: #0F172A; }
-.detail-toggle-btn.is-open { background: #FFF7ED; color: #C2410C; }
 
 /* 展開／疊起放前，拎走「地址」字樣 */
 .site-quick-bar {
@@ -208,33 +166,6 @@
 .site-chip-btn:hover { background: #CBD5E1; }
 .site-chip-btn.active { background: #EA580C; color: #FFFFFF; }
 
-.future-tag-pill {
-  display: inline-block;
-  background: #FFF7ED;
-  color: #C2410C;
-  border-radius: 3px;
-  padding: 0 5px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.45;
-  vertical-align: middle;
-}
-.future-diary-box {
-  background: #FFFFFF;
-  border-left: 3px solid #EA580C;
-  margin-top: 8px;
-  overflow: hidden;
-}
-.future-diary-head {
-  background: #FFF7ED;
-  padding: 6px 10px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-.future-diary-body { padding: 6px 10px; }
 .schedule-detail-panel {
   margin-top: 6px;
   padding: 7px 9px;
@@ -253,8 +184,8 @@
 .entry-summary { color: #1E293B; white-space: pre-line; margin-top: 3px; font-size: 12.5px; line-height: 1.45; word-break: break-word; }
 
 .docs-strip { margin-top: 5px; padding: 4px 7px; background: #F8FAFC; border-left: 2px solid #94A3B8; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; }
-.doc-item-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
-.doc-actions { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.doc-item-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.doc-actions { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; flex-shrink: 0; }
 
 /* 快改表單 */
 .inline-edit-form {
