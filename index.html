@@ -10,25 +10,25 @@
   <style>
     .future-tag-pill {
       display: inline-block;
-      background: #FFF7ED;
-      color: #C2410C;
+      background: #FFFBF7;
+      color: #9A3412;
       border: 1px solid #FDBA74;
       border-radius: 3px;
       padding: 0 5px;
       font-size: 11px;
-      font-weight: 700;
+      font-weight: 600;
       line-height: 1.45;
       vertical-align: middle;
     }
     .future-diary-box {
       background: #FFFFFF;
-      border-left: 3px solid #EA580C;
+      border-left: 2px solid #EA580C;
       margin-top: 8px;
       overflow: hidden;
     }
     .future-diary-head {
-      background: #FFF7ED;
-      border-bottom: 1px solid #FDBA74;
+      background: #FFFBF7;
+      border-bottom: 1px solid #E2E8F0;
       padding: 6px 10px;
       display: flex;
       flex-wrap: wrap;
@@ -40,25 +40,25 @@
       padding: 6px 10px;
     }
     .detail-toggle-btn {
-      background: #F1F5F9;
-      color: #334155;
+      background: #F8FAFC;
+      color: #475569;
       border: 1px solid #CBD5E1;
       border-radius: 3px;
-      padding: 1px 7px;
-      font-size: 11.5px;
-      font-weight: 600;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 500;
       cursor: pointer;
     }
     .detail-toggle-btn.is-open {
-      background: #FFF7ED;
-      color: #C2410C;
+      background: #FFFBF7;
+      color: #9A3412;
       border-color: #FDBA74;
     }
     .schedule-detail-panel {
       margin-top: 6px;
       padding: 7px 9px;
       background: #F8FAFC;
-      border-left: 2px solid #FDBA74;
+      border-left: 2px solid #CBD5E1;
       border-radius: 2px;
       font-size: 12.5px;
       line-height: 1.5;
@@ -66,9 +66,24 @@
       flex-direction: column;
       gap: 5px;
     }
+    .schedule-detail-footer {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+    .detail-slot-circle {
+      display: inline-block;
+      width: 16px;
+      height: 12px;
+      border: 1px solid #CBD5E1;
+      border-radius: 999px;
+      background: #FFFFFF;
+    }
     .site-quick-bar {
       background: #FFFFFF;
-      border-left: 3px solid #EA580C;
+      border-left: 2px solid #CBD5E1;
       padding: 8px 10px;
       margin-top: 8px;
     }
@@ -85,21 +100,22 @@
     }
     .site-chip-btn {
       background: #F8FAFC;
-      color: #0F172A;
+      color: #334155;
       border: 1px solid #CBD5E1;
       border-radius: 4px;
       padding: 3px 8px;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11.5px;
+      font-weight: 500;
       cursor: pointer;
     }
     .site-chip-btn.active {
-      background: #EA580C;
-      color: #FFFFFF;
-      border-color: #EA580C;
+      background: #FFF7ED;
+      color: #9A3412;
+      border-color: #FDBA74;
+      font-weight: 600;
     }
 
-    /* 「全」掣與下拉箭咀分開 */
+    /* 「全」掣與下拉箭咀分開，低調底色配幼框 */
     .all-filter-split {
       display: inline-flex;
       align-items: center;
@@ -108,60 +124,84 @@
     .all-btn {
       padding: 4px 8px;
       font-size: 12px;
-      font-weight: 700;
-      border-radius: 4px;
-      border: 1px solid #EA580C;
-      background: #FFF7ED;
-      color: #C2410C;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .all-btn.active {
-      background: #EA580C;
-      color: #FFFFFF;
-    }
-
-    /* 右上排全部無框 */
-    .borderless-top-actions {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .borderless-btn {
-      border: none;
-      background: transparent;
-      padding: 2px 4px;
-      font-size: 11.5px;
       font-weight: 600;
+      border-radius: 4px;
+      border: 1px solid #CBD5E1;
+      background: #F8FAFC;
       color: #334155;
       cursor: pointer;
       white-space: nowrap;
     }
-    .borderless-btn:hover {
-      color: #EA580C;
-      text-decoration: underline;
-    }
-    .borderless-btn.accent {
-      color: #C2410C;
-    }
-    .borderless-btn.del {
-      color: #B91C1C;
+    .all-btn.active {
+      background: #FFF7ED;
+      color: #9A3412;
+      border-color: #FDBA74;
     }
 
-    /* 紀錄列：外 1px 幼框全包，內全部無框 */
+    /* 右上排低調淺底幼框 */
+    .borderless-top-actions {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+    .soft-pill-btn {
+      border: 1px solid #CBD5E1;
+      background: #F8FAFC;
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .soft-pill-btn:hover {
+      background: #FFFBF7;
+      border-color: #FDBA74;
+      color: #9A3412;
+    }
+    .soft-pill-btn.accent {
+      background: #FFFBF7;
+      border-color: #FED7AA;
+      color: #9A3412;
+    }
+    .soft-pill-btn.del {
+      color: #991B1B;
+      border-color: #FECACA;
+      background: #FEF2F2;
+    }
+
+    /* 紀錄列：外 1px 幼框全包，內全部無框低調 */
     .record-action-shell {
       display: inline-flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
       border: 1px solid #CBD5E1;
       border-radius: 4px;
-      padding: 2px 6px;
-      background: #FFFFFF;
+      padding: 1px 6px;
+      background: #F8FAFC;
     }
-    .record-action-shell .borderless-btn {
-      padding: 1px 3px;
+    .record-mini-btn {
+      border: none;
+      background: transparent;
+      padding: 1px 2px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .record-mini-btn:hover {
+      color: #0F172A;
+      text-decoration: underline;
+    }
+    .record-mini-btn.accent {
+      color: #9A3412;
+    }
+    .record-mini-btn.del {
+      color: #991B1B;
     }
   </style>
 </head>
@@ -176,8 +216,8 @@
         <span id="syncBadge" class="sync-ok">連線中</span>
       </div>
       <div class="row" id="headerQuickActions">
-        <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="btn-top-white hidden">鎖定</button>
-        <button type="button" onclick="window.print()" class="btn-top-white hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
+        <button type="button" onclick="lockSystem()" id="lockSystemBtn" class="soft-pill-btn hidden">鎖定</button>
+        <button type="button" onclick="window.print()" class="soft-pill-btn hidden" id="standalonePrintBtn">列印 / 儲存 PDF</button>
       </div>
     </div>
   </header>
@@ -203,7 +243,7 @@
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
-      <button type="button" onclick="openEditor()" class="btn-orange">+ 單位</button>
+      <button type="button" onclick="openEditor()" class="soft-pill-btn accent">+ 單位</button>
       <div class="all-filter-split">
         <button type="button" id="btnAllSites" onclick="clickAllSitesBtn()" class="all-btn active">全</button>
         <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg" aria-label="選擇單位">
@@ -265,7 +305,7 @@
           <div style="margin-top:8px;">
             <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
-              <span class="t-meta" style="font-weight:700;color:#9A3412;">即將新單位 / 未來日記</span>
+              <span class="t-meta" style="font-weight:700;color:#9A3412;">+即將新單位</span>
             </label>
           </div>
         </div>
@@ -278,9 +318,9 @@
             <div class="row-between" style="margin-bottom:5px;">
               <span class="t-meta" style="font-weight:600;">附件</span>
               <div class="row">
-                <button type="button" onclick="openAlbumFromEditor()" class="btn-orange">截圖</button>
-                <label class="btn-secondary" style="cursor:pointer;"><span>+ PDF</span><input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" /></label>
-                <button type="button" onclick="addDocRow()" class="btn-secondary">+ 連結</button>
+                <button type="button" onclick="openAlbumFromEditor()" class="soft-pill-btn accent">截圖</button>
+                <label class="soft-pill-btn" style="cursor:pointer;"><span>+ PDF</span><input type="file" accept="application/pdf" multiple class="hidden" onchange="handlePdfUpload(event)" /></label>
+                <button type="button" onclick="addDocRow()" class="soft-pill-btn">+ 連結</button>
               </div>
             </div>
             <div id="docRowsContainer" style="display:flex;flex-direction:column;gap:5px;"></div>
@@ -294,20 +334,20 @@
               <span id="photoCountHint" class="t-meta muted"></span>
             </div>
             <div class="row">
-              <label class="btn-orange" style="cursor:pointer;"><span>📷 拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <label class="btn-secondary" style="cursor:pointer;"><span>🖼 上傳</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
-              <button type="button" onclick="createBlankSketch()" class="btn-secondary">草圖</button>
+              <label class="soft-pill-btn accent" style="cursor:pointer;"><span>📷 拍照</span><input type="file" accept="image/*" capture="environment" class="hidden" onchange="handlePhotoUpload(event)" /></label>
+              <label class="soft-pill-btn" style="cursor:pointer;"><span>🖼 上傳</span><input type="file" accept="image/*" multiple class="hidden" onchange="handlePhotoUpload(event)" /></label>
+              <button type="button" onclick="createBlankSketch()" class="soft-pill-btn">草圖</button>
             </div>
           </div>
 
           <div id="annotationWorkspace" class="hidden" style="background:#FFF;padding:6px;border-top:1px solid #CBD5E1;margin-bottom:6px;">
             <div class="row-between" style="margin-bottom:5px;">
               <div class="row">
-                <button type="button" onclick="setTool('move')" id="tool-move" class="btn-secondary btn-active">✋ 移動</button>
-                <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="btn-secondary">✎ 手繪</button>
-                <button type="button" onclick="setTool('circle')" id="tool-circle" class="btn-secondary">◯ 線圈</button>
-                <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="btn-secondary">↗ 箭咀</button>
-                <button type="button" onclick="setTool('text')" id="tool-text" class="btn-secondary">T 打字</button>
+                <button type="button" onclick="setTool('move')" id="tool-move" class="soft-pill-btn btn-active">✋ 移動</button>
+                <button type="button" onclick="setTool('freehand')" id="tool-freehand" class="soft-pill-btn">✎ 手繪</button>
+                <button type="button" onclick="setTool('circle')" id="tool-circle" class="soft-pill-btn">◯ 線圈</button>
+                <button type="button" onclick="setTool('arrow')" id="tool-arrow" class="soft-pill-btn">↗ 箭咀</button>
+                <button type="button" onclick="setTool('text')" id="tool-text" class="soft-pill-btn">T 打字</button>
                 <select id="fontSizeSelect" onchange="onFontSizeChange()" class="select-ui">
                   <option value="0.018">字體：細</option>
                   <option value="0.026" selected>字體：中</option>
@@ -320,9 +360,9 @@
                 <button type="button" onclick="setColor('rgba(220,38,38,0.92)', this)" class="color-dot" style="background:#DC2626;"></button>
                 <button type="button" onclick="setColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
                 <button type="button" onclick="setColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
-                <button type="button" id="delSelectedShapeBtn" onclick="deleteSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
-                <button type="button" onclick="undoShape()" class="btn-secondary">復原</button>
-                <button type="button" onclick="clearShapes()" class="btn-secondary">全清</button>
+                <button type="button" id="delSelectedShapeBtn" onclick="deleteSelectedShape()" class="soft-pill-btn del hidden">刪選取</button>
+                <button type="button" onclick="undoShape()" class="soft-pill-btn">復原</button>
+                <button type="button" onclick="clearShapes()" class="soft-pill-btn">全清</button>
               </div>
             </div>
 
@@ -338,8 +378,8 @@
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" onclick="closeEditor()" class="btn-secondary">取消</button>
-        <button type="button" id="saveReportBtn" onclick="saveReport()" class="btn-orange">儲存</button>
+        <button type="button" onclick="closeEditor()" class="soft-pill-btn">取消</button>
+        <button type="button" id="saveReportBtn" onclick="saveReport()" class="soft-pill-btn accent">儲存</button>
       </div>
     </div>
   </div>
@@ -356,7 +396,7 @@
           <div><label class="field-label">單位名稱</label><input type="text" id="manageNewSite" class="input-ui t-meta" /></div>
           <div><label class="field-label">@負責人</label><input type="text" id="manageNewAssignee" class="input-ui t-meta" /></div>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitRenameSite()" class="btn-orange">儲存修改</button>
+            <button type="button" onclick="submitRenameSite()" class="soft-pill-btn accent">儲存修改</button>
           </div>
         </div>
 
@@ -365,7 +405,7 @@
           <div class="t-meta muted" id="mergeHintText"></div>
           <select id="manageMergeTarget" class="input-ui t-meta"></select>
           <div style="display:flex;justify-content:flex-end;">
-            <button type="button" onclick="submitMergeSite()" class="btn-secondary" style="border-color:#EA580C;color:#EA580C;">合併</button>
+            <button type="button" onclick="submitMergeSite()" class="soft-pill-btn accent">合併</button>
           </div>
         </div>
       </div>
@@ -385,8 +425,8 @@
         <div><label class="field-label">留言 *</label><textarea id="fuMessage" rows="2" class="input-ui"></textarea></div>
       </div>
       <div class="modal-foot">
-        <button type="button" onclick="closeFollowupModal()" class="btn-secondary">取消</button>
-        <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="btn-orange">發送</button>
+        <button type="button" onclick="closeFollowupModal()" class="soft-pill-btn">取消</button>
+        <button type="button" id="submitFollowupBtn" onclick="submitFollowupLog()" class="soft-pill-btn accent">發送</button>
       </div>
     </div>
   </div>
@@ -439,8 +479,6 @@
     const PASSCODE_STORAGE_KEY = 'artisan_qc_unlocked_v1';
     const WEEKDAYS_HK = ['日', '一', '二', '三', '四', '五', '六'];
     const SCHEDULE_PAGE_SIZE = 10;
-    const HOURLY_RATE = 150;
-    const FULL_DAY_HOURS = 8;
 
     const urlParams = new URLSearchParams(window.location.search);
     const SINGLE_REPORT_ID = urlParams.get('reportId') || '';
@@ -463,8 +501,6 @@
     let scheduleRangeStart = '';
     let scheduleRangeEnd = '';
     let showScheduleRangeBox = false;
-    let showScheduleOutputBox = false;
-    let latestScheduleExportText = '';
 
     let draftDocs = [], draftPhotos = [], activePhotoIndex = -1, originalPhotoIds = [];
     let currentTool = 'move', currentColor = 'rgba(234,88,12,0.95)';
@@ -622,38 +658,6 @@
       showToast(`:${mm}`);
     }
 
-    function formatCurrency(val) {
-      const rounded = Math.round(val * 100) / 100;
-      const formatted = Number.isInteger(rounded) ? rounded.toLocaleString('en-US') : rounded.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
-      return `$${formatted}`;
-    }
-
-    function formatHours(hrs) {
-      const rounded = Math.round(hrs * 100) / 100;
-      return `${rounded}hr`;
-    }
-
-    function computeEntryHoursAndPay(timeRangeStr) {
-      const raw = (timeRangeStr || '').trim();
-      if (!raw || raw === '全日') {
-        return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
-      }
-      const rangeMatch = raw.match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
-      if (rangeMatch) {
-        const sMins = parseInt(rangeMatch[1], 10) * 60 + parseInt(rangeMatch[2], 10);
-        let eMins = parseInt(rangeMatch[3], 10) * 60 + parseInt(rangeMatch[4], 10);
-        if (eMins < sMins) eMins += 24 * 60;
-        const hrs = Math.max(0, (eMins - sMins) / 60);
-        return { hours: hrs, pay: hrs * HOURLY_RATE };
-      }
-      const numMatch = raw.match(/^\s*(\d+(?:\.\d+)?)\s*(?:hr|h|小時|鐘)?\s*$/i);
-      if (numMatch) {
-        const hrs = Math.max(0, parseFloat(numMatch[1]));
-        return { hours: hrs, pay: hrs * HOURLY_RATE };
-      }
-      return { hours: FULL_DAY_HOURS, pay: FULL_DAY_HOURS * HOURLY_RATE };
-    }
-
     function buildEditorTimeValue() {
       const s = (document.getElementById('fieldTimeStart').value || '').trim();
       const e = (document.getElementById('fieldTimeEnd').value || '').trim();
@@ -749,14 +753,14 @@
         onlyUpcomingNewUnits = false;
         sel.value = 'ALL';
         syncAllButtonState();
-        renderReportList();
+        renderCurrentView();
         showToast('全部單位');
         return;
       }
       if (sel.value === siteName && !onlyUpcomingNewUnits) {
         sel.value = 'ALL';
         syncAllButtonState();
-        renderReportList();
+        renderCurrentView();
         showToast('全部單位');
       } else {
         onlyUpcomingNewUnits = false;
@@ -764,7 +768,7 @@
         sel.value = siteName;
         syncAllButtonState();
         expandedSites.add(siteName);
-        renderReportList();
+        renderCurrentView();
         showToast(siteName);
       }
     }
@@ -902,14 +906,12 @@
         const dayLabel = formatMonthDayWeekday(g.date);
         const rowsHtml = g.items.map(r => {
           const t = (r.timeRange || '').trim() || '全日';
-          const calc = computeEntryHoursAndPay(t);
           const sName = r.site || '未分類';
           const latestLog = Array.isArray(r.followupLogs) && r.followupLogs.length ? r.followupLogs[r.followupLogs.length - 1] : null;
           const fuText = [r.followup, latestLog ? `${latestLog.author}：${latestLog.message}` : ''].filter(Boolean).join('｜');
           return `<div class="brief-row">
             <div class="brief-meta">
-              <span class="t-mono" style="font-weight:700;color:#EA580C;">${escapeHtml(t)}</span>
-              <span class="t-meta muted t-mono">(${escapeHtml(formatHours(calc.hours))})</span>
+              <span class="t-mono" style="font-weight:700;color:#9A3412;">${escapeHtml(t)}</span>
               <span style="font-weight:700;color:#0F172A;">${escapeHtml(sName)}</span>
               ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
             </div>
@@ -1046,52 +1048,8 @@
         .sort((a, b) => (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99') || (a.timeRange || '').localeCompare(b.timeRange || ''));
     }
 
-    function buildScheduleExportText(dayGroups, futureItems = []) {
-      const rangeLabel = (scheduleRangeStart || scheduleRangeEnd)
-        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '最早'} 至 ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '最新'}`
-        : '目前顯示區間';
-      const lines = [`築匠設計 ARTISAN STUDIO — 時間表（${rangeLabel}｜$150/hr，全日=8hr=$1,200）`, ''];
-
-      let grandHours = 0;
-      let grandPay = 0;
-
-      dayGroups.forEach(g => {
-        let dayHours = 0;
-        let dayPay = 0;
-        const itemLines = g.items.map(r => {
-          const t = (r.timeRange || '').trim() || '全日';
-          const calc = computeEntryHoursAndPay(t);
-          dayHours += calc.hours;
-          dayPay += calc.pay;
-          const ass = r.assignee ? ` (${r.assignee})` : '';
-          return `  • ${t} [${formatHours(calc.hours)} / ${formatCurrency(calc.pay)}]｜${r.site || '未分類'} ${ass}：${r.title || ''}`;
-        });
-        grandHours += dayHours;
-        grandPay += dayPay;
-
-        lines.push(`【${formatMonthDayWeekday(g.date)}】（${formatHours(dayHours)} / ${formatCurrency(dayPay)}）`);
-        lines.push(...itemLines);
-        lines.push('');
-      });
-
-      lines.push(`總計：${formatHours(grandHours)} ｜ ${formatCurrency(grandPay)}`);
-
-      if (futureItems.length) {
-        lines.push('', '【即將新單位】');
-        futureItems.forEach(r => {
-          const dStr = formatMonthDayWeekday(r.date || '未定日期');
-          const tStr = (r.timeRange || '').trim() || '全日';
-          const ass = r.assignee ? ` (${r.assignee})` : '';
-          lines.push(`  • ${dStr} ${tStr}｜${r.site || '未分類'}${ass}：${r.title || ''}`);
-        });
-      }
-
-      return lines.join('\n').trim();
-    }
-
     function toggleScheduleRangeBox() {
       showScheduleRangeBox = !showScheduleRangeBox;
-      showScheduleOutputBox = false;
       renderCurrentView();
     }
 
@@ -1120,35 +1078,12 @@
       schedulePage = 0;
       syncAllButtonState();
       renderCurrentView();
-      showToast('即將新單位');
+      showToast('+即將新單位');
     }
 
     function stepSchedulePage(delta) {
       schedulePage = Math.max(0, schedulePage + delta);
       renderCurrentView();
-    }
-
-    function openScheduleOutput() {
-      showScheduleOutputBox = !showScheduleOutputBox;
-      showScheduleRangeBox = false;
-      renderCurrentView();
-    }
-
-    function copyScheduleOutputText() {
-      if (!latestScheduleExportText) return;
-      copyText(latestScheduleExportText, '已複製');
-    }
-
-    function downloadScheduleOutputTxt() {
-      if (!latestScheduleExportText) return;
-      const blob = new Blob([latestScheduleExportText], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `時間表_${scheduleRangeStart || '全部'}_${scheduleRangeEnd || '輸出'}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('已下載');
     }
 
     function renderScheduleDetailHtml(r) {
@@ -1169,10 +1104,16 @@
         ${thumbs.length ? `<div class="thumbs" style="margin-top:2px;">${thumbs.map(t =>
           `<img loading="lazy" decoding="async" src="${t.src}" class="thumb-box" style="width:54px;height:54px;" />`
         ).join('')}</div>` : ''}
-        ${!IS_PUBLIC ? `<div class="row no-print" style="margin-top:2px;">
-          <button type="button" onclick="openFollowupModal('${r.id}')" class="borderless-btn accent">留言</button>
-          <button type="button" onclick="openEditor('${r.id}')" class="borderless-btn">詳編</button>
-        </div>` : ''}
+        <div class="schedule-detail-footer no-print">
+          ${!IS_PUBLIC ? `
+            <button type="button" onclick="openFollowupModal('${r.id}')" class="record-mini-btn accent">留言</button>
+            <button type="button" onclick="openEditor('${r.id}')" class="record-mini-btn">詳編</button>
+          ` : ''}
+          <span class="detail-slot-circle" aria-hidden="true"></span>
+          <span class="detail-slot-circle" aria-hidden="true"></span>
+          <span class="detail-slot-circle" aria-hidden="true"></span>
+          <span class="detail-slot-circle" aria-hidden="true"></span>
+        </div>
       </div>`;
     }
 
@@ -1190,25 +1131,22 @@
         ? allDayGroups
         : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
 
-      latestScheduleExportText = buildScheduleExportText(visibleDays, futureItems);
-
       const rangeInfoText = isCustomRange
         ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
         : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
 
       const toolbarHtml = `<div class="schedule-toolbar no-print">
         <div class="row">
-          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">時段</button>
-          <button type="button" onclick="jumpToUpcomingNewUnit()" class="btn-secondary">即將新單位</button>
-          <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
+          <button type="button" onclick="toggleScheduleRangeBox()" class="soft-pill-btn">時段</button>
+          <button type="button" onclick="jumpToUpcomingNewUnit()" class="soft-pill-btn accent">+即將新單位</button>
+          <span class="t-meta muted" style="font-weight:500;">${escapeHtml(rangeInfoText)}</span>
           ${!isCustomRange && totalPages > 1 ? `
-            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
-            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
+            <button type="button" onclick="stepSchedulePage(-1)" class="soft-pill-btn" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
+            <button type="button" onclick="stepSchedulePage(1)" class="soft-pill-btn" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
           ` : ''}
         </div>
         <div class="row">
-          <button type="button" onclick="openShareModal(document.getElementById('siteFilter').value && document.getElementById('siteFilter').value !== 'ALL' ? document.getElementById('siteFilter').value : (reports[0]?.site || '全部單位'))" class="btn-secondary">分享</button>
-          <button type="button" onclick="openScheduleOutput()" class="btn-orange">輸出</button>
+          <button type="button" onclick="openCurrentViewShareModal()" class="soft-pill-btn">分享</button>
         </div>
       </div>`;
 
@@ -1217,31 +1155,19 @@
         <input type="date" id="schedRangeStart" value="${escapeHtml(scheduleRangeStart)}" class="input-ui" style="width:auto;" />
         <span class="t-meta" style="font-weight:600;">至</span>
         <input type="date" id="schedRangeEnd" value="${escapeHtml(scheduleRangeEnd)}" class="input-ui" style="width:auto;" />
-        <button type="button" onclick="applyScheduleDateRange()" class="btn-orange">套用</button>
-        <button type="button" onclick="resetScheduleToRecentTen()" class="btn-secondary">重設</button>
-      </div>` : '';
-
-      const outputBoxHtml = showScheduleOutputBox ? `<div class="schedule-output-box no-print">
-        <div class="row-between">
-          <span class="t-meta" style="font-weight:700;">輸出（$150/hr｜全日=8hr=$1,200）</span>
-          <div class="row">
-            <button type="button" onclick="copyScheduleOutputText()" class="btn-wa">複製</button>
-            <button type="button" onclick="downloadScheduleOutputTxt()" class="btn-secondary">.txt</button>
-            <button type="button" onclick="window.print()" class="btn-secondary">PDF</button>
-          </div>
-        </div>
-        <textarea readonly class="schedule-output-ta">${escapeHtml(latestScheduleExportText)}</textarea>
+        <button type="button" onclick="applyScheduleDateRange()" class="soft-pill-btn accent">套用</button>
+        <button type="button" onclick="resetScheduleToRecentTen()" class="soft-pill-btn">重設</button>
       </div>` : '';
 
       if (!allDayGroups.length && !futureItems.length) {
-        container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
+        container.innerHTML = toolbarHtml + rangeBoxHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
         return;
       }
 
       const futureSectionHtml = futureItems.length ? `<div class="future-diary-box">
         <div class="future-diary-head">
           <div class="row">
-            <span class="future-tag-pill">即將新單位</span>
+            <span class="future-tag-pill">+即將新單位</span>
             <span class="t-site" style="font-size:13px;">${futureItems.length} 項</span>
           </div>
         </div>
@@ -1268,7 +1194,7 @@
                 ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
               </div>
               ${!IS_PUBLIC ? `<div class="row no-print" style="align-self:center;flex-shrink:0;">
-                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="borderless-btn accent">轉正</button>
+                <button type="button" onclick="convertFutureDiaryToFormal('${r.id}')" class="record-mini-btn accent">轉正</button>
               </div>` : ''}
             </div>`;
           }).join('')}
@@ -1313,7 +1239,7 @@
         </div>`;
       }).join('');
 
-      container.innerHTML = toolbarHtml + rangeBoxHtml + outputBoxHtml + futureSectionHtml + daysHtml;
+      container.innerHTML = toolbarHtml + rangeBoxHtml + futureSectionHtml + daysHtml;
     }
 
     async function renderSingleReportStandalone(r) {
@@ -1400,35 +1326,101 @@
       return u.toString();
     }
 
-    function buildWhatsAppMessage({ audience, site, date, title, url }) {
+    function buildCurrentViewShareUrl() {
+      const u = new URL('index.html', window.location.href);
+      u.searchParams.set('view', 'public');
+      u.searchParams.set('tab', activeMainView);
+      const selSite = document.getElementById('siteFilter')?.value || 'ALL';
+      if (!onlyUpcomingNewUnits && selSite && selSite !== 'ALL') {
+        u.searchParams.set('site', selSite);
+      }
+      return u.toString();
+    }
+
+    function buildCurrentViewShareSummary(items) {
+      const selSite = document.getElementById('siteFilter')?.value || 'ALL';
+      const scopeLabel = onlyUpcomingNewUnits
+        ? '+即將新單位'
+        : (selSite && selSite !== 'ALL' ? selSite : '全部已選記錄');
+      const lines = items.map(r => {
+        const dStr = formatMonthDayWeekday(r.date || '未定日期');
+        const tStr = (r.timeRange || '').trim();
+        const sStr = r.site || '未分類';
+        return `• ${dStr}${tStr ? ` ${tStr}` : ''}｜${sStr}：${r.title || ''}`;
+      });
+      return { scopeLabel, text: lines.join('\n') };
+    }
+
+    function buildWhatsAppMessage({ audience, site, date, title, url, extraLines = '' }) {
       if (audience === 'client') {
         return [
-          `你好！以下為 *${site}* 的最新記錄，請查閱：`,
+          `你好！以下為 *${site}* 的記錄，請查閱：`,
           date ? `📅 ${date}` : '',
           title ? `📌 ${title}` : '',
+          extraLines,
           `🔗 ${url}`,
           `— 築匠設計 ARTISAN STUDIO`
         ].filter(Boolean).join('\n');
       } else {
         return [
-          `跟進以下單位記錄：`,
+          `跟進以下記錄：`,
           `🏠 *${site}*`,
           date ? `📅 ${date}` : '',
           title ? `📌 ${title}` : '',
+          extraLines,
           `🔗 ${url}`
         ].filter(Boolean).join('\n');
       }
     }
 
-    function copyWaMsg(audience, encSite, encDate, encTitle, encUrl) {
+    function copyWaMsg(audience, encSite, encDate, encTitle, encUrl, encExtra = '') {
       const msg = buildWhatsAppMessage({
         audience,
         site: decodeURIComponent(encSite),
         date: decodeURIComponent(encDate),
         title: decodeURIComponent(encTitle),
-        url: decodeURIComponent(encUrl)
+        url: decodeURIComponent(encUrl),
+        extraLines: encExtra ? decodeURIComponent(encExtra) : ''
       });
       copyText(msg, audience === 'client' ? '已複製客人訊息' : '已複製師傅/廠訊息');
+    }
+
+    function openCurrentViewShareModal() {
+      const filtered = getFilteredReports();
+      const viewItems = activeMainView === 'schedule'
+        ? (() => {
+            const days = getScheduleDayGroups(filtered);
+            const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
+            const visDays = isCustomRange ? days : days.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
+            const futureItems = getFutureDiaryEntries(filtered);
+            return [...futureItems, ...visDays.flatMap(d => d.items)];
+          })()
+        : filtered;
+
+      if (!viewItems.length) return showToast('無可分享記錄');
+
+      const { scopeLabel, text: listText } = buildCurrentViewShareSummary(viewItems);
+      const shareUrl = buildCurrentViewShareUrl();
+      const latestDate = viewItems[0]?.date || '';
+      const encSite = encodeURIComponent(scopeLabel);
+      const eDate = encodeURIComponent(latestDate);
+      const eTitle = encodeURIComponent(`共 ${viewItems.length} 項`);
+      const eUrl = encodeURIComponent(shareUrl);
+      const eExtra = encodeURIComponent(listText);
+
+      document.getElementById('shareModalTitle').textContent = `分享全部（${scopeLabel}）`;
+      document.getElementById('shareModalBody').innerHTML = `
+        <div>
+          <div class="t-meta" style="margin-bottom:6px;">目前版面共 <b>${viewItems.length}</b> 項記錄：</div>
+          <textarea readonly rows="5" class="input-ui t-meta" style="margin-bottom:8px;">${escapeHtml(listText)}</textarea>
+          <div class="row">
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="soft-pill-btn accent">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}','${eExtra}')" class="soft-pill-btn accent">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(shareUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
+            <a href="${escapeHtml(shareUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
+          </div>
+        </div>`;
+      document.getElementById('shareModal').classList.remove('hidden');
     }
 
     function openFullShareModal(siteName) {
@@ -1436,15 +1428,16 @@
       const siteUrl = getSingleSiteUrl(siteName);
       const latestDate = items[0]?.date || '';
       const encSite = encodeURIComponent(siteName);
+      const summaryLines = items.map(r => `• ${formatMonthDayWeekday(r.date || '未定日期')}｜${r.title || ''}`).join('\n');
 
       document.getElementById('shareModalTitle').textContent = `全分享：${siteName}`;
       document.getElementById('shareModalBody').innerHTML = `
         <div>
           <div style="font-weight:700;margin-bottom:6px;">整個單位記錄（共 ${items.length} 條）</div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent('全部記錄')}','${encodeURIComponent(siteUrl)}')" class="btn-wa">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent('全部記錄')}','${encodeURIComponent(siteUrl)}')" class="btn-orange">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="soft-pill-btn accent">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${encodeURIComponent(latestDate)}','${encodeURIComponent(`全部記錄（${items.length}條）`)}','${encodeURIComponent(siteUrl)}','${encodeURIComponent(summaryLines)}')" class="soft-pill-btn accent">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(siteUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
             <a href="${escapeHtml(siteUrl)}" target="_blank" class="btn-link">預覽 ↗</a>
           </div>
         </div>`;
@@ -1465,9 +1458,9 @@
         <div>
           <div class="t-meta" style="margin-bottom:6px;"><b class="t-mono">${escapeHtml(formatMonthDayWeekday(r.date))}</b> — ${escapeHtml(r.title)}</div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-wa">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="btn-orange">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="soft-pill-btn accent">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eTitle}','${eUrl}')" class="soft-pill-btn accent">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(rUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
             <a href="${escapeHtml(rUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
           </div>
         </div>`;
@@ -1486,9 +1479,9 @@
         <div>
           <div class="t-meta" style="margin-bottom:6px;"><b>${escapeHtml(fileName || '附件')}</b></div>
           <div class="row">
-            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-wa">客人</button>
-            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="btn-orange">師傅/廠</button>
-            <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製連結')" class="btn-secondary">連結</button>
+            <button type="button" onclick="copyWaMsg('client','${encSite}','${eDate}','${eName}','${eUrl}')" class="soft-pill-btn accent">客人</button>
+            <button type="button" onclick="copyWaMsg('factory','${encSite}','${eDate}','${eName}','${eUrl}')" class="soft-pill-btn accent">師傅/廠</button>
+            <button type="button" onclick="copyText('${escapeAttr(fullUrl)}', '已複製連結')" class="soft-pill-btn">連結</button>
             <a href="${escapeHtml(fullUrl)}" target="_blank" class="btn-link blue">預覽 ↗</a>
           </div>
         </div>`;
@@ -1535,7 +1528,6 @@
       clearTimeout(window._t); window._t = setTimeout(() => el.classList.add('hidden'), 2000);
     }
 
-    // 下拉選單只留現有單位，唔放「即將新單位」
     function updateSiteFilterOptions() {
       const select = document.getElementById('siteFilter'), cur = select.value;
       const sites = getAllUniqueSites();
@@ -1794,7 +1786,7 @@
                 </div>
                 <input type="text" id="ie-fu-${r.id}" value="${escapeHtml(r.followup||'')}" class="input-ui t-meta" placeholder="跟進" />
                 <textarea id="ie-sum-${r.id}" rows="2" class="input-ui t-meta">${escapeHtml(r.summary||'')}</textarea>
-                <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="btn-secondary">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="btn-orange">儲存</button></div>
+                <div class="row" style="justify-content:flex-end;"><button type="button" onclick="cancelInlineEdit()" class="soft-pill-btn">取消</button><button type="button" onclick="saveInlineEdit('${r.id}')" class="soft-pill-btn accent">儲存</button></div>
               </div>
             </div>`;
           }
@@ -1818,16 +1810,13 @@
 
           const thumbsHtml = pCount ? `<div class="thumbs">${thumbs.map(t => `<a href="${escapeHtml(singleUrl)}" target="${IS_PUBLIC ? '_self' : '_blank'}" class="thumb-box"><img loading="lazy" decoding="async" src="${t.src}" /></a>`).join('')}</div>` : '';
 
-          // 紀錄列：1px 幼框全包，入面全部無框
           const actionGroupHtml = !IS_PUBLIC ? `
             <div class="record-action-shell no-print">
-              <button type="button" onclick="openRepairForRecord(reports.find(x=>x.id==='${r.id}'))" class="borderless-btn accent">修繕</button>
-              <button type="button" onclick="openAlbumWorkspace('${escapeAttr(g.site)}','${escapeAttr(r.date||'')}','${r.id}')" class="borderless-btn">截圖</button>
-              <button type="button" onclick="openEditor('${r.id}')" class="borderless-btn accent">詳編</button>
-              <button type="button" onclick="openFollowupModal('${r.id}')" class="borderless-btn accent">留言</button>
-              <button type="button" onclick="startInlineEdit('${r.id}')" class="borderless-btn">快改</button>
-              <button type="button" onclick="deleteReport('${r.id}')" class="borderless-btn del">X</button>
-              <button type="button" onclick="openSingleShareModal('${r.id}')" class="borderless-btn">單分</button>
+              <button type="button" onclick="openEditor('${r.id}')" class="record-mini-btn accent">詳編</button>
+              <button type="button" onclick="openFollowupModal('${r.id}')" class="record-mini-btn accent">留言</button>
+              <button type="button" onclick="startInlineEdit('${r.id}')" class="record-mini-btn">快改</button>
+              <button type="button" onclick="deleteReport('${r.id}')" class="record-mini-btn del">X</button>
+              <button type="button" onclick="openSingleShareModal('${r.id}')" class="record-mini-btn">單分</button>
             </div>
           ` : '';
 
@@ -1836,7 +1825,7 @@
               <div class="entry-date-group">
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
-                ${isFuture ? `<span class="future-tag-pill">即將新單位</span>` : ''}
+                ${isFuture ? `<span class="future-tag-pill">+即將新單位</span>` : ''}
               </div>
               ${actionGroupHtml}
             </div>
@@ -1861,10 +1850,10 @@
             </div>
             ${!IS_PUBLIC ? `
               <div class="borderless-top-actions no-print">
-                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="borderless-btn accent">+ 工作</button>
-                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="borderless-btn">截圖</button>
-                <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('需有地址同時間')`}" class="borderless-btn accent">修繕</button>
-                <button type="button" onclick="openFullShareModal(decodeURIComponent('${encSite}'))" class="borderless-btn">全分享</button>
+                <button type="button" onclick="openEditorForSite(decodeURIComponent('${encSite}'),decodeURIComponent('${encAss}'))" class="soft-pill-btn accent">+ 工作</button>
+                <button type="button" onclick="openAlbumWorkspace(decodeURIComponent('${encSite}'))" class="soft-pill-btn">截圖</button>
+                <button type="button" onclick="${validRepairItem ? `openRepairForRecord(reports.find(x=>x.id==='${validRepairItem.id}'))` : `showToast('需有地址同時間')`}" class="soft-pill-btn accent">修繕</button>
+                <button type="button" onclick="openFullShareModal(decodeURIComponent('${encSite}'))" class="soft-pill-btn">全分享</button>
               </div>
             ` : ''}
           </div>
