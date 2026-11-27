@@ -23,20 +23,20 @@
     @media (max-width: 640px) {
       .repair-meta-bar { grid-template-columns: 1fr; }
     }
+
+    /* 提示橫幅與工具列：只用底色與左色條分區，唔加四周框線避免似輸入框 */
     .repair-req-banner {
       background: #FFF7ED;
-      border: 1px solid #FDBA74;
+      border-left: 3px solid #EA580C;
       color: #9A3412;
-      border-radius: 4px;
       padding: 6px 10px;
       margin-top: 8px;
       font-size: 12.5px;
-      font-weight: 600;
+      font-weight: 700;
     }
     .repair-action-strip {
-      background: #F8FAFC;
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
+      background: #FFFFFF;
+      border-left: 3px solid #CBD5E1;
       padding: 6px 10px;
       margin-top: 8px;
       display: flex;
@@ -47,14 +47,15 @@
     }
     .paste-box {
       background: #FFFBEB;
-      border: 1px solid #FDBA74;
-      border-radius: 4px;
+      border-left: 3px solid #F59E0B;
       padding: 8px 10px;
       margin-top: 8px;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
+
+    /* 區域與問題項目分區（清走多餘外框，突出內容與輸入框） */
     .zone-card {
       background: #FFFFFF;
       border-left: 3px solid #EA580C;
@@ -78,17 +79,19 @@
       gap: 10px;
     }
     .issue-card {
-      border: 1px solid #CBD5E1;
-      border-radius: 4px;
-      padding: 8px;
+      padding: 4px 0 10px;
+      border-bottom: 1.5px solid #E2E8F0;
       background: #FFFFFF;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
+    .issue-card:last-child {
+      border-bottom: none;
+      padding-bottom: 2px;
+    }
     .issue-card.is-done {
-      background: #F8FAFC;
-      border-color: #E2E8F0;
+      opacity: 0.78;
     }
     .issue-top-row {
       display: flex;
@@ -114,7 +117,7 @@
     }
     .issue-title-text {
       font-weight: 700;
-      font-size: 13px;
+      font-size: 13.5px;
       color: #0F172A;
     }
     .issue-card.is-done .issue-title-text {
@@ -135,7 +138,6 @@
       align-items: center;
       gap: 6px;
       padding-top: 4px;
-      border-top: 1px dashed #E2E8F0;
     }
     .issue-thumb {
       width: 64px;
@@ -158,16 +160,23 @@
       gap: 5px;
       margin-bottom: 6px;
     }
+
+    /* 有框 = 可讀寫/複製文字欄 */
     .summary-out-ta {
       width: 100%;
       min-height: 160px;
-      border: 1px solid #CBD5E1;
+      border: 1px solid #94A3B8;
       border-radius: 4px;
       padding: 8px;
       font-size: 12px;
       line-height: 1.45;
       font-family: inherit;
-      background: #F8FAFC;
+      background: #FCFDFF;
+      color: #0F172A;
+    }
+    .summary-out-ta:focus {
+      outline: none;
+      border-color: #EA580C;
     }
   </style>
 </head>
@@ -176,14 +185,14 @@
   <header class="topbar no-print">
     <div class="container row-between" style="padding-bottom:0;">
       <div class="row">
-        <a href="index.html" class="btn-secondary">退回</a>
-        <span class="t-site brand-name">築匠設計 ARTISAN STUDIO</span>
+        <a href="index.html" class="btn-secondary"><span class="btn-sym">‹</span>退回</a>
+        <span class="t-site" style="color:#FFFFFF;">築匠設計 ARTISAN STUDIO</span>
         <span class="topbar-sep">|</span>
         <span class="topbar-sub">修繕與售後跟進</span>
         <span id="repairSyncTag" class="sync-ok"></span>
       </div>
       <div class="row">
-        <button type="button" onclick="toggleSummaryBox()" class="btn-secondary">匯出清單</button>
+        <button type="button" onclick="toggleSummaryBox()" class="btn-secondary"><span class="btn-sym">≡</span>匯出清單</button>
         <button type="button" id="saveRepairBtn" onclick="saveRepairSheet()" class="btn-orange">儲存同步</button>
       </div>
     </div>
@@ -215,13 +224,13 @@
 
     <div class="repair-action-strip no-print">
       <div class="row">
-        <button type="button" id="btnOpenPaste" onclick="togglePasteBox()" class="btn-orange">+ 貼入清單拆項</button>
-        <button type="button" onclick="addIssueItem('主人房')" class="btn-secondary zone-add-btn">+ 主人房</button>
-        <button type="button" onclick="addIssueItem('廁所')" class="btn-secondary zone-add-btn">+ 廁所</button>
-        <button type="button" onclick="addIssueItem('細房')" class="btn-secondary zone-add-btn">+ 細房</button>
-        <button type="button" onclick="addIssueItem('廳')" class="btn-secondary zone-add-btn">+ 廳</button>
-        <button type="button" onclick="addIssueItem('廚房')" class="btn-secondary zone-add-btn">+ 廚房</button>
-        <button type="button" onclick="addIssueItem('其他')" class="btn-secondary zone-add-btn">+ 其他</button>
+        <button type="button" id="btnOpenPaste" onclick="togglePasteBox()" class="btn-orange"><span class="btn-sym">＋</span>貼入拆項</button>
+        <button type="button" onclick="addIssueItem('主人房')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>主人房</button>
+        <button type="button" onclick="addIssueItem('廁所')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>廁所</button>
+        <button type="button" onclick="addIssueItem('細房')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>細房</button>
+        <button type="button" onclick="addIssueItem('廳')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>廳</button>
+        <button type="button" onclick="addIssueItem('廚房')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>廚房</button>
+        <button type="button" onclick="addIssueItem('其他')" class="btn-secondary zone-add-btn"><span class="btn-sym">＋</span>其他</button>
       </div>
       <div class="row" id="repairStatsText"></div>
     </div>
@@ -229,11 +238,11 @@
     <div id="pasteBox" class="paste-box hidden no-print">
       <div class="row-between">
         <span class="t-meta" style="font-weight:700;color:#9A3412;">貼入整段區域跟進文字（自動按區域與項目拆開，*星號* 備註會自動放入「跟進」）</span>
-        <button type="button" onclick="togglePasteBox()" class="btn-link">收合 ✕</button>
+        <button type="button" onclick="togglePasteBox()" class="btn-link danger">收合 <span class="btn-sym">✕</span></button>
       </div>
       <textarea id="pasteRawText" rows="5" class="input-ui" placeholder="例如：&#10;主人房&#10;1. 油壓床鉸位同床邊唔對 *電動鉸今日先到*&#10;廳&#10;1. 吊櫃花痕"></textarea>
       <div class="row" style="justify-content:flex-end;">
-        <button type="button" onclick="parseAndAppendPasteText()" class="btn-orange">拆解並加入清單</button>
+        <button type="button" onclick="parseAndAppendPasteText()" class="btn-orange"><span class="btn-sym">＋</span>拆解並加入清單</button>
       </div>
     </div>
 
@@ -241,7 +250,7 @@
       <div class="row-between" style="margin-bottom:6px;">
         <span style="font-weight:700;">跟進清單匯出預覽</span>
         <div class="row">
-          <button type="button" onclick="copyRepairExport()" class="btn-wa">複製文字</button>
+          <button type="button" onclick="copyRepairExport()" class="btn-wa"><span class="btn-sym">↗</span>複製文字</button>
           <button type="button" onclick="window.print()" class="btn-secondary">列印 / PDF</button>
         </div>
       </div>
@@ -251,16 +260,16 @@
     <div id="annotPanel" class="zone-card hidden no-print" style="padding:8px 10px;">
       <div class="row-between" style="margin-bottom:6px;">
         <span id="annotTargetLabel" style="font-weight:700;color:#EA580C;">照片標記工作區</span>
-        <button type="button" onclick="closeAnnotPanel()" class="btn-link">關閉標記 ✕</button>
+        <button type="button" onclick="closeAnnotPanel()" class="btn-link danger">關閉標記 <span class="btn-sym">✕</span></button>
       </div>
       <div class="canvas-toolbar">
         <div class="row">
-          <button type="button" onclick="setRepTool('move')" id="rt-move" class="btn-secondary btn-active">✋ 移動</button>
-          <button type="button" onclick="setRepTool('freehand')" id="rt-freehand" class="btn-secondary">✎ 手繪</button>
-          <button type="button" onclick="setRepTool('circle')" id="rt-circle" class="btn-secondary">◯ 線圈</button>
-          <button type="button" onclick="setRepTool('arrow')" id="rt-arrow" class="btn-secondary">↗ 箭咀</button>
-          <button type="button" onclick="setRepTool('text')" id="rt-text" class="btn-secondary">T 打字</button>
-          <select id="repFontSize" onchange="onRepFontChange()" class="select-ui">
+          <button type="button" onclick="setRepTool('move')" id="rt-move" class="btn-secondary btn-active"><span class="btn-sym">✋</span>移動</button>
+          <button type="button" onclick="setRepTool('freehand')" id="rt-freehand" class="btn-secondary"><span class="btn-sym">✎</span>手繪</button>
+          <button type="button" onclick="setRepTool('circle')" id="rt-circle" class="btn-secondary"><span class="btn-sym">◯</span>線圈</button>
+          <button type="button" onclick="setRepTool('arrow')" id="rt-arrow" class="btn-secondary"><span class="btn-sym">↗</span>箭咀</button>
+          <button type="button" onclick="setRepTool('text')" id="rt-text" class="btn-secondary"><span class="btn-sym">T</span>打字</button>
+          <select id="repFontSize" onchange="onRepFontChange()" class="select-ui" style="width:auto;">
             <option value="0.018">字體：細</option>
             <option value="0.026" selected>字體：中</option>
             <option value="0.036">字體：大</option>
@@ -271,9 +280,9 @@
           <button type="button" onclick="setRepColor('rgba(220,38,38,0.92)', this)" class="color-dot" style="background:#DC2626;"></button>
           <button type="button" onclick="setRepColor('rgba(37,99,235,0.92)', this)" class="color-dot" style="background:#2563EB;"></button>
           <button type="button" onclick="setRepColor('rgba(15,23,42,0.92)', this)" class="color-dot" style="background:#0F172A;"></button>
-          <button type="button" id="repDelShapeBtn" onclick="deleteRepSelectedShape()" class="btn-danger-outline hidden">刪選取</button>
-          <button type="button" onclick="undoRepShape()" class="btn-secondary">復原</button>
-          <button type="button" onclick="clearRepShapes()" class="btn-secondary">全清</button>
+          <button type="button" id="repDelShapeBtn" onclick="deleteRepSelectedShape()" class="btn-danger-outline hidden"><span class="btn-sym">✕</span>刪選取</button>
+          <button type="button" onclick="undoRepShape()" class="btn-secondary"><span class="btn-sym">↶</span>復原</button>
+          <button type="button" onclick="clearRepShapes()" class="btn-danger-outline">全清</button>
         </div>
       </div>
       <input type="text" id="repTextInput" oninput="onRepTextLive()" onkeydown="onRepTextKey(event)" class="input-ui hidden" style="margin-bottom:6px;" placeholder="輸入標記文字，按 Enter 放上照片或點照片落字" />
@@ -391,11 +400,11 @@
       const banner = document.getElementById('repairReqBanner');
       if (banner) {
         banner.style.background = ok ? '#ECFDF5' : '#FFF7ED';
-        banner.style.borderColor = ok ? '#6EE7B7' : '#FDBA74';
+        banner.style.borderLeftColor = ok ? '#059669' : '#EA580C';
         banner.style.color = ok ? '#065F46' : '#9A3412';
         const stageTag = stage ? `｜狀態：${stage}` : '';
         banner.textContent = ok
-          ? `已確認單位與時間（${site}｜${time}${stageTag}），可以寫修葺跟進。`
+          ? `✓ 已確認單位與時間（${site}｜${time}${stageTag}），可以寫修葺跟進。`
           : '必須先揀選「單位」、填寫「時間」同「日期」，先可以寫修葺跟進及儲存。';
       }
       document.getElementById('btnOpenPaste')?.toggleAttribute('disabled', !ok);
@@ -491,7 +500,7 @@
           const stText = data.stageStatus ? `[${data.stageStatus}]` : '';
           const label = `${data.site || '未命名單位'}${stText} [${data.timeRange || ''}] — ${data.date || ''} (${(data.items || []).length}項)`;
           const mark = filterSite && data.site === filterSite ? '★ ' : '';
-          opts.push(`<option value="${escapeHtml(d.id)}" ${d.id === currentRepairId ? 'selected' : ''}>${escapeHtml(mark + label)}</option>`);
+          opts.push(`<option value="${escapeHtml(d.id)}" ${d.id === currentRepairId ? 'selected' : ''}>${escapeHtml(mark + label)}</option>`).join('');
         });
         sel.innerHTML = opts.join('');
       } catch (_) {}
@@ -911,7 +920,7 @@
 
       const container = document.getElementById('issuesContainer');
       if (!items.length) {
-        container.innerHTML = `<div class="zone-card" style="padding:16px;text-align:center;" class="muted">揀好單位同時間後，可按上方「+ 貼入清單拆項」或各區「+」按鈕新增</div>`;
+        container.innerHTML = `<div class="zone-card muted" style="padding:16px;text-align:center;">揀好單位同時間後，可按上方「＋貼入拆項」或各區「＋」新增</div>`;
         return;
       }
 
@@ -947,7 +956,7 @@
                   <option value="跟進中" ${it.status === '跟進中' ? 'selected' : ''}>跟進中</option>
                   <option value="已完成" ${isDone ? 'selected' : ''}>已完成</option>
                 </select>
-                <button type="button" onclick="deleteIssueItem(${idx})" class="btn-danger-outline" style="height:24px;">刪</button>
+                <button type="button" onclick="deleteIssueItem(${idx})" class="btn-danger-outline" title="刪除此項"><span class="btn-sym">✕</span>刪</button>
               </div>
             </div>
 
@@ -957,12 +966,12 @@
             </div>
 
             <div class="issue-photos-row">
-              <label class="btn-orange" style="cursor:pointer;height:24px;">
-                <span>📷 連續拍照</span>
+              <label class="btn-orange">
+                <span class="btn-sym">📷</span><span>連續拍照</span>
                 <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleIssuePhotoFiles(${idx}, this.files)" />
               </label>
-              <label class="btn-secondary" style="cursor:pointer;height:24px;">
-                <span>🖼 揀相</span>
+              <label class="btn-secondary">
+                <span class="btn-sym">🖼</span><span>揀相</span>
                 <input type="file" accept="image/*" multiple class="hidden" onchange="handleIssuePhotoFiles(${idx}, this.files)" />
               </label>
               ${thumbsHtml}
@@ -973,7 +982,7 @@
         return `<div class="zone-card">
           <div class="zone-head">
             <span class="t-site">${escapeHtml(z)}（${zItems.length} 項）</span>
-            <button type="button" onclick="addIssueItem('${escapeHtml(z)}')" class="btn-secondary zone-add-btn" style="height:24px;">+ ${escapeHtml(z)}</button>
+            <button type="button" onclick="addIssueItem('${escapeHtml(z)}')" class="btn-orange zone-add-btn"><span class="btn-sym">＋</span>${escapeHtml(z)}</button>
           </div>
           <div class="zone-body">${cardsHtml}</div>
         </div>`;
