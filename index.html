@@ -46,7 +46,8 @@
         <button type="button" id="tabSchedule" onclick="switchMainView('schedule')" class="view-tab-btn active">時間表</button>
         <button type="button" id="tabReports" onclick="switchMainView('reports')" class="view-tab-btn">工作紀錄</button>
       </div>
-      <button type="button" onclick="openEditorForUpcomingNewUnit()" class="btn-orange">+ 即將新單位</button>
+      <button type="button" onclick="openWorkflowModal('immediate')" class="btn-orange">+ 即時</button>
+      <button type="button" onclick="openWorkflowModal('booking')" class="btn-secondary">預約</button>
       <button type="button" onclick="showAllUnitsDirect()" class="btn-secondary">全部顯示</button>
       <select id="siteFilter" onchange="onSiteFilterChange()" class="select-site-lg">
         <option value="ALL">全部單位</option>
@@ -61,6 +62,65 @@
       <div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">載入中...</div>
     </div>
   </main>
+
+  <!-- 即時 / 預約 工作流彈窗 -->
+  <div id="workflowModal" class="modal-backdrop hidden no-print">
+    <div class="modal-box modal-sm">
+      <div class="modal-head">
+        <div class="row" style="gap:6px;">
+          <span class="t-site" id="wfModalTitle">新增工作</span>
+          <span id="wfModeBadge" class="mode-badge mode-badge-immediate">即時</span>
+        </div>
+        <button type="button" onclick="closeWorkflowModal()" class="btn-link">關閉 ✕</button>
+      </div>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="addr-combo-box">
+          <div class="addr-mode-tabs">
+            <button type="button" id="tabSearchAddr" class="addr-mode-tab active" onclick="switchAddrMode('search')">搜尋現有地址</button>
+            <button type="button" id="tabNewAddr" class="addr-mode-tab" onclick="switchAddrMode('new')">寫新地址</button>
+          </div>
+          <div id="addrSearchPane">
+            <input type="text" id="wfAddrSearchInput" oninput="renderAddrSearchResults()" class="input-ui t-meta" placeholder="搜尋現有屋苑／單位地址..." />
+            <div id="wfAddrSearchList" class="site-suggest-box" style="margin-top:4px;"></div>
+          </div>
+          <div id="addrNewPane" class="hidden">
+            <input type="text" id="wfNewAddrInput" oninput="onWfNewAddrInput()" class="input-ui t-meta" placeholder="輸入新地址（例如：屯門海翠花園3座12A）" />
+          </div>
+          <div class="t-meta muted">已選地址：<strong id="wfSelectedAddrDisplay">未選擇</strong></div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label class="field-label">日期</label>
+            <input type="date" id="wfDateInput" class="input-ui t-meta" />
+          </div>
+          <div>
+            <label class="field-label">時間</label>
+            <input type="text" id="wfTimeInput" class="input-ui t-meta" placeholder="例如：21:13" />
+          </div>
+        </div>
+
+        <div>
+          <label class="field-label" id="wfNoteLabel">工作內容／指令</label>
+          <textarea id="wfNoteInput" rows="2" class="input-ui t-meta" placeholder="寫低有人叫你做乜，或未展開嘅預約記錄..."></textarea>
+        </div>
+
+        <div id="wfImmediateActions" class="row" style="flex-wrap:wrap;gap:6px;background:#FFF7ED;padding:6px;border-radius:4px;">
+          <button type="button" onclick="triggerWfScreenshot()" class="btn-secondary">截圖</button>
+          <button type="button" onclick="goWfRepair()" class="btn-orange">修繕</button>
+          <label class="btn-secondary" style="cursor:pointer;">
+            <span>上傳文檔</span>
+            <input type="file" id="wfDocFileInput" class="hidden" onchange="handleWfDocUpload(event)" />
+          </label>
+          <span id="wfDocStatus" class="t-meta muted"></span>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" onclick="closeWorkflowModal()" class="btn-secondary">取消</button>
+        <button type="button" id="wfSaveBtn" onclick="saveWorkflowEntry()" class="btn-orange">儲存</button>
+      </div>
+    </div>
+  </div>
 
   <div id="editorModal" class="modal-backdrop hidden no-print">
     <div class="modal-box">
@@ -299,6 +359,11 @@
     let managingOldSite = '';
     let forceUpcomingNoDate = false;
 
+    let currentWfMode = 'immediate';
+    let currentAddrMode = 'search';
+    let selectedWfAddr = '';
+    let wfUploadedDoc = null;
+
     let schedulePage = 0;
     let scheduleRangeStart = '';
     let scheduleRangeEnd = '';
@@ -313,6 +378,201 @@
 
     const canvas = document.getElementById('annotCanvas');
     const ctx = canvas.getContext('2d');
+
+    function getLocalDateOffset(dayOffset = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + dayOffset);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    function getNowHHMM() {
+      const d = new Date();
+      return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function openWorkflowModal(mode) {
+      currentWfMode = mode === 'booking' ? 'booking' : 'immediate';
+      selectedWfAddr = '';
+      wfUploadedDoc = null;
+      document.getElementById('wfDocStatus').textContent = '';
+      document.getElementById('wfAddrSearchInput').value = '';
+      document.getElementById('wfNewAddrInput').value = '';
+      document.getElementById('wfNoteInput').value = '';
+      updateWfAddrLabel('');
+
+      const titleEl = document.getElementById('wfModalTitle');
+      const badgeEl = document.getElementById('wfModeBadge');
+      const dateEl = document.getElementById('wfDateInput');
+      const timeEl = document.getElementById('wfTimeInput');
+      const noteLabelEl = document.getElementById('wfNoteLabel');
+      const immBoxEl = document.getElementById('wfImmediateActions');
+
+      if (currentWfMode === 'immediate') {
+        titleEl.textContent = '+ 即時';
+        badgeEl.textContent = '即時';
+        badgeEl.className = 'mode-badge mode-badge-immediate';
+        dateEl.value = getLocalDateOffset(0);
+        timeEl.value = getNowHHMM();
+        noteLabelEl.textContent = '有人叫我做嘢／即時處理內容';
+        immBoxEl.classList.remove('hidden');
+      } else {
+        titleEl.textContent = '預約';
+        badgeEl.textContent = '預約 · 未展開';
+        badgeEl.className = 'mode-badge mode-badge-booking';
+        dateEl.value = getLocalDateOffset(1);
+        timeEl.value = '';
+        noteLabelEl.textContent = '今天之後預約記錄（只作記錄，未展開工作）';
+        immBoxEl.classList.add('hidden');
+      }
+
+      switchAddrMode('search');
+      renderAddrSearchResults();
+      document.getElementById('workflowModal').classList.remove('hidden');
+    }
+
+    function closeWorkflowModal() {
+      document.getElementById('workflowModal').classList.add('hidden');
+    }
+
+    function switchAddrMode(mode) {
+      currentAddrMode = mode === 'new' ? 'new' : 'search';
+      document.getElementById('tabSearchAddr').classList.toggle('active', currentAddrMode === 'search');
+      document.getElementById('tabNewAddr').classList.toggle('active', currentAddrMode === 'new');
+      document.getElementById('addrSearchPane').classList.toggle('hidden', currentAddrMode !== 'search');
+      document.getElementById('addrNewPane').classList.toggle('hidden', currentAddrMode !== 'new');
+      if (currentAddrMode === 'new') {
+        updateWfAddrLabel((document.getElementById('wfNewAddrInput').value || '').trim());
+      } else {
+        updateWfAddrLabel(selectedWfAddr);
+      }
+    }
+
+    function onWfNewAddrInput() {
+      if (currentAddrMode === 'new') {
+        selectedWfAddr = (document.getElementById('wfNewAddrInput').value || '').trim();
+        updateWfAddrLabel(selectedWfAddr);
+      }
+    }
+
+    function updateWfAddrLabel(addr) {
+      document.getElementById('wfSelectedAddrDisplay').textContent = addr || '未選擇';
+    }
+
+    function renderAddrSearchResults() {
+      const q = (document.getElementById('wfAddrSearchInput').value || '').trim().toLowerCase();
+      const box = document.getElementById('wfAddrSearchList');
+      const allSites = getAllUniqueSites();
+      const matched = allSites.filter(s => !q || s.toLowerCase().includes(q)).slice(0, 10);
+
+      if (!matched.length) {
+        box.innerHTML = `<div class="t-meta muted">搵唔到現有地址，可切去「寫新地址」。</div>`;
+        box.classList.remove('hidden');
+        return;
+      }
+
+      box.innerHTML = `<div class="site-suggest-list">${
+        matched.map(s => `<button type="button" onclick="pickWfAddr('${escapeAttr(s)}')" class="site-suggest-item">${escapeHtml(s)}</button>`).join('')
+      }</div>`;
+      box.classList.remove('hidden');
+    }
+
+    function pickWfAddr(addr) {
+      selectedWfAddr = addr;
+      updateWfAddrLabel(addr);
+    }
+
+    function getResolvedWfAddr() {
+      if (currentAddrMode === 'new') {
+        return (document.getElementById('wfNewAddrInput').value || '').trim();
+      }
+      return selectedWfAddr || (document.getElementById('wfAddrSearchInput').value || '').trim();
+    }
+
+    function triggerWfScreenshot() {
+      const addr = getResolvedWfAddr();
+      const dStr = document.getElementById('wfDateInput').value || getLocalDateOffset(0);
+      openAlbumWorkspace(addr, dStr, '');
+    }
+
+    function goWfRepair() {
+      const addr = getResolvedWfAddr();
+      if (!addr) return showToast('請先揀或寫地址');
+      const dStr = document.getElementById('wfDateInput').value || getLocalDateOffset(0);
+      const tStr = (document.getElementById('wfTimeInput').value || getNowHHMM()).trim();
+      const noteStr = (document.getElementById('wfNoteInput').value || '').trim();
+      window.location.href = getRepairPageUrl(addr, dStr, tStr, noteStr);
+    }
+
+    function handleWfDocUpload(e) {
+      const file = e.target.files && e.target.files[0];
+      e.target.value = '';
+      if (!file) return;
+      if (file.size <= 650 * 1024) {
+        const rd = new FileReader();
+        rd.onload = ev => {
+          wfUploadedDoc = { name: file.name, url: ev.target.result };
+          document.getElementById('wfDocStatus').textContent = `已選：${file.name}`;
+        };
+        rd.readAsDataURL(file);
+      } else {
+        wfUploadedDoc = { name: file.name, url: '' };
+        document.getElementById('wfDocStatus').textContent = `已記檔名：${file.name}`;
+      }
+    }
+
+    async function saveWorkflowEntry() {
+      const site = getResolvedWfAddr();
+      if (!site) return showToast('請先揀或寫地址');
+
+      const dateVal = document.getElementById('wfDateInput').value || (currentWfMode === 'booking' ? getLocalDateOffset(1) : getLocalDateOffset(0));
+      const timeVal = (document.getElementById('wfTimeInput').value || '').trim() || (currentWfMode === 'immediate' ? getNowHHMM() : '');
+      const rawNote = (document.getElementById('wfNoteInput').value || '').trim();
+
+      const isBooking = currentWfMode === 'booking';
+      const prefix = isBooking ? '[預約·未展開] ' : '[即時] ';
+      const title = `${prefix}${rawNote || (isBooking ? '預約記錄（未展開工作）' : '即時跟進項目')}`;
+      const docs = wfUploadedDoc ? [wfUploadedDoc] : [];
+
+      const btn = document.getElementById('wfSaveBtn');
+      btn.disabled = true;
+      btn.textContent = '同步中...';
+
+      try {
+        const docId = 'rep-' + Date.now();
+        await db.collection(COLLECTION_NAME).doc(docId).set({
+          site,
+          assignee: '',
+          date: dateVal,
+          timeRange: timeVal,
+          workflowMode: currentWfMode,
+          isPendingBooking: isBooking,
+          isFutureDiary: isBooking,
+          isUpcoming: isBooking,
+          title,
+          docs,
+          docName: docs[0]?.name || '',
+          docUrl: docs[0]?.url || '',
+          summary: isBooking ? '只作預約記錄，尚未展開工作。' : '',
+          followup: '',
+          followupLogs: [],
+          photoMeta: [],
+          photos: [],
+          createdAt: Date.now(),
+          updatedAt: Date.now()
+        });
+        closeWorkflowModal();
+        showToast(isBooking ? '已記低預約' : '已記低即時');
+      } catch (err) {
+        console.error(err);
+        showToast('儲存失敗');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '儲存';
+      }
+    }
 
     function isUnlocked() {
       if (IS_PUBLIC) return true;
@@ -356,7 +616,7 @@
     }
 
     function isFutureDiaryEntry(r) {
-      return Boolean(r?.isFutureDiary);
+      return Boolean(r?.isFutureDiary || r?.isPendingBooking);
     }
 
     function toggleScheduleDetail(id) {
@@ -1492,7 +1752,7 @@
           const singleUrl = getSingleReportUrl(r.id);
           const isFuture = isFutureDiaryEntry(r);
 
-         const docsHtml = docs.length ? `<div class="docs-strip">
+          const docsHtml = docs.length ? `<div class="docs-strip">
             ${docs.map((d, dIdx) => {
               const editUrl = !IS_PUBLIC ? getAlbumEditUrl(d.url) : '';
               return `<div class="doc-item-row">
@@ -1525,7 +1785,7 @@
               <div class="entry-date-group">
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
-                ${isFuture ? `<span class="card-action-link orange" style="border-bottom:none;">即將</span>` : ''}
+                ${isFuture ? `<span class="card-action-link orange" style="border-bottom:none;">預約</span>` : ''}
                 ${!IS_PUBLIC ? `
                   <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green no-print">詳編</button>
                   <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate no-print">留言</button>
@@ -1618,13 +1878,6 @@
         const rd = new FileReader(); rd.onload = ev => { addDocRow(f.name, ev.target.result); showToast('已載入'); }; rd.readAsDataURL(f);
       });
       e.target.value = '';
-    }
-
-    function openEditorForUpcomingNewUnit() {
-      openEditor(null, { forceNoDate: true });
-      document.getElementById('fieldDate').value = '';
-      document.getElementById('fieldIsFutureDiary').checked = true;
-      document.getElementById('editorModalTitle').textContent = '新增即將新單位（未有日期）';
     }
 
     function openEditorForSite(site, ass) {
@@ -1995,6 +2248,14 @@
         }
 
         const rawDateInput = (document.getElementById('fieldDate').value || '').trim();
+        const dateVal = rawDateInput || (isFuture ? '' : new Date().toISOString().split('T')[0]);
+
+        await db.collection(COLLECTION_NAME).doc(docId).set({
+          site, assignee: document.getElementById('fieldAssignee').value.trim(),
+          date: dateVal,
+          timeRange:
+
+          const rawDateInput = (document.getElementById('fieldDate').value || '').trim();
         const dateVal = rawDateInput || (isFuture ? '' : new Date().toISOString().split('T')[0]);
 
         await db.collection(COLLECTION_NAME).doc(docId).set({
