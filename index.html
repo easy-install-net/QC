@@ -1169,11 +1169,15 @@
       showToast('已原地更新');
     }
 
-    function renderScheduleSlotRow(r) {
+function renderScheduleSlotRow(r) {
       const tStr = (r.timeRange || '').trim() || '全日';
       const sName = r.site || '未分類';
       const encSite = encodeURIComponent(sName);
       const isDetailOpen = expandedDetailIds.has(r.id);
+      const isBookingRow = Boolean(r?.isPendingBooking || r?.workflowMode === 'booking' || r?.isFutureDiary);
+      const modeTagHtml = isBookingRow
+        ? `<span class="mode-badge mode-badge-booking">預約·未展開</span>`
+        : `<span class="mode-badge mode-badge-immediate">即時</span>`;
 
       if (!IS_PUBLIC && inlineEditId === r.id) {
         const pt = parseTimeRange(r.timeRange);
@@ -1217,6 +1221,7 @@
         </div>
         <div class="schedule-slot-main">
           <div class="schedule-slot-top">
+            ${modeTagHtml}
             <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
             ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
             <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="card-action-link ${isDetailOpen ? 'orange' : 'slate'}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
@@ -1228,34 +1233,6 @@
         </div>
       </div>`;
     }
-
-    function renderScheduleTimeline() {
-      const container = document.getElementById('reportListContainer');
-      const filtered = getFilteredReports();
-      const allDayGroups = getScheduleDayGroups(filtered);
-
-      const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
-      const totalPages = isCustomRange ? 1 : Math.max(1, Math.ceil(allDayGroups.length / SCHEDULE_PAGE_SIZE));
-      if (schedulePage >= totalPages) schedulePage = totalPages - 1;
-
-      const visibleDays = isCustomRange
-        ? allDayGroups
-        : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
-
-      const rangeInfoText = isCustomRange
-        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
-        : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
-
-      const toolbarHtml = `<div class="schedule-toolbar no-print">
-        <div class="row">
-          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">時段</button>
-          <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
-          ${!isCustomRange && totalPages > 1 ? `
-            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
-            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
-          ` : ''}
-        </div>
-      </div>`;
 
       const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
         <span class="t-meta" style="font-weight:600;">時段：</span>
@@ -2288,4 +2265,4 @@
     bootApp();
   </script>
 </body>
-</html>我意思是在這個加你改錯了我的
+</html> 
