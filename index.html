@@ -1168,7 +1168,6 @@
       renderScheduleTimeline();
       showToast('已原地更新');
     }
-
 function renderScheduleSlotRow(r) {
       const tStr = (r.timeRange || '').trim() || '全日';
       const sName = r.site || '未分類';
@@ -1233,6 +1232,34 @@ function renderScheduleSlotRow(r) {
         </div>
       </div>`;
     }
+
+    function renderScheduleTimeline() {
+      const container = document.getElementById('reportListContainer');
+      const filtered = getFilteredReports();
+      const allDayGroups = getScheduleDayGroups(filtered);
+
+      const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
+      const totalPages = isCustomRange ? 1 : Math.max(1, Math.ceil(allDayGroups.length / SCHEDULE_PAGE_SIZE));
+      if (schedulePage >= totalPages) schedulePage = totalPages - 1;
+
+      const visibleDays = isCustomRange
+        ? allDayGroups
+        : allDayGroups.slice(schedulePage * SCHEDULE_PAGE_SIZE, (schedulePage + 1) * SCHEDULE_PAGE_SIZE);
+
+      const rangeInfoText = isCustomRange
+        ? `${scheduleRangeStart ? formatMonthDayWeekday(scheduleRangeStart) : '起'} ～ ${scheduleRangeEnd ? formatMonthDayWeekday(scheduleRangeEnd) : '止'}（${allDayGroups.length}日）`
+        : `${schedulePage + 1}/${totalPages}頁（${allDayGroups.length}日）`;
+
+      const toolbarHtml = `<div class="schedule-toolbar no-print">
+        <div class="row">
+          <button type="button" onclick="toggleScheduleRangeBox()" class="btn-secondary">時段</button>
+          <span class="t-meta muted" style="font-weight:600;">${escapeHtml(rangeInfoText)}</span>
+          ${!isCustomRange && totalPages > 1 ? `
+            <button type="button" onclick="stepSchedulePage(-1)" class="btn-secondary" ${schedulePage <= 0 ? 'disabled' : ''}>上一頁</button>
+            <button type="button" onclick="stepSchedulePage(1)" class="btn-secondary" ${schedulePage >= totalPages - 1 ? 'disabled' : ''}>下一頁</button>
+          ` : ''}
+        </div>
+      </div>`;
 
       const rangeBoxHtml = showScheduleRangeBox ? `<div class="schedule-range-box no-print">
         <span class="t-meta" style="font-weight:600;">時段：</span>
@@ -2265,4 +2292,4 @@ function renderScheduleSlotRow(r) {
     bootApp();
   </script>
 </body>
-</html> 
+</html>
