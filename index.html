@@ -69,7 +69,7 @@
       <div class="modal-head">
         <div class="row" style="gap:6px;">
           <span class="t-site" id="wfModalTitle">新增工作</span>
-          <span id="wfModeBadge" class="mode-badge mode-badge-immediate">即時</span>
+          <span id="wfModeBadge" class="mode-badge mode-badge-booking">預約</span>
         </div>
         <button type="button" onclick="closeWorkflowModal()" class="btn-link">關閉 ✕</button>
       </div>
@@ -164,7 +164,7 @@
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
           </div>
-        <div style="margin-top:8px;">
+          <div style="margin-top:8px;">
             <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
               <span class="t-meta" style="font-weight:700;color:#9A3412;">預約</span>
@@ -393,6 +393,10 @@
       return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     }
 
+    function isBookingItem(r) {
+      return Boolean(r?.isPendingBooking || r?.workflowMode === 'booking' || r?.isFutureDiary);
+    }
+
     function openWorkflowModal(mode) {
       currentWfMode = mode === 'booking' ? 'booking' : 'immediate';
       selectedWfAddr = '';
@@ -420,7 +424,7 @@
         immBoxEl.classList.remove('hidden');
       } else {
         titleEl.textContent = '預約';
-        badgeEl.textContent = '預約 · 未展開';
+        badgeEl.textContent = '預約';
         badgeEl.className = 'mode-badge mode-badge-booking';
         dateEl.value = getLocalDateOffset(1);
         timeEl.value = '';
@@ -532,7 +536,7 @@
       const rawNote = (document.getElementById('wfNoteInput').value || '').trim();
 
       const isBooking = currentWfMode === 'booking';
-      const prefix = isBooking ? '[預約·未展開] ' : '[即時] ';
+      const prefix = isBooking ? '[預約·未展開] ' : '';
       const title = `${prefix}${rawNote || (isBooking ? '預約記錄（未展開工作）' : '即時跟進項目')}`;
       const docs = wfUploadedDoc ? [wfUploadedDoc] : [];
 
@@ -564,7 +568,7 @@
           updatedAt: Date.now()
         });
         closeWorkflowModal();
-        showToast(isBooking ? '已記低預約' : '已記低即時');
+        showToast(isBooking ? '已記低預約' : '已儲存');
       } catch (err) {
         console.error(err);
         showToast('儲存失敗');
@@ -616,7 +620,7 @@
     }
 
     function isFutureDiaryEntry(r) {
-      return Boolean(r?.isFutureDiary || r?.isPendingBooking);
+      return isBookingItem(r);
     }
 
     function toggleScheduleDetail(id) {
@@ -1068,9 +1072,8 @@
     }
 
     function getScheduleDayGroups(filtered) {
-      const normalEntries = filtered.filter(r => !isFutureDiaryEntry(r));
       const dayMap = {};
-      normalEntries.forEach(r => {
+      filtered.forEach(r => {
         const dKey = r.date || '未定日期';
         if (scheduleRangeStart && dKey !== '未定日期' && dKey < scheduleRangeStart) return;
         if (scheduleRangeEnd && dKey !== '未定日期' && dKey > scheduleRangeEnd) return;
@@ -1174,8 +1177,7 @@
       const sName = r.site || '未分類';
       const encSite = encodeURIComponent(sName);
       const isDetailOpen = expandedDetailIds.has(r.id);
-      const isBookingRow = Boolean(r?.isPendingBooking || r?.workflowMode === 'booking' || r?.isFutureDiary);
-      const modeTagHtml = isBookingRow
+      const modeTagHtml = isBookingItem(r)
         ? `<span class="mode-badge mode-badge-booking">預約</span>`
         : '';
 
@@ -1234,28 +1236,47 @@
       </div>`;
     }
 
-      return `<div class="schedule-slot-row">
-        <div class="schedule-time-col">
-          <span class="t-mono schedule-time-tag">${escapeHtml(tStr)}</span>
-        </div>
-        <div class="schedule-slot-main">
-          <div class="schedule-slot-top">
-            ${modeTagHtml}
-            <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
-            ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
-            <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="card-action-link ${isDetailOpen ? 'orange' : 'slate'}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
-            ${!IS_PUBLIC ? `<button type="button" onclick="startScheduleInlineEdit('${r.id}')" class="card-action-link green">快改</button>` : ''}
+    function renderBookingBannerHtml(filtered) {
+      const bookings = filtered
+        .filter(r => isBookingItem(r))
+        .sort((a, b) => (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99') || (a.timeRange || '').localeCompare(b.timeRange || ''));
+
+      if (!bookings.length) return '';
+
+      const rows = bookings.map(r => {
+        const dLabel = formatMonthDayWeekday(r.date);
+        const tLabel = (r.timeRange || '').trim();
+        const sName = r.site || '未分類';
+        return `<div class="schedule-slot-row" style="padding:5px 0;">
+          <div class="schedule-time-col" style="width:130px;">
+            <span class="t-mono schedule-time-tag">${escapeHtml(dLabel)}${tLabel ? ' ' + escapeHtml(tLabel) : ''}</span>
           </div>
-          ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
-          ${r.summary ? `<div class="entry-summary">${escapeHtml(r.summary)}</div>` : ''}
-          ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+          <div class="schedule-slot-main">
+            <div class="schedule-slot-top">
+              <span class="mode-badge mode-badge-booking">預約</span>
+              <strong style="font-size:13px;">${escapeHtml(sName)}</strong>
+              ${r.title ? `<span class="t-meta">${escapeHtml(r.title)}</span>` : ''}
+              ${!IS_PUBLIC ? `<button type="button" onclick="openEditor('${r.id}')" class="card-action-link green no-print">詳編</button>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      return `<div class="schedule-day-card" style="border-color:#7DD3FC;">
+        <div class="schedule-day-head row-between" style="background:#F0F9FF;">
+          <div class="row">
+            <span class="mode-badge mode-badge-booking">預約</span>
+            <span class="t-site" style="font-size:13px;">已預約項目（${bookings.length}）</span>
+          </div>
         </div>
+        <div class="schedule-day-body">${rows}</div>
       </div>`;
     }
 
     function renderScheduleTimeline() {
       const container = document.getElementById('reportListContainer');
       const filtered = getFilteredReports();
+      const bookingBannerHtml = renderBookingBannerHtml(filtered);
       const allDayGroups = getScheduleDayGroups(filtered);
 
       const isCustomRange = Boolean(scheduleRangeStart || scheduleRangeEnd);
@@ -1291,7 +1312,7 @@
       </div>` : '';
 
       if (!allDayGroups.length) {
-        container.innerHTML = toolbarHtml + rangeBoxHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
+        container.innerHTML = bookingBannerHtml + toolbarHtml + rangeBoxHtml + `<div style="background:#FFF;padding:16px;margin-top:8px;text-align:center;" class="muted">暫無紀錄</div>`;
         return;
       }
 
@@ -1314,7 +1335,7 @@
         </div>`;
       }).join('');
 
-      container.innerHTML = toolbarHtml + rangeBoxHtml + daysHtml;
+      container.innerHTML = bookingBannerHtml + toolbarHtml + rangeBoxHtml + daysHtml;
     }
 
     async function renderSingleReportStandalone(r) {
@@ -1809,7 +1830,7 @@
               <div class="entry-date-group">
                 <span class="t-mono" style="font-weight:700;">${escapeHtml(formatMonthDayWeekday(r.date))}</span>
                 ${r.timeRange ? `<span class="t-meta t-mono muted">${escapeHtml(r.timeRange)}</span>` : ''}
-                ${isFuture ? `<span class="card-action-link orange" style="border-bottom:none;">預約</span>` : ''}
+                ${isFuture ? `<span class="mode-badge mode-badge-booking">預約</span>` : ''}
                 ${!IS_PUBLIC ? `
                   <button type="button" onclick="openEditor('${r.id}')" class="card-action-link green no-print">詳編</button>
                   <button type="button" onclick="openFollowupModal('${r.id}')" class="card-action-link slate no-print">留言</button>
@@ -1935,7 +1956,7 @@
         document.getElementById('fieldDurationHours').value = '';
         document.getElementById('fieldTimeEnd').value = pt.end;
         document.getElementById('fieldPeriodLabel').value = '';
-        document.getElementById('fieldIsFutureDiary').checked = Boolean(           r.isFutureDiary || r.isPendingBooking || r.workflowMode === 'booking'         );
+        document.getElementById('fieldIsFutureDiary').checked = isBookingItem(r);
         document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
@@ -2279,6 +2300,8 @@
           date: dateVal,
           timeRange: buildEditorTimeValue(),
           isFutureDiary: isFuture,
+          isPendingBooking: isFuture,
+          workflowMode: isFuture ? 'booking' : (ex?.workflowMode || 'standard'),
           isUpcoming: ex ? Boolean(ex.isUpcoming) : (isNewSite || isFuture),
           title,
           docs: validDocs, docName: validDocs[0]?.name || '', docUrl: validDocs[0]?.url || '',
