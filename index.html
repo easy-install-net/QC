@@ -1168,7 +1168,8 @@
       renderScheduleTimeline();
       showToast('已原地更新');
     }
-function renderScheduleSlotRow(r) {
+
+    function renderScheduleSlotRow(r) {
       const tStr = (r.timeRange || '').trim() || '全日';
       const sName = r.site || '未分類';
       const encSite = encodeURIComponent(sName);
