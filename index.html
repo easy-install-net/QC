@@ -164,10 +164,10 @@
               <input type="hidden" id="fieldPeriodLabel" value="" />
             </div>
           </div>
-          <div style="margin-top:8px;">
+        <div style="margin-top:8px;">
             <label class="row" style="gap:6px;cursor:pointer;user-select:none;">
               <input type="checkbox" id="fieldIsFutureDiary" style="width:15px;height:15px;accent-color:#EA580C;" />
-              <span class="t-meta" style="font-weight:700;color:#9A3412;">即將</span>
+              <span class="t-meta" style="font-weight:700;color:#9A3412;">預約</span>
             </label>
           </div>
         </div>
@@ -1915,7 +1915,7 @@ function renderScheduleSlotRow(r) {
         document.getElementById('fieldDurationHours').value = '';
         document.getElementById('fieldTimeEnd').value = pt.end;
         document.getElementById('fieldPeriodLabel').value = '';
-        document.getElementById('fieldIsFutureDiary').checked = Boolean(r.isFutureDiary);
+        document.getElementById('fieldIsFutureDiary').checked = Boolean(           r.isFutureDiary || r.isPendingBooking || r.workflowMode === 'booking'         );
         document.getElementById('fieldTitle').value = r.title || '';
         document.getElementById('fieldSummary').value = r.summary || ''; document.getElementById('fieldFollowup').value = r.followup || '';
         draftDocs = JSON.parse(JSON.stringify(getDocsList(r)));
