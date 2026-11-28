@@ -2253,14 +2253,6 @@
         await db.collection(COLLECTION_NAME).doc(docId).set({
           site, assignee: document.getElementById('fieldAssignee').value.trim(),
           date: dateVal,
-          timeRange:
-
-          const rawDateInput = (document.getElementById('fieldDate').value || '').trim();
-        const dateVal = rawDateInput || (isFuture ? '' : new Date().toISOString().split('T')[0]);
-
-        await db.collection(COLLECTION_NAME).doc(docId).set({
-          site, assignee: document.getElementById('fieldAssignee').value.trim(),
-          date: dateVal,
           timeRange: buildEditorTimeValue(),
           isFutureDiary: isFuture,
           isUpcoming: ex ? Boolean(ex.isUpcoming) : (isNewSite || isFuture),
