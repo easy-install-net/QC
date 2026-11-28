@@ -1175,8 +1175,8 @@ function renderScheduleSlotRow(r) {
       const isDetailOpen = expandedDetailIds.has(r.id);
       const isBookingRow = Boolean(r?.isPendingBooking || r?.workflowMode === 'booking' || r?.isFutureDiary);
       const modeTagHtml = isBookingRow
-        ? `<span class="mode-badge mode-badge-booking">預約·未展開</span>`
-        : `<span class="mode-badge mode-badge-immediate">即時</span>`;
+        ? `<span class="mode-badge mode-badge-booking">預約</span>`
+        : '';
 
       if (!IS_PUBLIC && inlineEditId === r.id) {
         const pt = parseTimeRange(r.timeRange);
@@ -1213,6 +1213,25 @@ function renderScheduleSlotRow(r) {
           </div>
         </div>`;
       }
+
+      return `<div class="schedule-slot-row">
+        <div class="schedule-time-col">
+          <span class="t-mono schedule-time-tag">${escapeHtml(tStr)}</span>
+        </div>
+        <div class="schedule-slot-main">
+          <div class="schedule-slot-top">
+            ${modeTagHtml}
+            <button type="button" onclick="jumpToSingleSite(decodeURIComponent('${encSite}'))" class="schedule-site-btn">${escapeHtml(sName)}</button>
+            ${r.assignee ? `<span class="t-meta muted">${escapeHtml(r.assignee)}</span>` : ''}
+            <button type="button" onclick="toggleScheduleDetail('${r.id}')" class="card-action-link ${isDetailOpen ? 'orange' : 'slate'}">${isDetailOpen ? '收起詳細 ▴' : '詳細 ▾'}</button>
+            ${!IS_PUBLIC ? `<button type="button" onclick="startScheduleInlineEdit('${r.id}')" class="card-action-link green">快改</button>` : ''}
+          </div>
+          ${r.title ? `<div class="schedule-topic">${escapeHtml(r.title)}</div>` : ''}
+          ${r.summary ? `<div class="entry-summary">${escapeHtml(r.summary)}</div>` : ''}
+          ${isDetailOpen ? renderScheduleDetailHtml(r) : ''}
+        </div>
+      </div>`;
+    }
 
       return `<div class="schedule-slot-row">
         <div class="schedule-time-col">
